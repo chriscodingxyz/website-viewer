@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label"
 import { PlusCircle } from 'lucide-react'
 import WebsiteView from './WebsiteView'
 
-
 export type ViewType = 'desktop' | 'tablet' | 'mobile'
 
 export interface View {
@@ -25,6 +24,7 @@ export default function WebsiteViewer() {
     if (url) {
       setViews([...views, { id: nextId, url, type: 'desktop' }])
       setNextId(nextId + 1)
+      setUrl('')
     }
   }
 
@@ -37,9 +37,9 @@ export default function WebsiteViewer() {
   }
 
   return (
-    <div>
-      <div className="mb-6">
-        <Label htmlFor="url-input" className="mb-2 block">Enter Website URL:</Label>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="url-input">Enter Website URL:</Label>
         <div className="flex gap-2">
           <Input
             id="url-input"
@@ -54,7 +54,7 @@ export default function WebsiteViewer() {
           </Button>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex flex-wrap gap-6 justify-start">
         {views.map(view => (
           <WebsiteView
             key={view.id}
