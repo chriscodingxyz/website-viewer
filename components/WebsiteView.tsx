@@ -182,7 +182,7 @@ export default function WebsiteView({
           {viewDimensions[view.type].width} x {viewDimensions[view.type].height}
         </div>
         <div
-          className="overflow-hidden bg-background"
+          className="overflow-hidden bg-background mx-auto"
           style={{
             width: `${viewDimensions[view.type].width * scale}px`,
             height: `${viewDimensions[view.type].height * scale}px`,
@@ -197,7 +197,7 @@ export default function WebsiteView({
               transform: `scale(${scale})`,
               transformOrigin: "top left",
             }}
-            className="border-none"
+            className=""
             title={`View ${view.id}`}
           />
         </div>
