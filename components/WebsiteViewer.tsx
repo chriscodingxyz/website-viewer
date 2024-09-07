@@ -204,7 +204,6 @@
 //     </div>
 //   );
 // }
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -261,12 +260,18 @@ export default function WebsiteViewer() {
   const [views, setViews] = useState<View[]>([]);
   const [nextId, setNextId] = useState(1);
   const [history, setHistory] = useState<string[]>([]);
-  const [favorites, setFavorites] = useState<string[]>(() => {
-    const storedFavorites = localStorage.getItem("favorites");
-    return storedFavorites ? JSON.parse(storedFavorites) : [];
-  });
+  const [favorites, setFavorites] = useState<string[]>([]);
 
   useEffect(() => {
+    // Load favorites from localStorage on the client side
+    const storedFavorites = localStorage.getItem("favorites");
+    if (storedFavorites) {
+      setFavorites(JSON.parse(storedFavorites));
+    }
+  }, []);
+
+  useEffect(() => {
+    // Save favorites to localStorage whenever it changes
     localStorage.setItem("favorites", JSON.stringify(favorites));
   }, [favorites]);
 
