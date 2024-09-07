@@ -27,12 +27,14 @@ interface WebsiteViewProps {
   view: View;
   onRemove: () => void;
   onTypeChange: (type: ViewType) => void;
+  index: number;
 }
 
 export default function WebsiteView({
   view,
   onRemove,
   onTypeChange,
+  index,
 }: WebsiteViewProps) {
   const [isCapturing, setIsCapturing] = useState(false);
   const [showCustomSize, setShowCustomSize] = useState(false);
@@ -94,19 +96,22 @@ export default function WebsiteView({
 
   return (
     <Card
-      className="w-full overflow-hidden"
+      className="w-full overflow-hidden relative"
       style={{
         width: `${viewDimensions[view.type].width * scale + 40}px`,
         height: `${
           viewDimensions[view.type].height * scale +
           (showCustomSize ? 220 : 180) +
-          bottomPadding // Add bottom padding here
+          bottomPadding
         }px`,
-        paddingBottom: `${bottomPadding}px`, // Apply padding to the bottom of the card
+        paddingBottom: `${bottomPadding}px`,
       }}
     >
+      <div className="absolute top-2 left-2 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold">
+        {index + 1}
+      </div>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium truncate flex-1 mr-2">
+        <CardTitle className="text-sm font-medium truncate flex-1 mr-2 pl-8">
           {view.url}
         </CardTitle>
         <Button variant="ghost" size="sm" onClick={onRemove}>
