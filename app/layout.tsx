@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Header } from "@/components/Header";
 import { IBM_Plex_Mono } from "next/font/google";
+import Footer from "@/components/Footer";
 
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
@@ -24,10 +25,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={ibmPlexMono.className}>
+      <body className={`${ibmPlexMono.className} flex flex-col min-h-screen`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Header />
-          {children}
+          <main className="flex-grow">{children}</main>
+          <Footer />
         </ThemeProvider>
       </body>
     </html>
