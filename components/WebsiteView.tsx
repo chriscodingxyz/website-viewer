@@ -1,8 +1,5 @@
-"use client";
-
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -10,9 +7,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Monitor, Tablet, Smartphone, Camera, X, Loader2 } from "lucide-react";
 import { View, ViewType } from "./WebsiteViewer";
 import html2canvas from "html2canvas";
@@ -37,9 +31,6 @@ export default function WebsiteView({
   index,
 }: WebsiteViewProps) {
   const [isCapturing, setIsCapturing] = useState(false);
-  const [showCustomSize, setShowCustomSize] = useState(false);
-  const [customWidth, setCustomWidth] = useState("");
-  const [customHeight, setCustomHeight] = useState("");
   const [viewDimensions, setViewDimensions] = useState(defaultViewDimensions);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -77,52 +68,38 @@ export default function WebsiteView({
     }
   };
 
-  const handleCustomDimensions = () => {
-    const width = parseInt(customWidth);
-    const height = parseInt(customHeight);
-    if (width > 0 && height > 0) {
-      setViewDimensions({
-        ...viewDimensions,
-        [view.type]: { width, height },
-      });
-    }
-  };
-
   const scale =
     view.type === "desktop" ? 0.4 : view.type === "tablet" ? 0.5 : 0.8;
 
-  // Add a constant for bottom padding
-  const bottomPadding = 20;
+  const scaledWidth = viewDimensions[view.type].width * scale;
+  const scaledHeight = viewDimensions[view.type].height * scale;
+  const optionsHeight = 90; // Adjust this value based on the actual height of your options section
+  const borderWidth = 1; // Width of the border
 
   return (
-    <Card
-      className="w-full overflow-hidden relative"
+    <div
+      className="relative border rounded-lg"
       style={{
-        width: `${viewDimensions[view.type].width * scale + 40}px`,
-        height: `${
-          viewDimensions[view.type].height * scale +
-          (showCustomSize ? 220 : 180) +
-          bottomPadding
-        }px`,
-        paddingBottom: `${bottomPadding}px`,
+        width: `${scaledWidth + 2 * borderWidth}px`,
+        height: `${scaledHeight + optionsHeight + 2 * borderWidth}px`,
       }}
     >
       <div className="absolute top-2 left-2 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold">
         {index + 1}
       </div>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium truncate flex-1 mr-2 pl-8">
-          {view.url}
-        </CardTitle>
-        <Button variant="ghost" size="sm" onClick={onRemove}>
-          <X className="h-4 w-4" />
-          <span className="sr-only">Remove view</span>
-        </Button>
-      </CardHeader>
-      <CardContent className="space-y-4 p-2">
+      <div className="p-2 space-y-2" style={{ height: `${optionsHeight}px` }}>
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-medium truncate flex-1 mr-2 pl-8">
+            {view.url}
+          </p>
+          <Button variant="ghost" size="sm" onClick={onRemove}>
+            <X className="h-4 w-4" />
+            <span className="sr-only">Remove view</span>
+          </Button>
+        </div>
         <div className="flex justify-between items-center">
           <Select value={view.type} onValueChange={onTypeChange}>
-            <SelectTrigger className="w-[120px]">
+            <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="View type" />
             </SelectTrigger>
             <SelectContent>
@@ -146,62 +123,29 @@ export default function WebsiteView({
             Capture
           </Button>
         </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            id={`custom-size-${view.id}`}
-            checked={showCustomSize}
-            onCheckedChange={setShowCustomSize}
-          />
-          <Label htmlFor={`custom-size-${view.id}`}>Custom size</Label>
-        </div>
-        {showCustomSize && (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Input
-                type="number"
-                placeholder="Width"
-                value={customWidth}
-                onChange={(e) => setCustomWidth(e.target.value)}
-                className="w-20"
-              />
-              <span>x</span>
-              <Input
-                type="number"
-                placeholder="Height"
-                value={customHeight}
-                onChange={(e) => setCustomHeight(e.target.value)}
-                className="w-20"
-              />
-              <Button onClick={handleCustomDimensions} size="sm">
-                Set
-              </Button>
-            </div>
-          </div>
-        )}
-        <div className="text-sm text-center">
+        <div className="text-xs text-center">
           {viewDimensions[view.type].width} x {viewDimensions[view.type].height}
         </div>
-        <div
-          className="overflow-hidden bg-background mx-auto"
+      </div>
+      <div
+        className="overflow-hidden bg-background mx-auto border-t"
+        style={{
+          width: `${scaledWidth}px`,
+          height: `${scaledHeight}px`,
+        }}
+      >
+        <iframe
+          ref={iframeRef}
+          src={view.url}
           style={{
-            width: `${viewDimensions[view.type].width * scale}px`,
-            height: `${viewDimensions[view.type].height * scale}px`,
+            width: `${viewDimensions[view.type].width}px`,
+            height: `${viewDimensions[view.type].height}px`,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
           }}
-        >
-          <iframe
-            ref={iframeRef}
-            src={view.url}
-            style={{
-              width: `${viewDimensions[view.type].width}px`,
-              height: `${viewDimensions[view.type].height}px`,
-              transform: `scale(${scale})`,
-              transformOrigin: "top left",
-            }}
-            className=""
-            title={`View ${view.id}`}
-          />
-        </div>
-      </CardContent>
-    </Card>
+          title={`View ${view.id}`}
+        />
+      </div>
+    </div>
   );
 }
