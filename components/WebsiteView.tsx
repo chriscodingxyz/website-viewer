@@ -1,4 +1,5 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -9,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Monitor, Tablet, Smartphone, Camera, X, Loader2 } from "lucide-react";
 import { View, ViewType } from "./WebsiteViewer";
-import html2canvas from "html2canvas";
+import { toast } from "sonner";
 
 const defaultViewDimensions = {
   desktop: { width: 1024, height: 768 },
@@ -31,60 +32,75 @@ export default function WebsiteView({
   index,
 }: WebsiteViewProps) {
   const [isCapturing, setIsCapturing] = useState(false);
-  const [viewDimensions, setViewDimensions] = useState(defaultViewDimensions);
+  const [viewDimensions] = useState(defaultViewDimensions);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [scale, setScale] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateScale = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth;
+        const viewWidth = viewDimensions[view.type].width;
+        const newScale = Math.min(1, containerWidth / viewWidth);
+        setScale(newScale);
+      }
+    };
+
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, [view.type, viewDimensions]);
 
   const captureScreenshot = async () => {
     setIsCapturing(true);
     try {
-      if (iframeRef.current) {
-        const iframe = iframeRef.current;
-        const iframeContent =
-          iframe.contentDocument || iframe.contentWindow?.document;
-
-        if (iframeContent) {
-          const canvas = await html2canvas(iframeContent.body, {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            windowWidth: viewDimensions[view.type].width,
-            windowHeight: viewDimensions[view.type].height,
-          });
-
-          const image = canvas.toDataURL("image/png");
-          const link = document.createElement("a");
-          link.href = image;
-          link.download = `screenshot-${view.type}-${Date.now()}.png`;
-          link.click();
+      const response = await axios.post(
+        "/api/capture-screenshot",
+        {
+          url: view.url,
+          width: viewDimensions[view.type].width,
+          height: viewDimensions[view.type].height,
+        },
+        {
+          responseType: "blob",
         }
-      }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `screenshot-${view.type}-${Date.now()}.png`
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      toast.success("Screenshot captured successfully");
     } catch (error) {
       console.error("Failed to capture screenshot:", error);
-      alert(
-        "Failed to capture screenshot. This might be due to cross-origin restrictions."
-      );
+      toast.error("Failed to capture screenshot. Please try again.");
     } finally {
       setIsCapturing(false);
     }
   };
 
-  const scale =
-    view.type === "desktop" ? 0.4 : view.type === "tablet" ? 0.5 : 0.8;
-
   const scaledWidth = viewDimensions[view.type].width * scale;
   const scaledHeight = viewDimensions[view.type].height * scale;
-  const optionsHeight = 90; // Adjust this value based on the actual height of your options section
-  const borderWidth = 1; // Width of the border
+  const optionsHeight = 90;
+  const borderWidth = 1;
 
   return (
     <div
-      className="relative border rounded-lg"
+      ref={containerRef}
+      className="relative border rounded-lg overflow-hidden w-full sm:w-auto"
       style={{
         width: `${scaledWidth + 2 * borderWidth}px`,
         height: `${scaledHeight + optionsHeight + 2 * borderWidth}px`,
       }}
     >
-      <div className="absolute top-2 left-2 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold">
+      <div className="absolute top-2 left-2 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold z-10">
         {index + 1}
       </div>
       <div className="p-2 space-y-2" style={{ height: `${optionsHeight}px` }}>

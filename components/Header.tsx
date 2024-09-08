@@ -1,5 +1,6 @@
 import ThemeToggle from "@/components/ThemeToggle";
 import { Monofett } from "next/font/google";
+import Link from "next/link";
 
 const monofett = Monofett({
   subsets: ["latin"],
@@ -9,8 +10,8 @@ const monofett = Monofett({
 export function Header() {
   return (
     <header className="border-b px-4">
-      <div className="container mx-auto flex justify-between items-center py-1">
-        <div>
+      <div className="container mx-auto flex justify-between items-center py-2">
+        <a href="/">
           <h1
             className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[0.7] tracking-tight ${monofett.className}`}
           >
@@ -22,7 +23,7 @@ export function Header() {
             {" "}
             Layout Lab
           </h1>
-        </div>
+        </a>
         <ThemeToggle />
       </div>
     </header>
