@@ -86,7 +86,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-a {
-  @apply underline hover:no-underline;
-}

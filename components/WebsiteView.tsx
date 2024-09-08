@@ -52,39 +52,39 @@ export default function WebsiteView({
     return () => window.removeEventListener("resize", updateScale);
   }, [view.type, viewDimensions]);
 
-  const captureScreenshot = async () => {
-    setIsCapturing(true);
-    try {
-      const response = await axios.post(
-        "/api/capture-screenshot",
-        {
-          url: view.url,
-          width: viewDimensions[view.type].width,
-          height: viewDimensions[view.type].height,
-        },
-        {
-          responseType: "blob",
-        }
-      );
+  // const captureScreenshot = async () => {
+  //   setIsCapturing(true);
+  //   try {
+  //     const response = await axios.post(
+  //       "/api/capture-screenshot",
+  //       {
+  //         url: view.url,
+  //         width: viewDimensions[view.type].width,
+  //         height: viewDimensions[view.type].height,
+  //       },
+  //       {
+  //         responseType: "blob",
+  //       }
+  //     );
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute(
-        "download",
-        `screenshot-${view.type}-${Date.now()}.png`
-      );
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-      toast.success("Screenshot captured successfully");
-    } catch (error) {
-      console.error("Failed to capture screenshot:", error);
-      toast.error("Failed to capture screenshot. Please try again.");
-    } finally {
-      setIsCapturing(false);
-    }
-  };
+  //     const url = window.URL.createObjectURL(new Blob([response.data]));
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     link.setAttribute(
+  //       "download",
+  //       `screenshot-${view.type}-${Date.now()}.png`
+  //     );
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     link.parentNode?.removeChild(link);
+  //     toast.success("Screenshot captured successfully");
+  //   } catch (error) {
+  //     console.error("Failed to capture screenshot:", error);
+  //     toast.error("Failed to capture screenshot. Please try again.");
+  //   } finally {
+  //     setIsCapturing(false);
+  //   }
+  // };
 
   const scaledWidth = viewDimensions[view.type].width * scale;
   const scaledHeight = viewDimensions[view.type].height * scale;
@@ -130,14 +130,14 @@ export default function WebsiteView({
               </SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={captureScreenshot} size="sm" disabled={isCapturing}>
+          {/* <Button onClick={captureScreenshot} size="sm" disabled={isCapturing}>
             {isCapturing ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Camera className="mr-2 h-4 w-4" />
             )}
             Capture
-          </Button>
+          </Button> */}
         </div>
         <div className="text-xs text-center">
           {viewDimensions[view.type].width} x {viewDimensions[view.type].height}
