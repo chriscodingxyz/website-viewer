@@ -140,7 +140,7 @@ export default function WebsiteViewer() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="example.com or localhost:3000"
-            className="flex-grow"
+            className="flex-grow text-[16px]"
           />
           <div className="flex gap-1">
             <Button onClick={addView} disabled={!formatUrl(url)}>
