@@ -126,8 +126,6 @@ export default function WebsiteViewer() {
     toast.success(`New ${view.type} view added`);
   };
 
-  const { addToFavorites } = useFavorites();
-
   return (
     <div className="space-y-6">
       <style jsx global>{`
