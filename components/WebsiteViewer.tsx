@@ -230,7 +230,6 @@
 //     </div>
 //   );
 // }
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -290,6 +289,7 @@ export default function WebsiteViewer() {
   const [nextId, setNextId] = useState(1);
   const [history, setHistory] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [isInputHighlighted, setIsInputHighlighted] = useState(false);
 
   useEffect(() => {
     const storedFavorites = localStorage.getItem("favorites");
@@ -301,6 +301,17 @@ export default function WebsiteViewer() {
   useEffect(() => {
     localStorage.setItem("favorites", JSON.stringify(favorites));
   }, [favorites]);
+
+  const highlightInput = () => {
+    setIsInputHighlighted(true);
+    setTimeout(() => setIsInputHighlighted(false), 1000); // Reset after 1 second
+  };
+
+  const setUrlWithHighlight = (newUrl: string) => {
+    setUrl(newUrl);
+    highlightInput();
+    toast.success("URL added to the viewer");
+  };
 
   const addView = () => {
     const formattedUrl = formatUrl(url);
@@ -363,6 +374,22 @@ export default function WebsiteViewer() {
 
   return (
     <div className="space-y-6">
+      <style jsx global>{`
+        @keyframes highlightInput {
+          0% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+          }
+          50% {
+            box-shadow: 0 0 0 4px blue;
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+          }
+        }
+        .highlight-input {
+          animation: highlightInput 1s ease-out;
+        }
+      `}</style>
       <div className="space-y-2">
         <Label htmlFor="url-input">Enter Website URL:</Label>
         <div className="flex gap-2 flex-col lg:flex-row">
@@ -372,7 +399,9 @@ export default function WebsiteViewer() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="example.com or localhost:3000"
-            className="flex-grow text-[16px]"
+            className={`flex-grow text-[16px] ${
+              isInputHighlighted ? "highlight-input" : ""
+            }`}
           />
           <div className="flex gap-1">
             <Button onClick={addView} disabled={!formatUrl(url)}>
@@ -398,7 +427,7 @@ export default function WebsiteViewer() {
               className="flex items-center bg-gray-100 rounded-md"
             >
               <button
-                onClick={() => setUrl(item)}
+                onClick={() => setUrlWithHighlight(item)}
                 className="text-sm text-blue-600 hover:underline px-2 py-1"
               >
                 {item}
@@ -423,10 +452,7 @@ export default function WebsiteViewer() {
                 className="flex items-center bg-gray-100 rounded-md"
               >
                 <button
-                  onClick={() => {
-                    setUrl(item);
-                    toast.success("URL added to the viewer");
-                  }}
+                  onClick={() => setUrlWithHighlight(item)}
                   className="text-sm text-blue-600 hover:underline px-2 py-1"
                 >
                   {item}
