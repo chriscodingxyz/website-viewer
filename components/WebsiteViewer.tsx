@@ -383,7 +383,7 @@ export default function WebsiteViewer() {
             </Button>
             {views.length > 0 && (
               <Button onClick={clearAllViews} variant="destructive">
-                <Trash2 className="mr-2 h-4 w-4" /> Clear All
+                <Trash2 className="mr-2 h-4 w-4" /> Clear
               </Button>
             )}
           </div>
