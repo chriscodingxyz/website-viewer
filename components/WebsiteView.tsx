@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -8,9 +7,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Monitor, Tablet, Smartphone, Camera, X, Loader2 } from "lucide-react";
+import { Monitor, Tablet, Smartphone, X, Star, PlusCircle } from "lucide-react";
 import { View, ViewType } from "./WebsiteViewer";
-import { toast } from "sonner";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const defaultViewDimensions = {
   desktop: { width: 1024, height: 768 },
@@ -22,6 +27,7 @@ interface WebsiteViewProps {
   view: View;
   onRemove: () => void;
   onTypeChange: (type: ViewType) => void;
+  onDuplicate: (view: View) => void;
   index: number;
 }
 
@@ -29,13 +35,16 @@ export default function WebsiteView({
   view,
   onRemove,
   onTypeChange,
+  onDuplicate,
   index,
 }: WebsiteViewProps) {
-  const [isCapturing, setIsCapturing] = useState(false);
   const [viewDimensions] = useState(defaultViewDimensions);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { favorites, addToFavorites, removeFromFavorites } = useFavorites();
+
+  const isFavorite = favorites.includes(view.url);
 
   useEffect(() => {
     const updateScale = () => {
@@ -52,39 +61,13 @@ export default function WebsiteView({
     return () => window.removeEventListener("resize", updateScale);
   }, [view.type, viewDimensions]);
 
-  // const captureScreenshot = async () => {
-  //   setIsCapturing(true);
-  //   try {
-  //     const response = await axios.post(
-  //       "/api/capture-screenshot",
-  //       {
-  //         url: view.url,
-  //         width: viewDimensions[view.type].width,
-  //         height: viewDimensions[view.type].height,
-  //       },
-  //       {
-  //         responseType: "blob",
-  //       }
-  //     );
-
-  //     const url = window.URL.createObjectURL(new Blob([response.data]));
-  //     const link = document.createElement("a");
-  //     link.href = url;
-  //     link.setAttribute(
-  //       "download",
-  //       `screenshot-${view.type}-${Date.now()}.png`
-  //     );
-  //     document.body.appendChild(link);
-  //     link.click();
-  //     link.parentNode?.removeChild(link);
-  //     toast.success("Screenshot captured successfully");
-  //   } catch (error) {
-  //     console.error("Failed to capture screenshot:", error);
-  //     toast.error("Failed to capture screenshot. Please try again.");
-  //   } finally {
-  //     setIsCapturing(false);
-  //   }
-  // };
+  const handleFavoriteToggle = () => {
+    if (isFavorite) {
+      removeFromFavorites(view.url);
+    } else {
+      addToFavorites(view.url);
+    }
+  };
 
   const scaledWidth = viewDimensions[view.type].width * scale;
   const scaledHeight = viewDimensions[view.type].height * scale;
@@ -105,9 +88,58 @@ export default function WebsiteView({
       </div>
       <div className="p-2 space-y-2" style={{ height: `${optionsHeight}px` }}>
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium truncate flex-1 mr-2 pl-8">
-            {view.url}
-          </p>
+          <div className="flex items-center flex-1 mr-2">
+            <p className="text-xs font-medium truncate flex-1 pl-8">
+              {view.url}
+            </p>
+            <button
+              onClick={handleFavoriteToggle}
+              className="text-gray-500 hover:text-gray-700 p-1"
+              title="Add to favorites"
+            >
+              {isFavorite ? (
+                <Star fill="yellow" className="h-4 w-4 text-yellow-500 " />
+              ) : (
+                <Star className="h-4 w-4" />
+              )}
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="text-gray-500 hover:text-gray-700 p-1"
+                  title="Duplicate view"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  onClick={() => {
+                    onDuplicate({ ...view, type: "desktop" });
+                    // Close the dropdown menu automatically
+                  }}
+                >
+                  <Monitor className="mr-2 h-4 w-4" /> Desktop
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    onDuplicate({ ...view, type: "tablet" });
+                    // Close the dropdown menu automatically
+                  }}
+                >
+                  <Tablet className="mr-2 h-4 w-4" /> Tablet
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    onDuplicate({ ...view, type: "mobile" });
+                    // Close the dropdown menu automatically
+                  }}
+                >
+                  <Smartphone className="mr-2 h-4 w-4" /> Mobile
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <Button variant="ghost" size="sm" onClick={onRemove}>
             <X className="h-4 w-4" />
             <span className="sr-only">Remove view</span>
@@ -115,18 +147,27 @@ export default function WebsiteView({
         </div>
         <div className="flex justify-between items-center">
           <Select value={view.type} onValueChange={onTypeChange}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[210px]">
               <SelectValue placeholder="View type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="desktop">
-                <Monitor className="inline mr-2 h-4 w-4" /> Desktop
+                <Monitor className="inline mr-1 h-4 w-4" /> Desktop{" "}
+                <span className="text-[10px] text-muted-foreground">
+                  1024 x 768
+                </span>
               </SelectItem>
               <SelectItem value="tablet">
-                <Tablet className="inline mr-2 h-4 w-4" /> Tablet
+                <Tablet className="inline mr-1 h-4 w-4" /> Tablet{" "}
+                <span className="text-[10px] text-muted-foreground">
+                  768 x 1024
+                </span>
               </SelectItem>
               <SelectItem value="mobile">
-                <Smartphone className="inline mr-2 h-4 w-4" /> Mobile
+                <Smartphone className="inline mr-1 h-4 w-4" /> Mobile{" "}
+                <span className="text-[10px] text-muted-foreground">
+                  375 x 667
+                </span>
               </SelectItem>
             </SelectContent>
           </Select>
