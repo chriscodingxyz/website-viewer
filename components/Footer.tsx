@@ -36,7 +36,7 @@ const Footer: React.FC = () => {
             />
           </a>
         </div>
-        <p className="text-sm text-gray-600">
+        <p className="text-xs md:text-sm text-gray-600">
           © {currentYear + " "}
           <a
             href="https://chriswiz.vercel.app"

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, X, Globe, Trash2, Star } from "lucide-react";
 import WebsiteView from "./WebsiteView";
+import { toast } from "sonner";
 
 export type ViewType = "desktop" | "tablet" | "mobile";
 
@@ -190,7 +191,10 @@ export default function WebsiteViewer() {
                 className="flex items-center bg-gray-100 rounded-md"
               >
                 <button
-                  onClick={() => setUrl(item)}
+                  onClick={() => {
+                    setUrl(item);
+                    toast.success("URL added to the viewer");
+                  }}
                   className="text-sm text-blue-600 hover:underline px-2 py-1"
                 >
                   {item}
