@@ -39,6 +39,7 @@ const Footer: React.FC = () => {
         <p className="text-xs md:text-sm text-gray-600">
           © {currentYear + " "}
           <a
+            className="underline hover:no-underline"
             href="https://chriswiz.vercel.app"
             target="_blank"
             rel="noopener noreferrer"

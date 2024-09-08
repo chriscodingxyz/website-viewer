@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Header } from "@/components/Header";
@@ -12,10 +11,8 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ["400"],
 });
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: "Website Viewer",
+  title: "Website Viewer | Layout Lab",
   description: "View websites in different device sizes",
 };
 
