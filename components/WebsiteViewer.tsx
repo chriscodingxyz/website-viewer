@@ -1,14 +1,20 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, X, Globe, Trash2, Star } from "lucide-react";
+import {
+  PlusCircle,
+  X,
+  Globe,
+  Trash2,
+  Star,
+  History,
+  Heart,
+} from "lucide-react";
 import WebsiteView from "./WebsiteView";
 import FavoriteLinks from "./FavoriteLinks";
-import { useFavorites } from "@/contexts/FavoritesContext";
 import { toast } from "sonner";
 
 export type ViewType = "desktop" | "tablet" | "mobile";
@@ -59,6 +65,8 @@ export default function WebsiteViewer() {
   const [nextId, setNextId] = useState(1);
   const [history, setHistory] = useState<string[]>([]);
   const [isInputHighlighted, setIsInputHighlighted] = useState(false);
+  const [showHistory, setShowHistory] = useState(true);
+  const [showFavorites, setShowFavorites] = useState(true);
 
   const highlightInput = () => {
     setIsInputHighlighted(true);
@@ -159,21 +167,43 @@ export default function WebsiteViewer() {
           />
           <div className="flex gap-1">
             <Button onClick={addView} disabled={!formatUrl(url)}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Add View
+              <PlusCircle className="mr-2 h-4 w-4" /> View
             </Button>
             <Button onClick={addAllViews} disabled={!formatUrl(url)}>
-              <PlusCircle className="mr-2 h-4 w-4" /> View All
+              <PlusCircle className="mr-2 h-4 w-4" /> All
             </Button>
+            <Button
+              onClick={() => setShowHistory((prev) => !prev)}
+              variant={showHistory ? "outline" : "ghost"}
+              size={"icon"}
+            >
+              <History size={18} />
+            </Button>
+            <Button
+              onClick={() => setShowFavorites((prev) => !prev)}
+              variant={showFavorites ? "outline" : "ghost"}
+              size={"icon"}
+            >
+              {showFavorites ? (
+                <Heart color="red" size={18} />
+              ) : (
+                <Heart size={18} />
+              )}
+            </Button>
+
             {views.length > 0 && (
               <Button onClick={clearAllViews} variant="destructive">
-                <Trash2 className="mr-2 h-4 w-4" /> Clear
+                <Trash2 className=" h-4 w-4" />
               </Button>
             )}
           </div>
         </div>
       </div>
-      <FavoriteLinks setUrlWithHighlight={setUrlWithHighlight} />
-      {history.length > 0 && (
+      {showFavorites && (
+        <FavoriteLinks setUrlWithHighlight={setUrlWithHighlight} />
+      )}
+
+      {history.length > 0 && showHistory && (
         <div className="space-y-2 container mx-auto">
           <Label>Recent URLs:</Label>
           <div className="flex flex-wrap gap-2">
