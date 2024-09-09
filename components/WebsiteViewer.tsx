@@ -166,11 +166,11 @@ export default function WebsiteViewer() {
             }`}
           />
           <div className="flex gap-1">
-            <Button onClick={addView} disabled={!formatUrl(url)}>
+            {/* <Button onClick={addView} disabled={!formatUrl(url)}>
               <PlusCircle className="mr-2 h-4 w-4" /> View
-            </Button>
+            </Button> */}
             <Button onClick={addAllViews} disabled={!formatUrl(url)}>
-              <PlusCircle className="mr-2 h-4 w-4" /> All
+              <PlusCircle className="mr-2 h-4 w-4" /> All Views
             </Button>
             <Button
               onClick={() => setShowHistory((prev) => !prev)}
