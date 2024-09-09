@@ -20,7 +20,11 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(
 );
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://98.chriscoding.xyz",
+  ]);
 
   useEffect(() => {
     const storedFavorites = localStorage.getItem("favorites");

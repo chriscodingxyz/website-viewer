@@ -5,13 +5,11 @@ import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 
-interface FavoriteLinksProps {
+type FavoriteLinksProps = {
   setUrlWithHighlight: (url: string) => void;
-}
+};
 
-const FavoriteLinks: React.FC<FavoriteLinksProps> = ({
-  setUrlWithHighlight,
-}) => {
+const FavoriteLinks = ({ setUrlWithHighlight }: FavoriteLinksProps) => {
   const { favorites, removeFromFavorites } = useFavorites();
 
   return (
