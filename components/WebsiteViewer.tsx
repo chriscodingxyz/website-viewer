@@ -12,10 +12,19 @@ import {
   Star,
   History,
   Heart,
+  Monitor,
+  Tablet,
+  Smartphone,
 } from "lucide-react";
 import WebsiteView from "./WebsiteView";
 import FavoriteLinks from "./FavoriteLinks";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 export type ViewType = "desktop" | "tablet" | "mobile";
 
@@ -80,16 +89,17 @@ export default function WebsiteViewer() {
     toast.success("URL added to the viewer");
   };
 
-  const addView = () => {
+  const addView = (viewType: ViewType = "desktop") => {
     const formattedUrl = formatUrl(url);
     if (formattedUrl) {
       setViews((prevViews) => [
-        { id: nextId, url: formattedUrl, type: "desktop" },
+        { id: nextId, url: formattedUrl, type: viewType },
         ...prevViews,
       ]);
       setNextId(nextId + 1);
       setHistory((prev) => Array.from(new Set([formattedUrl, ...prev])));
       setUrl("");
+      toast.success(`New ${viewType} view added`);
     } else {
       toast.error("Please enter a valid URL");
     }
@@ -166,9 +176,24 @@ export default function WebsiteViewer() {
             }`}
           />
           <div className="flex gap-1">
-            {/* <Button onClick={addView} disabled={!formatUrl(url)}>
-              <PlusCircle className="mr-2 h-4 w-4" /> View
-            </Button> */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button disabled={!formatUrl(url)}>
+                  <PlusCircle className="mr-2 h-4 w-4" /> View
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onSelect={() => addView("desktop")}>
+                  <Monitor className="mr-2 h-4 w-4" /> Desktop
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => addView("tablet")}>
+                  <Tablet className="mr-2 h-4 w-4" /> Tablet
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => addView("mobile")}>
+                  <Smartphone className="mr-2 h-4 w-4" /> Mobile
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button onClick={addAllViews} disabled={!formatUrl(url)}>
               <PlusCircle className="mr-2 h-4 w-4" /> All Views
             </Button>
@@ -192,8 +217,12 @@ export default function WebsiteViewer() {
             </Button>
 
             {views.length > 0 && (
-              <Button onClick={clearAllViews} variant="destructive">
-                <Trash2 className=" h-4 w-4" />
+              <Button
+                size={"icon"}
+                onClick={clearAllViews}
+                variant="destructive"
+              >
+                <Trash2 size={18} />
               </Button>
             )}
           </div>
