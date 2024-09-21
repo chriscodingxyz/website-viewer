@@ -13,11 +13,11 @@ const FavoriteLinks = ({ setUrlWithHighlight }: FavoriteLinksProps) => {
   const { favorites, removeFromFavorites } = useFavorites();
 
   return (
-    <div className="space-y-2 container mx-auto">
+    <div className="space-y-2 container mx-auto bg-accent p-4 rounded-md">
       {favorites.length > 0 && <Label>Favorites:</Label>}
       <div className="flex flex-wrap gap-2">
         {favorites.map((item, index) => (
-          <div key={index} className="flex items-center bg-gray-100 rounded-md">
+          <div key={index} className="flex items-center bg-accent rounded-md">
             <button
               onClick={() => setUrlWithHighlight(item)}
               className="text-sm text-blue-600 hover:underline px-2 py-1"

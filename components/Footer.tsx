@@ -36,7 +36,7 @@ const Footer: React.FC = () => {
             />
           </a>
         </div>
-        <p className="text-xs md:text-sm text-gray-600">
+        <p className="responsive-text-sm text-gray-600">
           © {currentYear + " "}
           <a
             className="underline hover:no-underline"

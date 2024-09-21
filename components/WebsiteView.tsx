@@ -89,7 +89,7 @@ export default function WebsiteView({
       <div className="p-2 space-y-2" style={{ height: `${optionsHeight}px` }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center flex-1 mr-2">
-            <p className="text-xs font-medium truncate flex-1 pl-8">
+            <p className="responsive-text-sm font-medium truncate flex-1 pl-8">
               {view.url}
             </p>
             <button

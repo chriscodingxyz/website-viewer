@@ -162,8 +162,10 @@ export default function WebsiteViewer() {
           animation: highlightInput 1s ease-out;
         }
       `}</style>
-      <div className="space-y-2 container mx-auto">
-        <Label htmlFor="url-input">Enter Website URL:</Label>
+      <div className="space-y-2 container mx-auto bg-accent p-4 rounded-md">
+        <Label htmlFor="url-input" className="responsive-text-sm">
+          Enter Website URL:
+        </Label>
         <div className="flex gap-2 flex-col lg:flex-row">
           <Input
             id="url-input"
@@ -171,14 +173,14 @@ export default function WebsiteViewer() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="example.com or localhost:3000"
-            className={`flex-grow text-[16px] ${
+            className={`flex-grow text-[16px] bg-background ${
               isInputHighlighted ? "highlight-input" : ""
             }`}
           />
           <div className="flex gap-1">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button disabled={!formatUrl(url)}>
+                <Button size="sm" disabled={!formatUrl(url)}>
                   <PlusCircle className="mr-2 h-4 w-4" /> View
                 </Button>
               </DropdownMenuTrigger>
@@ -194,20 +196,20 @@ export default function WebsiteViewer() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button onClick={addAllViews} disabled={!formatUrl(url)}>
+            <Button size="sm" onClick={addAllViews} disabled={!formatUrl(url)}>
               <PlusCircle className="mr-2 h-4 w-4" /> All Views
             </Button>
             <Button
               onClick={() => setShowHistory((prev) => !prev)}
               variant={showHistory ? "outline" : "ghost"}
-              size={"icon"}
+              size={"sm"}
             >
               <History size={18} />
             </Button>
             <Button
               onClick={() => setShowFavorites((prev) => !prev)}
               variant={showFavorites ? "outline" : "ghost"}
-              size={"icon"}
+              size={"sm"}
             >
               {showFavorites ? (
                 <Heart color="red" size={18} />
@@ -217,11 +219,7 @@ export default function WebsiteViewer() {
             </Button>
 
             {views.length > 0 && (
-              <Button
-                size={"icon"}
-                onClick={clearAllViews}
-                variant="destructive"
-              >
+              <Button size={"sm"} onClick={clearAllViews} variant="destructive">
                 <Trash2 size={18} />
               </Button>
             )}
@@ -233,13 +231,13 @@ export default function WebsiteViewer() {
       )}
 
       {history.length > 0 && showHistory && (
-        <div className="space-y-2 container mx-auto">
+        <div className="space-y-2 container mx-auto bg-accent p-4 rounded-md">
           <Label>Recent URLs:</Label>
           <div className="flex flex-wrap gap-2">
             {history.map((item, index) => (
               <div
                 key={index}
-                className="flex items-center bg-gray-100 rounded-md"
+                className="flex items-center bg-accent rounded-md"
               >
                 <button
                   onClick={() => setUrlWithHighlight(item)}
