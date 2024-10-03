@@ -1,30 +1,30 @@
-import ThemeToggle from "@/components/ThemeToggle";
-import { Monofett } from "next/font/google";
+import ThemeToggle from '@/components/ThemeToggle'
+import { Monofett } from 'next/font/google'
 
 const monofett = Monofett({
-  subsets: ["latin"],
-  weight: ["400"],
-});
+  subsets: ['latin'],
+  weight: ['400']
+})
 
-export function Header() {
+export function Header () {
   return (
-    <header className="border-b px-4 top-0 sticky z-50 bg-accent">
-      <div className="container mx-auto flex justify-between items-center pt-2 md:pt-0 ">
-        <a href="/">
+    <header className='border-b px-4 top-0 sticky z-50'>
+      <div className='container mx-auto flex justify-between items-center pt-2 md:pt-0 '>
+        <a href='/'>
           <h1
-            className={`responsive-text-3xl font-bold leading-[0.7] tracking-tight drop-shadow-lg ${monofett.className}`}
+            className={`responsive-text-xl font-bold  tracking-tight drop-shadow-lg ${monofett.className}`}
           >
             Website🧿Viewer
           </h1>
-          <h1
+          {/* <h1
             className={`-mt-2 responsive-text-xl font-bold text-blue-700 drop-shadow-lg ${monofett.className}`}
           >
-            {" "}
+            {' '}
             Layout Lab
-          </h1>
+          </h1> */}
         </a>
         <ThemeToggle />
       </div>
     </header>
-  );
+  )
 }
