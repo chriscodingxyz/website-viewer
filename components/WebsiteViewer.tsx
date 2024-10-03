@@ -25,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from './ui/dropdown-menu'
+import { useFavorites } from '@/contexts/FavoritesContext'
 
 export type ViewType = 'desktop' | 'tablet' | 'mobile'
 
@@ -76,6 +77,7 @@ export default function WebsiteViewer () {
   const [isInputHighlighted, setIsInputHighlighted] = useState(false)
   const [showHistory, setShowHistory] = useState(true)
   const [showFavorites, setShowFavorites] = useState(true)
+  const { favorites } = useFavorites()
 
   const highlightInput = () => {
     setIsInputHighlighted(true)
@@ -162,10 +164,10 @@ export default function WebsiteViewer () {
           animation: highlightInput 1s ease-out;
         }
       `}</style>
-      <div className='space-y-2 container mx-auto  p-4 rounded-md'>
-        <Label htmlFor='url-input' className='responsive-text-sm'>
+      <div className='space-y-2 container mx-auto rounded-md'>
+        {/* <Label htmlFor='url-input' className='responsive-text-sm'>
           Enter Website URL:
-        </Label>
+        </Label> */}
         <div className='flex gap-2 flex-col lg:flex-row'>
           <Input
             id='url-input'
@@ -178,10 +180,20 @@ export default function WebsiteViewer () {
             }`}
           />
           <div className='flex gap-1'>
+            {/* <Button onClick={loadUrl} size='sm'>
+              <Globe className='w-4 h-4 mr-2' />
+              Load
+            </Button>
+            <Button onClick={handleAddToFavorites} size='sm'>
+              <Star className='w-4 h-4 mr-2' />
+              Favorite
+            </Button> */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size='sm' disabled={!formatUrl(url)}>
-                  <PlusCircle className='mr-2 h-4 w-4' /> View
+                  {/* <PlusCircle className='mr-2 h-4 w-4' /> View */}
+                  <Globe className='w-4 h-4 mr-2' />
+                  Load
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -194,11 +206,17 @@ export default function WebsiteViewer () {
                 <DropdownMenuItem onSelect={() => addView('mobile')}>
                   <Smartphone className='mr-2 h-4 w-4' /> Mobile
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={addAllViews}
+                  disabled={!formatUrl(url)}
+                >
+                  <PlusCircle className='mr-2 h-4 w-4' /> All Views
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button size='sm' onClick={addAllViews} disabled={!formatUrl(url)}>
+            {/* <Button size='sm' onClick={addAllViews} disabled={!formatUrl(url)}>
               <PlusCircle className='mr-2 h-4 w-4' /> All Views
-            </Button>
+            </Button> */}
             <Button
               onClick={() => setShowHistory(prev => !prev)}
               variant={showHistory ? 'outline' : 'ghost'}
@@ -226,22 +244,21 @@ export default function WebsiteViewer () {
           </div>
         </div>
       </div>
-      {showFavorites && (
+      {showFavorites && favorites.length > 0 && (
         <FavoriteLinks setUrlWithHighlight={setUrlWithHighlight} />
       )}
 
       {history.length > 0 && showHistory && (
-        <div className='space-y-2 container mx-auto bg-accent p-4 rounded-md'>
-          <Label>Recent URLs:</Label>
+        <div className='space-y-2 container mx-auto flex items-center'>
+          {/* <Label className=''>Recent URLs:</Label> */}
+
           <div className='flex flex-wrap gap-2'>
+            <History size={18} />
             {history.map((item, index) => (
-              <div
-                key={index}
-                className='flex items-center bg-accent rounded-md'
-              >
+              <div key={index} className='flex items-center'>
                 <button
                   onClick={() => setUrlWithHighlight(item)}
-                  className='text-sm text-blue-600 hover:underline px-2 py-1'
+                  className='text-xs text-blue-600 hover:underline px-2 py-1'
                 >
                   {item}
                 </button>

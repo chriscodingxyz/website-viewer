@@ -8,7 +8,7 @@ const monofett = Monofett({
 
 export function Header () {
   return (
-    <header className='border-b px-4 top-0 sticky z-50'>
+    <header className='border-b px-4 top-0 sticky z-50 bg-background'>
       <div className='container mx-auto flex justify-between items-center pt-2 md:pt-0 '>
         <a href='/'>
           <h1
