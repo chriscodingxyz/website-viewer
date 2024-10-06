@@ -1,23 +1,23 @@
 'use client'
 
 import React from 'react'
-import { Heart, X } from 'lucide-react'
-import { useFavorites } from '@/contexts/FavoritesContext'
+import { Clock, X } from 'lucide-react'
+import { useHistory } from '@/contexts/HistoryContext'
 
-type FavoriteLinksProps = {
+type HistoryLinksProps = {
   setUrlWithHighlight: (url: string) => void
 }
 
-const FavoriteLinks = ({ setUrlWithHighlight }: FavoriteLinksProps) => {
-  const { favorites, removeFromFavorites } = useFavorites()
+const HistoryLinks = ({ setUrlWithHighlight }: HistoryLinksProps) => {
+  const { history, removeFromHistory } = useHistory()
 
-  if (favorites.length === 0) return null
+  if (history.length === 0) return null
 
   return (
     <div className='space-y-2 container mx-auto'>
       <div className='flex flex-wrap items-center gap-2 bg-secondary/10 p-2 rounded-lg'>
-        <Heart size={16} className='text-primary' />
-        {favorites.map((item, index) => (
+        <Clock size={16} className='text-primary' />
+        {history.map((item, index) => (
           <div
             key={index}
             className='flex items-center bg-secondary/20 rounded-md hover:bg-secondary/30 transition-colors'
@@ -30,7 +30,7 @@ const FavoriteLinks = ({ setUrlWithHighlight }: FavoriteLinksProps) => {
               {item}
             </button>
             <button
-              onClick={() => removeFromFavorites(item)}
+              onClick={() => removeFromHistory(item)}
               className='text-gray-500 hover:text-gray-700 px-2 py-1.5 border-l border-secondary'
             >
               <X className='h-3 w-3' />
@@ -42,4 +42,4 @@ const FavoriteLinks = ({ setUrlWithHighlight }: FavoriteLinksProps) => {
   )
 }
 
-export default FavoriteLinks
+export default HistoryLinks

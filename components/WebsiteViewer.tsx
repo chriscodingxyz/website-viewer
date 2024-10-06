@@ -3,21 +3,18 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
-  PlusCircle,
-  X,
   Globe,
   Trash2,
-  Star,
-  History,
   Heart,
+  Clock,
   Monitor,
   Tablet,
-  Smartphone
+  Smartphone,
+  PlusCircle,
+  Star
 } from 'lucide-react'
 import WebsiteView from './WebsiteView'
-import FavoriteLinks from './FavoriteLinks'
 import { toast } from 'sonner'
 import {
   DropdownMenu,
@@ -26,6 +23,8 @@ import {
   DropdownMenuTrigger
 } from './ui/dropdown-menu'
 import { useFavorites } from '@/contexts/FavoritesContext'
+import { useHistory } from '@/contexts/HistoryContext'
+import { ScrollArea } from './ui/scroll-area'
 
 export type ViewType = 'desktop' | 'tablet' | 'mobile'
 
@@ -73,11 +72,9 @@ export default function WebsiteViewer () {
   const [url, setUrl] = useState('')
   const [views, setViews] = useState<View[]>([])
   const [nextId, setNextId] = useState(1)
-  const [history, setHistory] = useState<string[]>([])
   const [isInputHighlighted, setIsInputHighlighted] = useState(false)
-  const [showHistory, setShowHistory] = useState(true)
-  const [showFavorites, setShowFavorites] = useState(true)
   const { favorites } = useFavorites()
+  const { history, addToHistory, removeFromHistory } = useHistory()
 
   const highlightInput = () => {
     setIsInputHighlighted(true)
@@ -99,7 +96,7 @@ export default function WebsiteViewer () {
         ...prevViews
       ])
       setNextId(nextId + 1)
-      setHistory(prev => Array.from(new Set([formattedUrl, ...prev])))
+      addToHistory(formattedUrl)
       setUrl('')
       toast.success(`New ${viewType} view added`)
     } else {
@@ -117,7 +114,7 @@ export default function WebsiteViewer () {
         ...prevViews
       ])
       setNextId(nextId + 3)
-      setHistory(prev => Array.from(new Set([formattedUrl, ...prev])))
+      addToHistory(formattedUrl)
       setUrl('')
     } else {
       toast.error('Please enter a valid URL')
@@ -130,10 +127,6 @@ export default function WebsiteViewer () {
 
   const changeViewType = (id: number, type: ViewType) => {
     setViews(views.map(view => (view.id === id ? { ...view, type } : view)))
-  }
-
-  const removeFromHistory = (urlToRemove: string) => {
-    setHistory(prev => prev.filter(item => item !== urlToRemove))
   }
 
   const clearAllViews = () => {
@@ -165,9 +158,6 @@ export default function WebsiteViewer () {
         }
       `}</style>
       <div className='space-y-2 container mx-auto rounded-md'>
-        {/* <Label htmlFor='url-input' className='responsive-text-sm'>
-          Enter Website URL:
-        </Label> */}
         <div className='flex gap-2 flex-col lg:flex-row'>
           <Input
             id='url-input'
@@ -180,18 +170,9 @@ export default function WebsiteViewer () {
             }`}
           />
           <div className='flex gap-1'>
-            {/* <Button onClick={loadUrl} size='sm'>
-              <Globe className='w-4 h-4 mr-2' />
-              Load
-            </Button>
-            <Button onClick={handleAddToFavorites} size='sm'>
-              <Star className='w-4 h-4 mr-2' />
-              Favorite
-            </Button> */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size='sm' disabled={!formatUrl(url)}>
-                  {/* <PlusCircle className='mr-2 h-4 w-4' /> View */}
                   <Globe className='w-4 h-4 mr-2' />
                   Load
                 </Button>
@@ -214,27 +195,49 @@ export default function WebsiteViewer () {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            {/* <Button size='sm' onClick={addAllViews} disabled={!formatUrl(url)}>
-              <PlusCircle className='mr-2 h-4 w-4' /> All Views
-            </Button> */}
-            <Button
-              onClick={() => setShowHistory(prev => !prev)}
-              variant={showHistory ? 'outline' : 'ghost'}
-              size={'sm'}
-            >
-              <History size={18} />
-            </Button>
-            <Button
-              onClick={() => setShowFavorites(prev => !prev)}
-              variant={showFavorites ? 'outline' : 'ghost'}
-              size={'sm'}
-            >
-              {showFavorites ? (
-                <Heart color='red' size={18} />
-              ) : (
-                <Heart size={18} />
-              )}
-            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size='sm' variant='outline'>
+                  <Star
+                    className='w-4 h-4 text-yellow-500'
+                    fill={favorites.length > 0 ? 'yellow' : 'transparent'}
+                  />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className='w-72'>
+                <ScrollArea className='max-h-[300px]'>
+                  {favorites.map((item, index) => (
+                    <DropdownMenuItem
+                      key={index}
+                      onSelect={() => setUrlWithHighlight(item)}
+                    >
+                      {item}
+                    </DropdownMenuItem>
+                  ))}
+                </ScrollArea>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size='sm' variant='outline'>
+                  <Clock className='w-4 h-4' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className='w-72'>
+                <ScrollArea className='max-h-[300px]'>
+                  {history.map((item, index) => (
+                    <DropdownMenuItem
+                      key={index}
+                      onSelect={() => setUrlWithHighlight(item)}
+                    >
+                      {item}
+                    </DropdownMenuItem>
+                  ))}
+                </ScrollArea>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {views.length > 0 && (
               <Button size={'sm'} onClick={clearAllViews} variant='destructive'>
@@ -244,35 +247,7 @@ export default function WebsiteViewer () {
           </div>
         </div>
       </div>
-      {showFavorites && favorites.length > 0 && (
-        <FavoriteLinks setUrlWithHighlight={setUrlWithHighlight} />
-      )}
 
-      {history.length > 0 && showHistory && (
-        <div className='space-y-2 container mx-auto flex items-center'>
-          {/* <Label className=''>Recent URLs:</Label> */}
-
-          <div className='flex flex-wrap gap-2'>
-            <History size={18} />
-            {history.map((item, index) => (
-              <div key={index} className='flex items-center'>
-                <button
-                  onClick={() => setUrlWithHighlight(item)}
-                  className='text-xs text-blue-600 hover:underline px-2 py-1'
-                >
-                  {item}
-                </button>
-                <button
-                  onClick={() => removeFromHistory(item)}
-                  className='text-gray-500 hover:text-gray-700 px-2 py-1'
-                >
-                  <X className='h-3 w-3' />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
       <div className='flex flex-wrap gap-6 justify-center'>
         {views.map((view, index) => (
           <WebsiteView
