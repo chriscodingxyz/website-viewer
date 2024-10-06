@@ -76,7 +76,7 @@ export function Header () {
       <div className='container mx-auto flex justify-between items-center'>
         <a href='/'>
           <h1
-            className={`text-md tracking-tight drop-shadow-lg space-x-1 grayscale hover:grayscale-0
+            className={`text-md tracking-tight drop-shadow-lg space-x-1
 ${raleway.className}`}
           >
             <span className='text-xl '>🌐</span>
