@@ -79,9 +79,7 @@ export function Header () {
             className={`text-md tracking-tight drop-shadow-lg space-x-1
 ${raleway.className}`}
           >
-            {/* <span className='text-xl '>🍒</span> */}
-            <span className=''>cherrydub</span>
-            <span className='text-xl '>🍒</span>
+            cherrydub 🍒
           </h1>
         </a>
         <div className='flex items-center space-x-2'>
