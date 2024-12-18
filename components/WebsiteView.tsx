@@ -17,13 +17,20 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 
+// const defaultViewDimensions = {
+//   desktop: { width: 1024, height: 768 },
+//   tablet: { width: 768, height: 1024 },
+//   mobile: { width: 375, height: 667 }
+// }
+
 const defaultViewDimensions = {
   desktop: { width: 1024, height: 768 },
   tablet: { width: 768, height: 1024 },
-  mobile: { width: 375, height: 667 }
+  mobileLarge: { width: 640, height: 1000 }, // Just under sm: breakpoint (640px)
+  mobile: { width: 375, height: 667 } // Standard phones like iPhone SE
 }
 
-interface WebsiteViewProps {
+type WebsiteViewProps = {
   view: View
   onRemove: () => void
   onTypeChange: (type: ViewType) => void
@@ -116,7 +123,6 @@ export default function WebsiteView ({
                 <DropdownMenuItem
                   onClick={() => {
                     onDuplicate({ ...view, type: 'desktop' })
-                    // Close the dropdown menu automatically
                   }}
                 >
                   <Monitor className='mr-2 h-4 w-4' /> Desktop
@@ -124,15 +130,20 @@ export default function WebsiteView ({
                 <DropdownMenuItem
                   onClick={() => {
                     onDuplicate({ ...view, type: 'tablet' })
-                    // Close the dropdown menu automatically
                   }}
                 >
                   <Tablet className='mr-2 h-4 w-4' /> Tablet
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
+                    onDuplicate({ ...view, type: 'mobileLarge' })
+                  }}
+                >
+                  <Smartphone className='mr-2 h-4 w-4' /> Large Mobile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
                     onDuplicate({ ...view, type: 'mobile' })
-                    // Close the dropdown menu automatically
                   }}
                 >
                   <Smartphone className='mr-2 h-4 w-4' /> Mobile
@@ -161,6 +172,12 @@ export default function WebsiteView ({
                 <Tablet className='inline mr-1 h-4 w-4' /> Tablet{' '}
                 <span className='text-[10px] text-muted-foreground'>
                   768 x 1024
+                </span>
+              </SelectItem>
+              <SelectItem value='mobileLarge'>
+                <Smartphone className='inline mr-1 h-4 w-4' /> Large Mobile{' '}
+                <span className='text-[10px] text-muted-foreground'>
+                  428 x 926
                 </span>
               </SelectItem>
               <SelectItem value='mobile'>

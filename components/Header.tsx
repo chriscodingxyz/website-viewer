@@ -82,7 +82,7 @@ ${raleway.className}`}
             cherrydub 🍒
           </h1>
         </a>
-        <div className='flex items-center space-x-2'>
+        <div className='flex items-center'>
           <ThemeToggle />
           {/* <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
             <DropdownMenuTrigger asChild>

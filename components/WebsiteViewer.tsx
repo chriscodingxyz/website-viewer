@@ -26,7 +26,9 @@ import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
 import { ScrollArea } from './ui/scroll-area'
 
-export type ViewType = 'desktop' | 'tablet' | 'mobile'
+// export type ViewType = 'desktop' | 'tablet' | 'mobile'
+
+export type ViewType = 'desktop' | 'tablet' | 'mobileLarge' | 'mobile'
 
 export interface View {
   id: number
@@ -110,10 +112,11 @@ export default function WebsiteViewer () {
       setViews(prevViews => [
         { id: nextId, url: formattedUrl, type: 'desktop' },
         { id: nextId + 1, url: formattedUrl, type: 'tablet' },
-        { id: nextId + 2, url: formattedUrl, type: 'mobile' },
+        { id: nextId + 2, url: formattedUrl, type: 'mobileLarge' },
+        { id: nextId + 3, url: formattedUrl, type: 'mobile' },
         ...prevViews
       ])
-      setNextId(nextId + 3)
+      setNextId(nextId + 4)
       addToHistory(formattedUrl)
       setUrl('')
     } else {
@@ -183,6 +186,9 @@ export default function WebsiteViewer () {
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => addView('tablet')}>
                   <Tablet className='mr-2 h-4 w-4' /> Tablet
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => addView('mobileLarge')}>
+                  <Smartphone className='mr-2 h-4 w-4' /> Large Mobile
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => addView('mobile')}>
                   <Smartphone className='mr-2 h-4 w-4' /> Mobile
