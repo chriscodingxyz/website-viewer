@@ -21,7 +21,7 @@ import {
   AlertCircle,
   Settings
 } from 'lucide-react'
-import { View, ViewType } from './WebsiteViewer'
+import { View, ViewType } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { toast } from 'sonner'
 import {
@@ -276,10 +276,14 @@ export default function WebsiteView ({
                 <DropdownMenuItem
                   key={deviceType}
                   onClick={() => onTypeChange(deviceType)}
-                  className={`flex items-center gap-3 ${view.type === deviceType ? 'bg-accent' : ''} focus:bg-accent`}
+                  className={`flex items-center gap-3 ${
+                    view.type === deviceType ? 'bg-accent' : ''
+                  } focus:bg-accent`}
                 >
                   {getDeviceIcon(deviceType)}
-                  <span className='font-medium'>{getDeviceName(deviceType)}</span>
+                  <span className='font-medium'>
+                    {getDeviceName(deviceType)}
+                  </span>
                   {view.type === deviceType && (
                     <div className='ml-auto w-2 h-2 rounded-full bg-primary'></div>
                   )}
