@@ -23,7 +23,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<string[]>([
     "http://localhost:3000",
     "http://localhost:5173",
-    "https://chriscoding.xyz",
+    "https://chriswiz.vercel.app",
   ]);
 
   useEffect(() => {

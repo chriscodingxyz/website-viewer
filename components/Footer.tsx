@@ -9,9 +9,9 @@ const Footer: React.FC = () => {
 
   return (
     <footer className='border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
-      <div className='container mx-auto flex items-center justify-between px-4 py-4'>
+      <div className='container mx-auto flex items-center justify-between px-2 sm:px-4 py-2'>
         {/* Left Side: Branding & Copyright */}
-        <div className='flex items-center gap-3'>
+        <div className='flex items-center gap-1 sm:gap-3'>
           <p className='text-xs text-muted-foreground'>
             © {currentYear}{' '}
             <a
@@ -26,33 +26,33 @@ const Footer: React.FC = () => {
         </div>
 
         {/* Center: Social Icons */}
-        <div className='flex items-center space-x-3'>
+        <div className='flex items-center space-x-2 sm:space-x-3'>
           <a
             href='https://github.com/chriscodingxyz'
             target='_blank'
             rel='noopener noreferrer'
             aria-label='GitHub'
-            className='rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
+            className='rounded-full p-1 sm:p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
           >
-            <GithubLogo size={16} />
+            <GithubLogo size={14} className="sm:w-4 sm:h-4" />
           </a>
           <a
             href='https://linkedin.com/in/wisniewskichris'
             target='_blank'
             rel='noopener noreferrer'
             aria-label='LinkedIn'
-            className='rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
+            className='rounded-full p-1 sm:p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
           >
-            <LinkedinLogo size={16} />
+            <LinkedinLogo size={14} className="sm:w-4 sm:h-4" />
           </a>
           <a
             href='https://twitter.com/chriscodingxyz'
             target='_blank'
             rel='noopener noreferrer'
             aria-label='X (formerly Twitter)'
-            className='rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
+            className='rounded-full p-1 sm:p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
           >
-            <XLogo size={16} />
+            <XLogo size={14} className="sm:w-4 sm:h-4" />
           </a>
         </div>
 

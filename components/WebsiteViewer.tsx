@@ -236,7 +236,7 @@ export default function WebsiteViewer () {
   }, {} as Record<string, View[]>)
 
   return (
-    <div className='relative min-h-screen flex flex-col'>
+    <div className='h-full flex flex-col'>
       <style jsx global>{`
         @keyframes highlightInput {
           0% {
@@ -253,27 +253,50 @@ export default function WebsiteViewer () {
           animation: highlightInput 1s ease-out;
         }
       `}</style>
+      
+      <Header
+        url={url}
+        setUrl={setUrl}
+        handleUrlChange={handleUrlChange}
+        handleKeyDown={handleKeyDown}
+        isInputHighlighted={isInputHighlighted}
+        showSuggestions={showSuggestions}
+        filteredSuggestions={filteredSuggestions}
+        setShowSuggestions={setShowSuggestions}
+        selectSuggestion={selectSuggestion}
+        formatUrl={formatUrl}
+        addAllViews={addAllViews}
+        addView={addView}
+        setUrlWithHighlight={setUrlWithHighlight}
+        clearAllViews={clearAllViews}
+        views={views}
+      />
+      
       {/* Main Content Area */}
-      <main className='flex-grow p-4 pt-32'>
+      <div className='flex-1 overflow-auto p-4'>
         {/* Adjusted padding for fixed header */}
         {/* pb-28 for footer clearance, flex-grow to push footer down */}
         {Object.keys(groupedViews).length === 0 && (
-          <div className='flex flex-col items-center justify-center h-full text-center text-muted-foreground pt-20 max-w-2xl mx-auto'>
-            <Globe className='w-16 h-16 mb-6 text-muted-foreground/60' />
-            <h2 className='text-3xl font-medium mb-4 text-foreground'>
+          <div className='flex flex-col items-center justify-center min-h-full text-center text-muted-foreground py-4 sm:py-8 max-w-xl mx-auto px-2'>
+            <Globe className='w-12 h-12 sm:w-14 sm:h-14 mb-3 sm:mb-4 text-muted-foreground/60' />
+            <h2 className='text-xl sm:text-2xl font-medium mb-2 sm:mb-3 text-foreground'>
               Website Viewer
             </h2>
-            <p className='text-lg mb-6 text-muted-foreground/80 leading-relaxed'>
+            <p className='text-sm sm:text-base mb-3 sm:mb-4 text-muted-foreground/80 leading-relaxed max-w-md'>
               View any website across different device formats simultaneously. 
               Perfect for responsive design testing and development.
             </p>
-            <div className='space-y-2 text-sm text-muted-foreground/70'>
+            <div className='space-y-1 text-xs sm:text-sm text-muted-foreground/70'>
               <p>✓ Desktop, Tablet, and Mobile views</p>
               <p>✓ Real-time responsive testing</p>
               <p>✓ Local development server support</p>
             </div>
-            <p className='text-sm mt-8 px-4 py-2 bg-muted/50 rounded-lg'>
-              Enter any URL above and press <kbd className='px-1.5 py-0.5 bg-background border rounded text-xs'>Enter</kbd> to get started
+            <div className='space-y-1 text-xs text-muted-foreground/60 mt-3 sm:mt-4'>
+              <p>⭐ Star button: Quick access to your saved favorites</p>
+              <p>🕒 Clock button: Browse your recently visited URLs</p>
+            </div>
+            <p className='text-xs sm:text-sm mt-3 sm:mt-4 px-3 sm:px-4 py-1.5 sm:py-2 bg-muted/50 rounded-lg'>
+              Enter any URL above and press <kbd className='px-1 sm:px-1.5 py-0.5 bg-background border rounded text-xs'>Enter</kbd> to get started
             </p>
           </div>
         )}
@@ -361,24 +384,7 @@ export default function WebsiteViewer () {
             ))}
           </Accordion>
         )}
-      </main>
-      <Header
-        url={url}
-        setUrl={setUrl}
-        handleUrlChange={handleUrlChange}
-        handleKeyDown={handleKeyDown}
-        isInputHighlighted={isInputHighlighted}
-        showSuggestions={showSuggestions}
-        filteredSuggestions={filteredSuggestions}
-        setShowSuggestions={setShowSuggestions}
-        selectSuggestion={selectSuggestion}
-        formatUrl={formatUrl}
-        addAllViews={addAllViews}
-        addView={addView}
-        setUrlWithHighlight={setUrlWithHighlight}
-        clearAllViews={clearAllViews}
-        views={views}
-      />
+      </div>
     </div>
   )
 }

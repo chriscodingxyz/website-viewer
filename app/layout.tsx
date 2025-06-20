@@ -25,13 +25,12 @@ export default function RootLayout ({
 }>) {
   return (
     <html lang='en' suppressHydrationWarning>
-      <body className={`${ibmPlexMono.className} flex flex-col min-h-[100dvh]`}>
+      <body className={`${ibmPlexMono.className} flex flex-col h-screen`}>
         <Toaster richColors />
         <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
           <FavoritesProvider>
             <HistoryProvider>
-              {/* Header component removed as its functionality is now in WebsiteViewer */}
-              <main className='flex-grow'>{children}</main>
+              <main className='flex-grow overflow-hidden'>{children}</main>
               <Footer />
             </HistoryProvider>
           </FavoritesProvider>
