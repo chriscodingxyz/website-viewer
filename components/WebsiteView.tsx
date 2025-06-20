@@ -188,13 +188,13 @@ export default function WebsiteView ({
   const getDeviceIcon = (deviceType: ViewType) => {
     switch (deviceType) {
       case 'desktop':
-        return <Monitor className='h-4 w-4 text-blue-600' />
+        return <Monitor className='h-4 w-4 text-purple-600' />
       case 'tablet':
-        return <Tablet className='h-4 w-4 text-green-600' />
+        return <Tablet className='h-4 w-4 text-blue-600' />
       case 'mobileLarge':
-        return <Smartphone className='h-4 w-4 text-orange-600' />
+        return <Smartphone className='h-4 w-4 text-green-600' />
       case 'mobile':
-        return <Smartphone className='h-4 w-4 text-red-600' />
+        return <Smartphone className='h-4 w-4 text-orange-600' />
     }
   }
 
@@ -214,13 +214,13 @@ export default function WebsiteView ({
   const getDeviceColor = (deviceType: ViewType) => {
     switch (deviceType) {
       case 'desktop':
-        return 'bg-blue-100 hover:bg-blue-200 border-blue-300'
+        return 'border-purple-500 bg-purple-50 text-purple-700'
       case 'tablet':
-        return 'bg-green-100 hover:bg-green-200 border-green-300'
+        return 'border-blue-500 bg-blue-50 text-blue-700'
       case 'mobileLarge':
-        return 'bg-orange-100 hover:bg-orange-200 border-orange-300'
+        return 'border-green-500 bg-green-50 text-green-700'
       case 'mobile':
-        return 'bg-red-100 hover:bg-red-200 border-red-300'
+        return 'border-orange-500 bg-orange-50 text-orange-700'
     }
   }
 
@@ -266,7 +266,9 @@ export default function WebsiteView ({
           <div className='flex items-center gap-1'>
             <button
               onClick={cycleDeviceType}
-              className={`w-8 h-8 rounded border-2 transition-colors shadow-sm flex items-center justify-center ${getDeviceColor(view.type)}`}
+              className={`w-8 h-8 rounded border-2 transition-colors shadow-sm flex items-center justify-center ${getDeviceColor(
+                view.type
+              )}`}
               title={`${view.type} - Click to cycle device type`}
             >
               {getDeviceIcon(view.type)}
@@ -338,7 +340,7 @@ export default function WebsiteView ({
                         onDuplicate({ ...view, type: 'mobileLarge' })
                       }}
                     >
-                      <Smartphone className='mr-2 h-3 w-3' /> Large Mobile
+                      <Smartphone className='mr-2 h-3 w-3' /> Mobile Large
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => {
