@@ -7,7 +7,21 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { Monitor, Tablet, Smartphone, X, Star, PlusCircle, RefreshCw, ExternalLink, Copy, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
+import {
+  Monitor,
+  Tablet,
+  Smartphone,
+  X,
+  Star,
+  PlusCircle,
+  RefreshCw,
+  ExternalLink,
+  Copy,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  Settings
+} from 'lucide-react'
 import { View, ViewType } from './WebsiteViewer'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { toast } from 'sonner'
@@ -15,7 +29,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger
 } from '@/components/ui/dropdown-menu'
 
 // const defaultViewDimensions = {
@@ -24,7 +42,7 @@ import {
 //   mobile: { width: 375, height: 667 }
 // }
 
-// Actual device dimensions for iframe content 
+// Actual device dimensions for iframe content
 const actualViewDimensions = {
   desktop: { width: 1024, height: 768 },
   tablet: { width: 768, height: 1024 },
@@ -35,7 +53,7 @@ const actualViewDimensions = {
 // Display dimensions for container (scaled down for layout)
 const displayViewDimensions = {
   desktop: { width: 400, height: 300 }, // 2.56x scale down
-  tablet: { width: 384, height: 512 }, // 2x scale down  
+  tablet: { width: 384, height: 512 }, // 2x scale down
   mobileLarge: { width: 320, height: 500 }, // 2x scale down
   mobile: { width: 187, height: 333 } // 2x scale down
 }
@@ -78,7 +96,7 @@ export default function WebsiteView ({
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth
         const displayWidth = displayDimensions[view.type].width
-        
+
         // For zoom levels 100% and below, fit to container
         // For zoom levels above 100%, expand to show full content
         let baseScale
@@ -88,11 +106,11 @@ export default function WebsiteView ({
           // At zoom levels above 100%, always show full content
           baseScale = 1
         }
-        
+
         const finalScale = baseScale * globalZoom
         setScale(finalScale)
-        
-        // Determine if view should be in compact mode based on final width  
+
+        // Determine if view should be in compact mode based on final width
         const currentScaledWidth = displayWidth * finalScale
         setIsCompactView(currentScaledWidth < 350) // Increased threshold for mobile
       }
@@ -159,24 +177,37 @@ export default function WebsiteView ({
   const getStatusIcon = () => {
     switch (loadingState) {
       case 'loading':
-        return <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
+        return <Loader2 className='h-3 w-3 animate-spin text-blue-500' />
       case 'loaded':
-        return <CheckCircle className="h-3 w-3 text-green-500" />
+        return <CheckCircle className='h-3 w-3 text-green-500' />
       case 'error':
-        return <AlertCircle className="h-3 w-3 text-red-500" />
+        return <AlertCircle className='h-3 w-3 text-red-500' />
     }
   }
 
   const getDeviceIcon = (deviceType: ViewType) => {
     switch (deviceType) {
       case 'desktop':
-        return <Monitor className="h-4 w-4 text-blue-600" />
+        return <Monitor className='h-4 w-4 text-blue-600' />
       case 'tablet':
-        return <Tablet className="h-4 w-4 text-green-600" />
+        return <Tablet className='h-4 w-4 text-green-600' />
       case 'mobileLarge':
-        return <Smartphone className="h-4 w-4 text-orange-600" />
+        return <Smartphone className='h-4 w-4 text-orange-600' />
       case 'mobile':
-        return <Smartphone className="h-4 w-4 text-red-600" />
+        return <Smartphone className='h-4 w-4 text-red-600' />
+    }
+  }
+
+  const getDeviceName = (deviceType: ViewType) => {
+    switch (deviceType) {
+      case 'desktop':
+        return 'Desktop'
+      case 'tablet':
+        return 'Tablet'
+      case 'mobileLarge':
+        return 'Mobile Large'
+      case 'mobile':
+        return 'Mobile'
     }
   }
 
@@ -193,7 +224,6 @@ export default function WebsiteView ({
     }
   }
 
-
   const cycleDeviceType = () => {
     const devices: ViewType[] = ['desktop', 'tablet', 'mobileLarge', 'mobile']
     const currentIndex = devices.indexOf(view.type)
@@ -202,13 +232,14 @@ export default function WebsiteView ({
   }
 
   // Container size - shows full content at all zoom levels
-  const scaledWidth = displayDimensions[view.type].width * scale  
+  const scaledWidth = displayDimensions[view.type].width * scale
   const scaledHeight = displayDimensions[view.type].height * scale
-  
+
   // Calculate the scale factor to fit actual dimensions into display dimensions
-  const contentScale = displayDimensions[view.type].width / actualDimensions[view.type].width
+  const contentScale =
+    displayDimensions[view.type].width / actualDimensions[view.type].width
   const finalContentScale = contentScale * scale
-  
+
   const optionsHeight = isCompactView ? 40 : 35 // Minimal height - just action buttons
   const borderWidth = 1
 
@@ -222,98 +253,112 @@ export default function WebsiteView ({
         maxWidth: globalZoom > 1 ? 'none' : '600px' // Remove max-width constraint when zoomed
       }}
     >
-      <div className='absolute top-2 left-2 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold z-10'>
-        {index + 1}
-      </div>
-      <button
-        onClick={cycleDeviceType}
-        className={`absolute bottom-2 left-2 w-8 h-8 rounded border-2 transition-colors z-20 shadow-sm flex items-center justify-center ${getDeviceColor(view.type)}`}
-        title={`${view.type} - Click to cycle device type`}
+      <div
+        className={`flex items-center justify-between ${
+          isCompactView ? 'p-1' : 'p-2'
+        }`}
+        style={{ height: `${optionsHeight}px` }}
       >
-        {getDeviceIcon(view.type)}
-      </button>
-      <button
-        onClick={onRemove}
-        className='absolute bottom-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded w-6 h-6 flex items-center justify-center z-20 shadow-sm transition-colors'
-        title='Remove view'
-      >
-        <X className='h-3 w-3' />
-      </button>
-      <div className={`flex items-center justify-between ${isCompactView ? 'p-1' : 'p-2'}`} style={{ height: `${optionsHeight}px` }}>
-        <div className='flex items-center gap-1 pl-8'>
-            {getStatusIcon()}
+        <div className='flex items-center gap-2'>
+          <div className='bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold'>
+            {index + 1}
+          </div>
+          <div className='flex items-center gap-1'>
             <button
-              onClick={refreshView}
-              className='text-gray-500 hover:text-gray-700 p-0.5'
-              title='Refresh view'
+              onClick={cycleDeviceType}
+              className={`w-8 h-8 rounded border-2 transition-colors shadow-sm flex items-center justify-center ${getDeviceColor(view.type)}`}
+              title={`${view.type} - Click to cycle device type`}
             >
-              <RefreshCw className='h-4 w-4' />
+              {getDeviceIcon(view.type)}
             </button>
-            <button
-              onClick={openInNewTab}
-              className='text-gray-500 hover:text-gray-700 p-0.5'
-              title='Open in new tab'
-            >
-              <ExternalLink className='h-4 w-4' />
-            </button>
-            <button
-              onClick={copyUrl}
-              className='text-gray-500 hover:text-gray-700 p-0.5'
-              title='Copy URL'
-            >
-              <Copy className='h-4 w-4' />
-            </button>
-            <button
-              onClick={handleFavoriteToggle}
-              className='text-gray-500 hover:text-gray-700 p-0.5'
-              title='Add to favorites'
-            >
-              {isFavorite ? (
-                <Star fill='yellow' className='h-4 w-4 text-yellow-500' />
-              ) : (
-                <Star className='h-4 w-4' />
-              )}
-            </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className='text-gray-500 hover:text-gray-700 p-0.5'
-                  title='Duplicate view'
-                >
-                  <PlusCircle className='h-4 w-4' />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  onClick={() => {
-                    onDuplicate({ ...view, type: 'desktop' })
-                  }}
-                >
-                  <Monitor className='mr-2 h-3 w-3' /> Desktop
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    onDuplicate({ ...view, type: 'tablet' })
-                  }}
-                >
-                  <Tablet className='mr-2 h-3 w-3' /> Tablet
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    onDuplicate({ ...view, type: 'mobileLarge' })
-                  }}
-                >
-                  <Smartphone className='mr-2 h-3 w-3' /> Large Mobile
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    onDuplicate({ ...view, type: 'mobile' })
-                  }}
-                >
-                  <Smartphone className='mr-2 h-3 w-3' /> Mobile
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <span className='text-xs text-gray-500 font-medium'>
+              {getDeviceName(view.type)}
+            </span>
+          </div>
+          {getStatusIcon()}
+        </div>
+
+        <div className='flex items-center gap-1'>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className='text-gray-500 hover:text-gray-700 p-0.5'
+                title='More options'
+              >
+                <Settings className='h-4 w-4' />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={refreshView}>
+                <RefreshCw className='mr-2 h-4 w-4' />
+                <span>Refresh</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={openInNewTab}>
+                <ExternalLink className='mr-2 h-4 w-4' />
+                <span>Open in new tab</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={copyUrl}>
+                <Copy className='mr-2 h-4 w-4' />
+                <span>Copy URL</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleFavoriteToggle}>
+                <Star
+                  className={`mr-2 h-4 w-4 ${
+                    isFavorite ? 'text-yellow-500' : ''
+                  }`}
+                  fill={isFavorite ? 'yellow' : 'transparent'}
+                />
+                <span>
+                  {isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <PlusCircle className='mr-2 h-4 w-4' />
+                  <span>Duplicate</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        onDuplicate({ ...view, type: 'desktop' })
+                      }}
+                    >
+                      <Monitor className='mr-2 h-3 w-3' /> Desktop
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        onDuplicate({ ...view, type: 'tablet' })
+                      }}
+                    >
+                      <Tablet className='mr-2 h-3 w-3' /> Tablet
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        onDuplicate({ ...view, type: 'mobileLarge' })
+                      }}
+                    >
+                      <Smartphone className='mr-2 h-3 w-3' /> Large Mobile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        onDuplicate({ ...view, type: 'mobile' })
+                      }}
+                    >
+                      <Smartphone className='mr-2 h-3 w-3' /> Mobile
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <button
+            onClick={onRemove}
+            className='bg-red-500 hover:bg-red-600 text-white rounded w-6 h-6 flex items-center justify-center shadow-sm transition-colors'
+            title='Remove view'
+          >
+            <X className='h-3 w-3' />
+          </button>
         </div>
       </div>
       <div
@@ -337,25 +382,25 @@ export default function WebsiteView ({
           title={`View ${view.id}`}
         />
         {loadingState === 'loading' && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span className="text-sm">Loading...</span>
+          <div className='absolute inset-0 flex items-center justify-center bg-background/80'>
+            <div className='flex items-center gap-2'>
+              <Loader2 className='h-6 w-6 animate-spin' />
+              <span className='text-sm'>Loading...</span>
             </div>
           </div>
         )}
         {loadingState === 'error' && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/90">
-            <div className="text-center">
-              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-              <p className="text-sm text-red-600">Failed to load</p>
-              <Button 
-                size="sm" 
-                variant="outline" 
+          <div className='absolute inset-0 flex items-center justify-center bg-background/90'>
+            <div className='text-center'>
+              <AlertCircle className='h-8 w-8 text-red-500 mx-auto mb-2' />
+              <p className='text-sm text-red-600'>Failed to load</p>
+              <Button
+                size='sm'
+                variant='outline'
                 onClick={refreshView}
-                className="mt-2"
+                className='mt-2'
               >
-                <RefreshCw className="h-4 w-4 mr-1" />
+                <RefreshCw className='h-4 w-4 mr-1' />
                 Retry
               </Button>
             </div>
