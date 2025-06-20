@@ -13,7 +13,13 @@ import {
   Smartphone,
   PlusCircle,
   Star,
-  RefreshCw
+  RefreshCw,
+  ZoomIn,
+  ZoomOut,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 import WebsiteView from './WebsiteView'
 import { toast } from 'sonner'
@@ -94,6 +100,14 @@ export default function WebsiteViewer () {
   const [refreshKey, setRefreshKey] = useState(0)
   const { favorites } = useFavorites()
   const { history, addToHistory, removeFromHistory } = useHistory()
+  
+  // Global zoom state
+  const zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2]
+  const [globalZoomStepIndex, setGlobalZoomStepIndex] = useState(2) // Default to 100%
+  const globalZoom = zoomSteps[globalZoomStepIndex]
+  
+  // Info panel visibility state
+  const [showInfoPanel, setShowInfoPanel] = useState(true)
 
   const highlightInput = () => {
     setIsInputHighlighted(true)
@@ -202,6 +216,26 @@ export default function WebsiteViewer () {
     setShowSuggestions(false)
     setIsInputHighlighted(true)
     setTimeout(() => setIsInputHighlighted(false), 1000)
+  }
+
+  // Global zoom functions
+  const globalZoomIn = () => {
+    setGlobalZoomStepIndex(prev => Math.min(prev + 1, zoomSteps.length - 1))
+    toast.success(`Global zoom: ${Math.round(zoomSteps[Math.min(globalZoomStepIndex + 1, zoomSteps.length - 1)] * 100)}%`)
+  }
+
+  const globalZoomOut = () => {
+    setGlobalZoomStepIndex(prev => Math.max(prev - 1, 0))
+    toast.success(`Global zoom: ${Math.round(zoomSteps[Math.max(globalZoomStepIndex - 1, 0)] * 100)}%`)
+  }
+
+  const resetGlobalZoom = () => {
+    setGlobalZoomStepIndex(2)
+    toast.success('Global zoom reset to 100%')
+  }
+
+  const toggleInfoPanel = () => {
+    setShowInfoPanel(!showInfoPanel)
   }
 
   return (
@@ -340,41 +374,104 @@ export default function WebsiteViewer () {
       </div>
 
       {views.length > 0 && (
-        <div className='mb-4 p-3 bg-muted/50 rounded-lg border'>
-          <div className='flex flex-col gap-3'>
+        <div className='mb-4'>
+          {/* Compact toggle bar */}
+          <div className='flex items-center justify-between p-2 bg-muted/50 rounded-lg border mb-2'>
             <div className='flex items-center gap-2 text-sm text-muted-foreground'>
               <Globe className='h-4 w-4' />
-              <span className='font-medium'>Viewing:</span>
-              <div className='flex flex-wrap gap-2'>
-                {[...new Set(views.map(v => v.url))].map((url, index) => (
-                  <span key={index} className='px-2 py-1 bg-background rounded text-xs font-mono'>
-                    {url.replace(/^https?:\/\//, '')}
-                  </span>
-                ))}
-              </div>
+              <span className='font-medium'>
+                {[...new Set(views.map(v => v.url))].length} site{[...new Set(views.map(v => v.url))].length > 1 ? 's' : ''}, {views.length} view{views.length > 1 ? 's' : ''}
+              </span>
             </div>
-            <div className='flex items-center gap-4 text-xs text-muted-foreground'>
-              <span className='font-medium'>Device Types:</span>
-              <div className='flex items-center gap-2'>
-                <div className='flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded border border-blue-300'>
-                  <Monitor className='h-3 w-3' />
-                  <span>Desktop (1024×768)</span>
-                </div>
-                <div className='flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded border border-green-300'>
-                  <Tablet className='h-3 w-3' />
-                  <span>Tablet (768×1024)</span>
-                </div>
-                <div className='flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 rounded border border-orange-300'>
-                  <Smartphone className='h-3 w-3' />
-                  <span>Large (640×1000)</span>
-                </div>
-                <div className='flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 rounded border border-red-300'>
-                  <Smartphone className='h-3 w-3' />
-                  <span>Mobile (375×667)</span>
-                </div>
+            <div className='flex items-center gap-2'>
+              {/* Global Zoom Controls - Always visible */}
+              <div className='flex items-center gap-1'>
+                <span className='text-xs text-muted-foreground font-medium hidden sm:inline'>Zoom:</span>
+                <Button 
+                  size="sm"
+                  variant="outline" 
+                  onClick={globalZoomOut}
+                  disabled={globalZoomStepIndex === 0}
+                  title={`Zoom out all views to ${globalZoomStepIndex > 0 ? Math.round(zoomSteps[globalZoomStepIndex - 1] * 100) : 50}%`}
+                  className="h-6 w-6 p-0"
+                >
+                  <ZoomOut className="h-3 w-3" />
+                </Button>
+                <Button 
+                  size="sm"
+                  variant="ghost" 
+                  onClick={resetGlobalZoom}
+                  className="text-xs px-1 h-6 min-w-[32px]"
+                  title="Reset all views to 100%"
+                >
+                  {Math.round(globalZoom * 100)}%
+                </Button>
+                <Button 
+                  size="sm"
+                  variant="outline" 
+                  onClick={globalZoomIn}
+                  disabled={globalZoomStepIndex === zoomSteps.length - 1}
+                  title={`Zoom in all views to ${globalZoomStepIndex < zoomSteps.length - 1 ? Math.round(zoomSteps[globalZoomStepIndex + 1] * 100) : 200}%`}
+                  className="h-6 w-6 p-0"
+                >
+                  <ZoomIn className="h-3 w-3" />
+                </Button>
               </div>
+              
+              {/* Toggle Info Panel Button */}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={toggleInfoPanel}
+                className="h-6 w-6 p-0"
+                title={showInfoPanel ? 'Hide details' : 'Show details'}
+              >
+                {showInfoPanel ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+              </Button>
             </div>
           </div>
+
+          {/* Expandable details panel */}
+          {showInfoPanel && (
+            <div className='p-3 bg-muted/30 rounded-lg border border-muted'>
+              <div className='flex flex-col gap-3'>
+                <div className='flex items-start gap-2 text-sm text-muted-foreground'>
+                  <Globe className='h-4 w-4 mt-0.5 flex-shrink-0' />
+                  <div className='flex-1'>
+                    <span className='font-medium block mb-2'>Viewing:</span>
+                    <div className='flex flex-wrap gap-2'>
+                      {[...new Set(views.map(v => v.url))].map((url, index) => (
+                        <span key={index} className='px-2 py-1 bg-background rounded text-xs font-mono break-all'>
+                          {url.replace(/^https?:\/\//, '')}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className='text-xs text-muted-foreground'>
+                  <span className='font-medium block mb-2'>Device Types & Dimensions:</span>
+                  <div className='grid grid-cols-2 lg:grid-cols-4 gap-2'>
+                    <div className='flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded border border-blue-300'>
+                      <Monitor className='h-3 w-3 flex-shrink-0' />
+                      <span className='text-xs'>Desktop<br className='sm:hidden'/><span className='hidden sm:inline'> </span>(1024×768)</span>
+                    </div>
+                    <div className='flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded border border-green-300'>
+                      <Tablet className='h-3 w-3 flex-shrink-0' />
+                      <span className='text-xs'>Tablet<br className='sm:hidden'/><span className='hidden sm:inline'> </span>(768×1024)</span>
+                    </div>
+                    <div className='flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 rounded border border-orange-300'>
+                      <Smartphone className='h-3 w-3 flex-shrink-0' />
+                      <span className='text-xs'>Large<br className='sm:hidden'/><span className='hidden sm:inline'> </span>(640×1000)</span>
+                    </div>
+                    <div className='flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 rounded border border-red-300'>
+                      <Smartphone className='h-3 w-3 flex-shrink-0' />
+                      <span className='text-xs'>Mobile<br className='sm:hidden'/><span className='hidden sm:inline'> </span>(375×667)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -384,6 +481,7 @@ export default function WebsiteViewer () {
             key={view.id}
             view={view}
             refreshKey={refreshKey}
+            globalZoom={globalZoom}
             onRemove={() => removeView(view.id)}
             onTypeChange={type => changeViewType(view.id, type)}
             onDuplicate={duplicateView}

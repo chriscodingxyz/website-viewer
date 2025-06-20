@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { Monitor, Tablet, Smartphone, X, Star, PlusCircle, RefreshCw, ExternalLink, Copy, Loader2, AlertCircle, CheckCircle, ZoomIn, ZoomOut } from 'lucide-react'
+import { Monitor, Tablet, Smartphone, X, Star, PlusCircle, RefreshCw, ExternalLink, Copy, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { View, ViewType } from './WebsiteViewer'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { toast } from 'sonner'
@@ -43,6 +43,7 @@ const displayViewDimensions = {
 type WebsiteViewProps = {
   view: View
   refreshKey?: number
+  globalZoom: number
   onRemove: () => void
   onTypeChange: (type: ViewType) => void
   onDuplicate: (view: View) => void
@@ -54,6 +55,7 @@ type LoadingState = 'loading' | 'loaded' | 'error'
 export default function WebsiteView ({
   view,
   refreshKey,
+  globalZoom,
   onRemove,
   onTypeChange,
   onDuplicate,
@@ -63,10 +65,6 @@ export default function WebsiteView ({
   const [displayDimensions] = useState(displayViewDimensions)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [scale, setScale] = useState(1)
-  // Fixed zoom steps for better UX
-  const zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2]
-  const [zoomStepIndex, setZoomStepIndex] = useState(2) // Default to 100% (index 2)
-  const userZoom = zoomSteps[zoomStepIndex]
   const [isCompactView, setIsCompactView] = useState(false) // For responsive layout
   const containerRef = useRef<HTMLDivElement>(null)
   const [loadingState, setLoadingState] = useState<LoadingState>('loading')
@@ -84,14 +82,14 @@ export default function WebsiteView ({
         // For zoom levels 100% and below, fit to container
         // For zoom levels above 100%, expand to show full content
         let baseScale
-        if (userZoom <= 1) {
+        if (globalZoom <= 1) {
           baseScale = Math.min(1, containerWidth / displayWidth)
         } else {
           // At zoom levels above 100%, always show full content
           baseScale = 1
         }
         
-        const finalScale = baseScale * userZoom
+        const finalScale = baseScale * globalZoom
         setScale(finalScale)
         
         // Determine if view should be in compact mode based on final width  
@@ -103,7 +101,7 @@ export default function WebsiteView ({
     updateScale()
     window.addEventListener('resize', updateScale)
     return () => window.removeEventListener('resize', updateScale)
-  }, [view.type, displayDimensions, userZoom])
+  }, [view.type, displayDimensions, globalZoom])
 
   useEffect(() => {
     setLoadingState('loading')
@@ -195,17 +193,6 @@ export default function WebsiteView ({
     }
   }
 
-  const zoomIn = () => {
-    setZoomStepIndex(prev => Math.min(prev + 1, zoomSteps.length - 1))
-  }
-
-  const zoomOut = () => {
-    setZoomStepIndex(prev => Math.max(prev - 1, 0))
-  }
-
-  const resetZoom = () => {
-    setZoomStepIndex(2) // Reset to 100%
-  }
 
   const cycleDeviceType = () => {
     const devices: ViewType[] = ['desktop', 'tablet', 'mobileLarge', 'mobile']
@@ -222,7 +209,7 @@ export default function WebsiteView ({
   const contentScale = displayDimensions[view.type].width / actualDimensions[view.type].width
   const finalContentScale = contentScale * scale
   
-  const optionsHeight = isCompactView ? 80 : 70 // Reduced since dimensions moved to legend
+  const optionsHeight = isCompactView ? 40 : 35 // Minimal height - just action buttons
   const borderWidth = 1
 
   return (
@@ -232,12 +219,19 @@ export default function WebsiteView ({
       style={{
         width: `${scaledWidth + 2 * borderWidth}px`,
         height: `${scaledHeight + optionsHeight + 2 * borderWidth}px`,
-        maxWidth: userZoom > 1 ? 'none' : '600px' // Remove max-width constraint when zoomed
+        maxWidth: globalZoom > 1 ? 'none' : '600px' // Remove max-width constraint when zoomed
       }}
     >
       <div className='absolute top-2 left-2 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold z-10'>
         {index + 1}
       </div>
+      <button
+        onClick={cycleDeviceType}
+        className={`absolute bottom-2 left-2 w-8 h-8 rounded border-2 transition-colors z-20 shadow-sm flex items-center justify-center ${getDeviceColor(view.type)}`}
+        title={`${view.type} - Click to cycle device type`}
+      >
+        {getDeviceIcon(view.type)}
+      </button>
       <button
         onClick={onRemove}
         className='absolute bottom-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded w-6 h-6 flex items-center justify-center z-20 shadow-sm transition-colors'
@@ -245,53 +239,48 @@ export default function WebsiteView ({
       >
         <X className='h-3 w-3' />
       </button>
-      <div className={`space-y-2 ${isCompactView ? 'p-1' : 'p-2'}`} style={{ height: `${optionsHeight}px` }}>
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center flex-1 mr-2'>
-            <div className='flex items-center gap-2 pl-8'>
-              {getStatusIcon()}
-            </div>
-            <div className='flex items-center gap-1'>
-              <button
-                onClick={refreshView}
-                className='text-gray-500 hover:text-gray-700 p-0.5'
-                title='Refresh view'
-              >
-                <RefreshCw className={`${isCompactView ? 'h-3 w-3' : 'h-4 w-4'}`} />
-              </button>
-              <button
-                onClick={openInNewTab}
-                className='text-gray-500 hover:text-gray-700 p-0.5'
-                title='Open in new tab'
-              >
-                <ExternalLink className={`${isCompactView ? 'h-3 w-3' : 'h-4 w-4'}`} />
-              </button>
-              <button
-                onClick={copyUrl}
-                className='text-gray-500 hover:text-gray-700 p-0.5'
-                title='Copy URL'
-              >
-                <Copy className={`${isCompactView ? 'h-3 w-3' : 'h-4 w-4'}`} />
-              </button>
-              <button
-                onClick={handleFavoriteToggle}
-                className='text-gray-500 hover:text-gray-700 p-0.5'
-                title='Add to favorites'
-              >
-                {isFavorite ? (
-                  <Star fill='yellow' className={`${isCompactView ? 'h-3 w-3' : 'h-4 w-4'} text-yellow-500`} />
-                ) : (
-                  <Star className={`${isCompactView ? 'h-3 w-3' : 'h-4 w-4'}`} />
-                )}
-              </button>
-            </div>
+      <div className={`flex items-center justify-between ${isCompactView ? 'p-1' : 'p-2'}`} style={{ height: `${optionsHeight}px` }}>
+        <div className='flex items-center gap-1 pl-8'>
+            {getStatusIcon()}
+            <button
+              onClick={refreshView}
+              className='text-gray-500 hover:text-gray-700 p-0.5'
+              title='Refresh view'
+            >
+              <RefreshCw className='h-4 w-4' />
+            </button>
+            <button
+              onClick={openInNewTab}
+              className='text-gray-500 hover:text-gray-700 p-0.5'
+              title='Open in new tab'
+            >
+              <ExternalLink className='h-4 w-4' />
+            </button>
+            <button
+              onClick={copyUrl}
+              className='text-gray-500 hover:text-gray-700 p-0.5'
+              title='Copy URL'
+            >
+              <Copy className='h-4 w-4' />
+            </button>
+            <button
+              onClick={handleFavoriteToggle}
+              className='text-gray-500 hover:text-gray-700 p-0.5'
+              title='Add to favorites'
+            >
+              {isFavorite ? (
+                <Star fill='yellow' className='h-4 w-4 text-yellow-500' />
+              ) : (
+                <Star className='h-4 w-4' />
+              )}
+            </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   className='text-gray-500 hover:text-gray-700 p-0.5'
                   title='Duplicate view'
                 >
-                  <PlusCircle className={`${isCompactView ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                  <PlusCircle className='h-4 w-4' />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -325,57 +314,6 @@ export default function WebsiteView ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-        </div>
-        <div className={`${isCompactView ? 'flex flex-col gap-2' : 'flex justify-between items-center'}`}>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={cycleDeviceType}
-              className={`flex items-center justify-center w-10 h-8 rounded border transition-colors ${getDeviceColor(view.type)}`}
-              title={`${view.type} (${actualDimensions[view.type].width}×${actualDimensions[view.type].height}) - Click to cycle`}
-            >
-              {getDeviceIcon(view.type)}
-            </button>
-            <div className="flex items-center gap-1">
-              <Button 
-                size={isCompactView ? "sm" : "sm"}
-                variant="outline" 
-                onClick={zoomOut}
-                disabled={zoomStepIndex === 0}
-                title={`Zoom out to ${zoomStepIndex > 0 ? Math.round(zoomSteps[zoomStepIndex - 1] * 100) : 50}%`}
-                className={isCompactView ? 'h-7 w-7 p-0' : ''}
-              >
-                <ZoomOut className="h-3 w-3" />
-              </Button>
-              <Button 
-                size={isCompactView ? "sm" : "sm"}
-                variant="ghost" 
-                onClick={resetZoom}
-                className={`text-xs ${isCompactView ? 'px-1 h-7' : 'px-2'}`}
-                title="Reset to 100%"
-              >
-                {Math.round(userZoom * 100)}%
-              </Button>
-              <Button 
-                size={isCompactView ? "sm" : "sm"}
-                variant="outline" 
-                onClick={zoomIn}
-                disabled={zoomStepIndex === zoomSteps.length - 1}
-                title={`Zoom in to ${zoomStepIndex < zoomSteps.length - 1 ? Math.round(zoomSteps[zoomStepIndex + 1] * 100) : 200}%`}
-                className={isCompactView ? 'h-7 w-7 p-0' : ''}
-              >
-                <ZoomIn className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
-          {/* <Button onClick={captureScreenshot} size="sm" disabled={isCapturing}>
-            {isCapturing ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Camera className="mr-2 h-4 w-4" />
-            )}
-            Capture
-          </Button> */}
         </div>
       </div>
       <div
