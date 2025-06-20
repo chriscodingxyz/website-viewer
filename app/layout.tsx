@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
-import { Header } from '@/components/Header'
+
 import { IBM_Plex_Mono } from 'next/font/google'
 import Footer from '@/components/Footer'
 import { Toaster } from 'sonner'
@@ -30,7 +30,7 @@ export default function RootLayout ({
         <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
           <FavoritesProvider>
             <HistoryProvider>
-              <Header />
+              {/* Header component removed as its functionality is now in WebsiteViewer */}
               <main className='flex-grow'>{children}</main>
               <Footer />
             </HistoryProvider>

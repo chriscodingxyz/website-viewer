@@ -21,6 +21,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react'
+import ThemeToggle from '@/components/ThemeToggle'
 import {
   Collapsible,
   CollapsibleContent,
@@ -281,7 +282,7 @@ export default function WebsiteViewer () {
   }, {} as Record<string, View[]>)
 
   return (
-    <div className='space-y-6'>
+    <div className='relative min-h-screen flex flex-col'>
       <style jsx global>{`
         @keyframes highlightInput {
           0% {
@@ -298,244 +299,261 @@ export default function WebsiteViewer () {
           animation: highlightInput 1s ease-out;
         }
       `}</style>
-      <div className='space-y-2 container mx-auto rounded-md'>
-        <div className='flex gap-2 flex-col lg:flex-row'>
-          <div className='flex-grow relative'>
-            <Input
-              id='url-input'
-              type='text'
-              value={url}
-              onChange={e => handleUrlChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onFocus={() =>
-                url.length > 0 &&
-                setShowSuggestions(filteredSuggestions.length > 0)
-              }
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
-              placeholder='example.com or localhost:3000 (⏎ for desktop, ⌘⏎ for all)'
-              className={`text-[16px] bg-background ${
-                isInputHighlighted ? 'highlight-input' : ''
-              }`}
-            />
-            {showSuggestions && (
-              <div className='absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto'>
-                {filteredSuggestions.map((suggestion, index) => (
-                  <button
-                    key={index}
-                    onClick={() => selectSuggestion(suggestion)}
-                    className='w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground text-sm border-b last:border-b-0'
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            )}
+      {/* Main Content Area */}
+      <main className='flex-grow p-4 pt-32'>
+        {/* Adjusted padding for fixed header */}
+        {/* pb-28 for footer clearance, flex-grow to push footer down */}
+        {Object.keys(groupedViews).length === 0 && (
+          <div className='flex flex-col items-center justify-center h-full text-center text-muted-foreground pt-20'>
+            <Globe className='w-16 h-16 mb-4 text-gray-400' />
+            <h2 className='text-2xl font-semibold mb-2'>
+              Welcome to Website Viewer
+            </h2>
+            <p className='mb-6'>
+              Enter a URL in the bar below to start viewing websites in multiple
+              device formats.
+            </p>
+            <p className='text-sm'>
+              Tip: Use ⌘⏎ (or Ctrl⏎) to load in all device types at once.
+            </p>
           </div>
-          <div className='flex gap-1'>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size='sm' disabled={!formatUrl(url)}>
-                  <Globe className='w-4 h-4 mr-2' />
-                  Load
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className='w-56'>
-                <DropdownMenuItem
-                  onClick={addAllViews}
-                  disabled={!formatUrl(url)}
-                  className='hover:bg-muted focus:bg-muted text-foreground'
+        )}
+        {/* Grouped Views - This part is moved inside main and wrapped with container */}
+        {Object.keys(groupedViews).length > 0 && (
+          <>
+            {Object.entries(groupedViews).map(([url, viewsInGroup]) => {
+              const isCollapsed = collapsedGroups[url]
+              return (
+                <Collapsible
+                  key={url}
+                  open={!isCollapsed}
+                  onOpenChange={() => toggleGroupCollapse(url)}
+                  className='border rounded-lg bg-card p-3 shadow-md space-y-1'
                 >
-                  <PlusCircle className='mr-2 h-4 w-4' /> All Views
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addView('desktop')}
-                  className='bg-purple-50 hover:bg-purple-100 text-purple-700 focus:bg-purple-100 focus:text-purple-800'
-                >
-                  <Monitor className='mr-2 h-4 w-4' /> Desktop
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addView('tablet')}
-                  className='bg-blue-50 hover:bg-blue-100 text-blue-700 focus:bg-blue-100 focus:text-blue-800'
-                >
-                  <Tablet className='mr-2 h-4 w-4' /> Tablet
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addView('mobileLarge')}
-                  className='bg-green-50 hover:bg-green-100 text-green-700 focus:bg-green-100 focus:text-green-800'
-                >
-                  <Smartphone className='mr-2 h-4 w-4' /> Large Mobile
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addView('mobile')}
-                  className='bg-orange-50 hover:bg-orange-100 text-orange-700 focus:bg-orange-100 focus:text-orange-800'
-                >
-                  <Smartphone className='mr-2 h-4 w-4' /> Mobile
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size='sm' variant='outline'>
-                  <Star
-                    className='w-4 h-4 text-primary'
-                    fill={
-                      favorites.length > 0
-                        ? 'hsl(var(--primary))'
-                        : 'transparent'
-                    }
-                  />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className='w-72'>
-                <ScrollArea className='max-h-[300px]'>
-                  {favorites.map((item, index) => (
-                    <DropdownMenuItem
-                      key={index}
-                      onSelect={() => setUrlWithHighlight(item)}
-                    >
-                      {item}
-                    </DropdownMenuItem>
-                  ))}
-                </ScrollArea>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size='sm' variant='outline'>
-                  <Clock className='w-4 h-4' />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className='w-72'>
-                <ScrollArea className='max-h-[300px]'>
-                  {history.map((item, index) => (
-                    <DropdownMenuItem
-                      key={index}
-                      onSelect={() => setUrlWithHighlight(item)}
-                    >
-                      {item}
-                    </DropdownMenuItem>
-                  ))}
-                </ScrollArea>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {views.length > 0 && (
-              <>
-                {/* Refresh All button removed */}
-                <Button
-                  size={'sm'}
-                  onClick={clearAllViews}
-                  variant='destructive'
-                >
-                  <Trash2 size={18} />
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {Object.keys(groupedViews).length > 0 && (
-        <div className='space-y-6'>
-          {/* Simplified Global Bar REMOVED */}
-
-          {/* Main content area for grouped views */}
-          {Object.entries(groupedViews).map(([url, viewsInGroup]) => {
-            const isCollapsed = collapsedGroups[url]
-            return (
-              <Collapsible
-                key={url}
-                open={!isCollapsed}
-                onOpenChange={() => toggleGroupCollapse(url)}
-                className='border rounded-lg bg-card p-3 shadow-md space-y-1'
-              >
-                <div
-                  className={`flex justify-between items-center ${
-                    isCollapsed ? '' : ''
-                  }`}
-                >
-                  <h2
-                    className='text-sm font-semibold text-primary truncate flex-1 mr-2'
-                    title={url}
+                  <CollapsibleContent className='pt-1'>
+                    {/* Apply pt-1 here for spacing when open */}
+                    <div className='flex flex-wrap gap-4 justify-start'>
+                      {viewsInGroup.map(view => (
+                        <WebsiteView
+                          key={view.id}
+                          view={view}
+                          refreshKey={refreshKey}
+                          globalZoom={globalZoom}
+                          onRemove={() => removeView(view.id)}
+                          onTypeChange={type => changeViewType(view.id, type)}
+                          onDuplicate={duplicateView}
+                          index={views.findIndex(v => v.id === view.id)} // Use original index for numbering
+                        />
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                  {/* Group Footer: URL, Zoom, Collapse Controls */}
+                  <div
+                    className={`flex justify-between items-center mt-2 pt-2 border-t ${
+                      isCollapsed ? '' : '' // Retain for potential future conditional styling, though less relevant now
+                    }`}
                   >
-                    {url}
-                  </h2>
-                  <div className='flex items-center gap-2 flex-shrink-0 bg-muted p-1 rounded-md'>
-                    {!isCollapsed && (
-                      <div className='flex items-center gap-1'>
+                    <h2
+                      className='text-sm font-semibold text-primary truncate flex-1 mr-2'
+                      title={url}
+                    >
+                      {url}
+                    </h2>
+                    <div className='flex items-center gap-2 flex-shrink-0 bg-muted p-1 rounded-md'>
+                      {!isCollapsed && (
+                        <div className='flex items-center gap-1'>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            onClick={globalZoomOut}
+                            disabled={globalZoomStepIndex === 0}
+                            title='Zoom out (global)'
+                          >
+                            <ZoomOut className='h-4 w-4' />
+                          </Button>
+                          <span
+                            className='text-xs w-10 text-center tabular-nums cursor-pointer'
+                            onClick={resetGlobalZoom}
+                            title='Reset zoom (global)'
+                          >
+                            {Math.round(globalZoom * 100)}%
+                          </span>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            onClick={globalZoomIn}
+                            disabled={
+                              globalZoomStepIndex === zoomSteps.length - 1
+                            }
+                            title='Zoom in (global)'
+                          >
+                            <ZoomIn className='h-4 w-4' />
+                          </Button>
+                        </div>
+                      )}
+                      {!isCollapsed && (
+                        <div className='w-px self-stretch bg-border mx-1'></div>
+                      )} {/* Vertical Separator */}
+                      <CollapsibleTrigger asChild>
                         <Button
-                          variant='ghost'
                           size='icon'
-                          onClick={globalZoomOut}
-                          disabled={globalZoomStepIndex === 0}
-                          title='Zoom out (global)'
-                        >
-                          <ZoomOut className='h-4 w-4' />
-                        </Button>
-                        <span
-                          className='text-xs w-10 text-center tabular-nums cursor-pointer'
-                          onClick={resetGlobalZoom}
-                          title='Reset zoom (global)'
-                        >
-                          {Math.round(globalZoom * 100)}%
-                        </span>
-                        <Button
                           variant='ghost'
-                          size='icon'
-                          onClick={globalZoomIn}
-                          disabled={
-                            globalZoomStepIndex === zoomSteps.length - 1
-                          }
-                          title='Zoom in (global)'
+                          title={isCollapsed ? 'Show views' : 'Hide views'}
                         >
-                          <ZoomIn className='h-4 w-4' />
+                          {isCollapsed ? (
+                            <Eye className='h-4 w-4' />
+                          ) : (
+                            <EyeOff className='h-4 w-4' />
+                          )}
                         </Button>
-                      </div>
-                    )}
-                    {!isCollapsed && (
-                      <div className='w-px self-stretch bg-border mx-1'></div>
-                    )}{' '}
-                    {/* Vertical Separator */}
-                    <CollapsibleTrigger asChild>
-                      <Button
-                        size='icon'
-                        variant='ghost'
-                        title={isCollapsed ? 'Show views' : 'Hide views'}
-                      >
-                        {isCollapsed ? (
-                          <Eye className='h-4 w-4' />
-                        ) : (
-                          <EyeOff className='h-4 w-4' />
-                        )}
-                      </Button>
-                    </CollapsibleTrigger>
+                      </CollapsibleTrigger>
+                    </div>
                   </div>
+                </Collapsible>
+              )
+            })}
+          </>
+        )}
+      </main>
+      {/* Footer - Fixed at the bottom */}
+      <header className='fixed top-0 left-0 right-0 bg-background border-b p-3 shadow-md z-40'>
+        <div className='container mx-auto'>
+          <div className='flex gap-2 flex-col lg:flex-row'>
+            <div className='flex-grow relative w-full lg:w-auto'>
+              <Input
+                id='url-input'
+                type='text'
+                value={url}
+                onChange={e => handleUrlChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onFocus={() =>
+                  url.length > 0 &&
+                  setShowSuggestions(filteredSuggestions.length > 0)
+                }
+                onBlur={() =>
+                  setTimeout(() => setShowSuggestions(false), 100)
+                }
+                placeholder='example.com or localhost:3000 (⏎ for desktop, ⌘⏎ for all)'
+                className={`text-[16px] bg-background ${
+                  isInputHighlighted ? 'highlight-input' : ''
+                }`}
+              />
+              {showSuggestions && (
+                <div className='absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto'>
+                  {filteredSuggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => selectSuggestion(suggestion)}
+                      className='w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground text-sm border-b last:border-b-0'
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
                 </div>
-                <CollapsibleContent className='pt-1'>
-                  {' '}
-                  {/* Apply pt-1 here for spacing when open */}
-                  <div className='flex flex-wrap gap-4 justify-start'>
-                    {viewsInGroup.map(view => (
-                      <WebsiteView
-                        key={view.id}
-                        view={view}
-                        refreshKey={refreshKey}
-                        globalZoom={globalZoom}
-                        onRemove={() => removeView(view.id)}
-                        onTypeChange={type => changeViewType(view.id, type)}
-                        onDuplicate={duplicateView}
-                        index={views.findIndex(v => v.id === view.id)} // Use original index for numbering
-                      />
+              )}
+            </div>
+            <div className='flex gap-1'>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size='sm' disabled={!formatUrl(url)}>
+                    <Globe className='w-4 h-4 mr-2' />
+                    Load
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className='w-56'>
+                  <DropdownMenuItem
+                    onClick={addAllViews}
+                    disabled={!formatUrl(url)}
+                    className='hover:bg-muted focus:bg-muted text-foreground'
+                  >
+                    <PlusCircle className='mr-2 h-4 w-4' /> All Views
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addView('desktop')}
+                    className='bg-purple-50 hover:bg-purple-100 text-purple-700 focus:bg-purple-100 focus:text-purple-800'
+                  >
+                    <Monitor className='mr-2 h-4 w-4' /> Desktop
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addView('tablet')}
+                    className='bg-blue-50 hover:bg-blue-100 text-blue-700 focus:bg-blue-100 focus:text-blue-800'
+                  >
+                    <Tablet className='mr-2 h-4 w-4' /> Tablet
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addView('mobileLarge')}
+                    className='bg-green-50 hover:bg-green-100 text-green-700 focus:bg-green-100 focus:text-green-800'
+                  >
+                    <Smartphone className='mr-2 h-4 w-4' /> Large Mobile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => addView('mobile')}
+                    className='bg-orange-50 hover:bg-orange-100 text-orange-700 focus:bg-orange-100 focus:text-orange-800'
+                  >
+                    <Smartphone className='mr-2 h-4 w-4' /> Mobile
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size='sm' variant='outline'>
+                    <Star
+                      className='w-4 h-4 text-yellow-500'
+                      fill={favorites.length > 0 ? 'yellow' : 'transparent'}
+                    />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className='w-72'>
+                  <ScrollArea className='max-h-[300px]'>
+                    {favorites.map((item, index) => (
+                      <DropdownMenuItem
+                        key={index}
+                        onSelect={() => setUrlWithHighlight(item)}
+                      >
+                        {item}
+                      </DropdownMenuItem>
                     ))}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            )
-          })}
+                  </ScrollArea>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size='sm' variant='outline'>
+                    <Clock className='w-4 h-4' />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className='w-72'>
+                  <ScrollArea className='max-h-[300px]'>
+                    {history.map((item, index) => (
+                      <DropdownMenuItem
+                        key={index}
+                        onSelect={() => setUrlWithHighlight(item)}
+                      >
+                        {item}
+                      </DropdownMenuItem>
+                    ))}
+                  </ScrollArea>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {views.length > 0 && (
+                <>
+                  {/* Refresh All button removed */}
+                  <Button
+                    size={'sm'}
+                    onClick={clearAllViews}
+                    variant='destructive'
+                  >
+                    <Trash2 size={18} />
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
-      )}
+      </header>
     </div>
   )
 }

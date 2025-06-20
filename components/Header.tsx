@@ -1,6 +1,4 @@
 'use client'
-
-import ThemeToggle from '@/components/ThemeToggle'
 import {
   Monofett,
   Silkscreen,
@@ -74,16 +72,17 @@ export function Header () {
   return (
     <header className='border-b px-4 top-0 sticky z-50 bg-background'>
       <div className='container mx-auto flex justify-between items-center'>
-        <a href='/'>
+        {/* Branding and ThemeToggle removed, moved to WebsiteViewer.tsx */}
+        {/* <a href='/'>
           <h1
             className={`text-md tracking-tight drop-shadow-lg space-x-1
 ${raleway.className}`}
           >
             cherrydub 🍒
           </h1>
-        </a>
+        </a> */}
         <div className='flex items-center'>
-          <ThemeToggle />
+          {/* <ThemeToggle /> */}
           {/* <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
             <DropdownMenuTrigger asChild>
               <Button size={'icon'} variant={'ghost'}>

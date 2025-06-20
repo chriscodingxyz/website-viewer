@@ -1,56 +1,68 @@
-import React from "react";
-import { FaGithub, FaLinkedin, FaTwitter } from "react-icons/fa";
+'use client'
+
+import React from 'react'
+import ThemeToggle from '@/components/ThemeToggle'
+import { GithubLogo, LinkedinLogo, XLogo } from '@phosphor-icons/react'
 
 const Footer: React.FC = () => {
-  const currentYear = new Date().getFullYear();
+  const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="border-t mt-8 py-4">
-      <div className="container mx-auto px-4 flex flex-col items-center">
-        <div className="flex space-x-4 mb-2">
+    <footer className='border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
+      <div className='container mx-auto flex items-center justify-between px-4 py-4'>
+        {/* Left Side: Branding & Copyright */}
+        <div className='flex items-center gap-3'>
+          <p className='text-xs text-muted-foreground'>
+            © {currentYear}{' '}
+            <a
+              href='https://chriswiz.vercel.app'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='font-medium text-primary hover:underline'
+            >
+              cherrydub 🍒
+            </a>
+          </p>
+        </div>
+
+        {/* Center: Social Icons */}
+        <div className='flex items-center space-x-3'>
           <a
-            href="https://github.com/chriscodingxyz"
-            target="_blank"
-            rel="noopener noreferrer"
+            href='https://github.com/chriscodingxyz'
+            target='_blank'
+            rel='noopener noreferrer'
+            aria-label='GitHub'
+            className='rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
           >
-            <FaGithub className="text-gray-600 hover:text-gray-800" size={24} />
+            <GithubLogo size={16} />
           </a>
           <a
-            href="https://linkedin.com/in/wisniewskichris"
-            target="_blank"
-            rel="noopener noreferrer"
+            href='https://linkedin.com/in/wisniewskichris'
+            target='_blank'
+            rel='noopener noreferrer'
+            aria-label='LinkedIn'
+            className='rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
           >
-            <FaLinkedin
-              className="text-gray-600 hover:text-gray-800"
-              size={24}
-            />
+            <LinkedinLogo size={16} />
           </a>
           <a
-            href="https://twitter.com/chriscodingxyz"
-            target="_blank"
-            rel="noopener noreferrer"
+            href='https://twitter.com/chriscodingxyz'
+            target='_blank'
+            rel='noopener noreferrer'
+            aria-label='X (formerly Twitter)'
+            className='rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
           >
-            <FaTwitter
-              className="text-gray-600 hover:text-gray-800"
-              size={24}
-            />
+            <XLogo size={16} />
           </a>
         </div>
-        <p className="responsive-text-sm text-gray-600">
-          © {currentYear + " "}
-          <a
-            className="underline hover:no-underline"
-            href="https://chriswiz.vercel.app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            chriscoding.xyz
-          </a>{" "}
-          - All rights reserved.
-        </p>
+
+        {/* Right Side: Theme Toggle */}
+        <div className='flex items-center'>
+          <ThemeToggle />
+        </div>
       </div>
     </footer>
-  );
-};
+  )
+}
 
-export default Footer;
+export default Footer
