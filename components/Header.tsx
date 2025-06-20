@@ -1,32 +1,29 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Globe,
-  Trash2,
-  Star,
-  Clock,
-  Monitor,
-  Tablet,
-  Smartphone,
-  PlusCircle
-} from 'lucide-react'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from './ui/dropdown-menu'
+import { Globe, Check, ChevronDown, Star, Clock, Zap } from 'lucide-react'
+import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
-import { ScrollArea } from './ui/scroll-area'
-import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@/components/ui/popover'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator
+} from '@/components/ui/command'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
 export function Header () {
-  const { favorites } = useFavorites()
-  const { history } = useHistory()
   const {
     url,
     handleUrlChange,
@@ -37,149 +34,123 @@ export function Header () {
     setShowSuggestions,
     selectSuggestion,
     formatUrl,
-    addAllViews,
-    addView,
-    setUrlWithHighlight,
-    clearAllViews,
-    views
+    loadSite
   } = useWebsiteViewer()
 
+  const { favorites } = useFavorites()
+  const { history } = useHistory()
+
+  const [open, setOpen] = useState(false)
+
+  // Function to handle selection from combobox
+  const onSelect = (selectedValue: string) => {
+    selectSuggestion(selectedValue)
+    setOpen(false)
+  }
+
   return (
-    <header className='bg-background border-b py-3 px-2 flex-shrink-0'>
+    <header className='fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b py-3 px-2'>
       <div>
-        <div className='flex gap-2 flex-col lg:flex-row'>
-          <div className='flex-grow relative w-full lg:w-auto'>
-            <Input
-              id='url-input'
-              type='text'
-              value={url}
-              onChange={e => handleUrlChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onFocus={() =>
-                url.length > 0 &&
-                setShowSuggestions(filteredSuggestions.length > 0)
-              }
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
-              placeholder='example.com or localhost:3000'
-              className={`text-[16px] bg-background ${
-                isInputHighlighted ? 'highlight-input' : ''
-              }`}
-            />
-            {showSuggestions && (
-              <div className='absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto'>
-                {filteredSuggestions.map((suggestion, index) => (
-                  <button
-                    key={index}
-                    onClick={() => selectSuggestion(suggestion)}
-                    className='w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground text-sm border-b last:border-b-0'
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            )}
+        <div className='flex gap-2 flex-row items-center'>
+          <div className='flex-grow relative'>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className={cn(
+                    'w-full justify-between text-[16px] h-10 px-3 py-2', 
+                    isInputHighlighted && 'highlight-input'
+                  )}
+                >
+                  {url ? url : "example.com or localhost:3000"}
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent 
+                className="p-0" 
+                align="start" 
+                sideOffset={5}
+                style={{ width: 'var(--radix-popover-trigger-width)' }}
+              >
+                <Command className='w-full'>
+                  <CommandInput
+                    placeholder='Search URL...'
+                    value={url}
+                    onValueChange={handleUrlChange}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && url.trim()) {
+                        setOpen(false)
+                        loadSite()
+                      }
+                      handleKeyDown(e)
+                    }}
+                    className='text-[16px]'
+                  />
+                  <CommandEmpty className='py-3 text-center'>
+                    No URL found.
+                  </CommandEmpty>
+                  <CommandList>
+                    {filteredSuggestions.length > 0 && (
+                      <CommandGroup heading='Suggestions'>
+                        {filteredSuggestions.map((suggestion, index) => (
+                          <CommandItem
+                            key={`suggestion-${index}`}
+                            onSelect={() => onSelect(suggestion)}
+                            className='cursor-pointer flex items-center w-full'
+                          >
+                            <Zap className='mr-2 h-4 w-4 flex-shrink-0' />
+                            <span className='truncate'>{suggestion}</span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+
+                    {favorites.length > 0 && (
+                      <CommandGroup heading='Favorites'>
+                        {favorites.map((fav, index) => (
+                          <CommandItem
+                            key={`favorite-${index}`}
+                            onSelect={() => onSelect(fav)}
+                            className='cursor-pointer flex items-center w-full'
+                          >
+                            <Star className='mr-2 h-4 w-4 text-yellow-500 flex-shrink-0' />
+                            <span className='truncate'>{fav}</span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+
+                    {history.length > 0 && (
+                      <CommandGroup heading='History'>
+                        {history.map((item, index) => (
+                          <CommandItem
+                            key={`history-${index}`}
+                            onSelect={() => onSelect(item)}
+                            className='cursor-pointer flex items-center w-full'
+                          >
+                            <Clock className='mr-2 h-4 w-4 text-slate-400 flex-shrink-0' />
+                            <span className='truncate'>{item}</span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className='flex gap-2'>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size='sm'
-                  disabled={!formatUrl(url)}
-                  className='font-medium'
-                >
-                  <Globe className='w-4 h-4 mr-2' />
-                  Load
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className='w-56 border-muted'>
-                <DropdownMenuItem
-                  onClick={addAllViews}
-                  disabled={!formatUrl(url)}
-                  className='focus:bg-muted/50'
-                >
-                  <PlusCircle className='mr-2 h-4 w-4' /> All Views
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addView('desktop')}
-                  className='bg-purple-50 hover:bg-purple-100 text-purple-700 focus:bg-purple-100 focus:text-purple-800'
-                >
-                  <Monitor className='mr-2 h-4 w-4 text-purple-600' /> Desktop
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addView('tablet')}
-                  className='bg-blue-50 hover:bg-blue-100 text-blue-700 focus:bg-blue-100 focus:text-blue-800'
-                >
-                  <Tablet className='mr-2 h-4 w-4 text-blue-600' /> Tablet
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addView('mobileLarge')}
-                  className='bg-green-50 hover:bg-green-100 text-green-700 focus:bg-green-100 focus:text-green-800'
-                >
-                  <Smartphone className='mr-2 h-4 w-4 text-green-600' /> Large
-                  Mobile
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => addView('mobile')}
-                  className='bg-orange-50 hover:bg-orange-100 text-orange-700 focus:bg-orange-100 focus:text-orange-800'
-                >
-                  <Smartphone className='mr-2 h-4 w-4 text-orange-600' /> Mobile
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size='sm' variant='ghost' className='border-0'>
-                  <Star
-                    className='w-4 h-4 text-yellow-500'
-                    fill={favorites.length > 0 ? 'yellow' : 'transparent'}
-                  />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className='w-72'>
-                <ScrollArea className='max-h-[300px]'>
-                  {favorites.map((item, index) => (
-                    <DropdownMenuItem
-                      key={index}
-                      onSelect={() => setUrlWithHighlight(item)}
-                    >
-                      {item}
-                    </DropdownMenuItem>
-                  ))}
-                </ScrollArea>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size='sm' variant='ghost' className='border-0'>
-                  <Clock className='w-4 h-4' />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className='w-72'>
-                <ScrollArea className='max-h-[300px]'>
-                  {history.map((item, index) => (
-                    <DropdownMenuItem
-                      key={index}
-                      onSelect={() => setUrlWithHighlight(item)}
-                    >
-                      {item}
-                    </DropdownMenuItem>
-                  ))}
-                </ScrollArea>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {views.length > 0 && (
-              <Button
-                size={'sm'}
-                onClick={clearAllViews}
-                variant='ghost'
-                className='text-destructive hover:text-destructive hover:bg-destructive/10'
-              >
-                <Trash2 size={18} />
-              </Button>
-            )}
+            <Button
+              size='sm'
+              disabled={!formatUrl(url)}
+              onClick={loadSite}
+              className='px-3'
+              title='Load site'
+            >
+              <Globe className='w-4 h-4' />
+            </Button>
           </div>
         </div>
       </div>

@@ -63,6 +63,7 @@ const commonDevPorts = [
 interface WebsiteViewerContextType {
   url: string
   setUrl: (url: string) => void
+  currentSite: string | null
   views: View[]
   isInputHighlighted: boolean
   showSuggestions: boolean
@@ -72,32 +73,30 @@ interface WebsiteViewerContextType {
   handleKeyDown: (e: React.KeyboardEvent) => void
   selectSuggestion: (suggestion: string) => void
   formatUrl: (url: string) => string | null
-  addAllViews: () => void
-  addView: (type: ViewType) => void
+  loadSite: () => void
   setUrlWithHighlight: (url: string) => void
-  clearAllViews: () => void
   removeView: (id: number) => void
   changeViewType: (id: number, type: ViewType) => void
   duplicateView: (view: View) => void
-  openAccordionItems: string[]
-  setOpenAccordionItems: (items: string[] | ((prev: string[]) => string[])) => void
   globalZoom: number
   setGlobalZoomStepIndex: (index: number) => void
   globalZoomStepIndex: number
   zoomSteps: number[]
 }
 
-const WebsiteViewerContext = createContext<WebsiteViewerContextType | undefined>(undefined)
+const WebsiteViewerContext = createContext<
+  WebsiteViewerContextType | undefined
+>(undefined)
 
-export function WebsiteViewerProvider({ children }: { children: ReactNode }) {
+export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   const [url, setUrl] = useState('')
+  const [currentSite, setCurrentSite] = useState<string | null>(null)
   const [views, setViews] = useState<View[]>([])
   const [nextId, setNextId] = useState(1)
   const [isInputHighlighted, setIsInputHighlighted] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
-  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([])
-  
+
   const { favorites } = useFavorites()
   const { history, addToHistory } = useHistory()
 
@@ -110,46 +109,23 @@ export function WebsiteViewerProvider({ children }: { children: ReactNode }) {
     setUrl(url)
     setIsInputHighlighted(true)
     setTimeout(() => setIsInputHighlighted(false), 1000)
-    toast.success('URL added to the viewer')
   }
 
-  const addView = (viewType: ViewType = 'desktop') => {
+  const loadSite = () => {
     const formattedUrl = formatUrl(url)
     if (formattedUrl) {
-      setViews(prevViews => [
-        { id: nextId, url: formattedUrl, type: viewType },
-        ...prevViews
-      ])
-      setNextId(nextId + 1)
-      addToHistory(formattedUrl)
-      setUrl('')
-      // Auto-open accordion for this URL
-      setOpenAccordionItems(prev =>
-        prev.includes(formattedUrl) ? prev : [...prev, formattedUrl]
-      )
-      toast.success(`New ${viewType} view added`)
-    } else {
-      toast.error('Please enter a valid URL')
-    }
-  }
-
-  const addAllViews = () => {
-    const formattedUrl = formatUrl(url)
-    if (formattedUrl) {
-      setViews(prevViews => [
+      // Replace all views with new site's 4 viewports
+      setViews([
         { id: nextId, url: formattedUrl, type: 'desktop' },
         { id: nextId + 1, url: formattedUrl, type: 'tablet' },
         { id: nextId + 2, url: formattedUrl, type: 'mobileLarge' },
-        { id: nextId + 3, url: formattedUrl, type: 'mobile' },
-        ...prevViews
+        { id: nextId + 3, url: formattedUrl, type: 'mobile' }
       ])
+      setCurrentSite(formattedUrl)
       setNextId(nextId + 4)
       addToHistory(formattedUrl)
       setUrl('')
-      // Auto-open accordion for this URL
-      setOpenAccordionItems(prev =>
-        prev.includes(formattedUrl) ? prev : [...prev, formattedUrl]
-      )
+      toast.success('Site loaded in all viewports')
     } else {
       toast.error('Please enter a valid URL')
     }
@@ -169,9 +145,9 @@ export function WebsiteViewerProvider({ children }: { children: ReactNode }) {
     toast.success(`New ${view.type} view added`)
   }
 
-  const clearAllViews = () => {
+  const clearSite = () => {
     setViews([])
-    setOpenAccordionItems([])
+    setCurrentSite(null)
   }
 
   const handleUrlChange = (value: string) => {
@@ -191,7 +167,7 @@ export function WebsiteViewerProvider({ children }: { children: ReactNode }) {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && url.trim()) {
-      addAllViews()
+      loadSite()
     }
   }
 
@@ -203,6 +179,7 @@ export function WebsiteViewerProvider({ children }: { children: ReactNode }) {
   const value: WebsiteViewerContextType = {
     url,
     setUrl,
+    currentSite,
     views,
     isInputHighlighted,
     showSuggestions,
@@ -212,15 +189,11 @@ export function WebsiteViewerProvider({ children }: { children: ReactNode }) {
     handleKeyDown,
     selectSuggestion,
     formatUrl,
-    addAllViews,
-    addView,
+    loadSite,
     setUrlWithHighlight,
-    clearAllViews,
     removeView,
     changeViewType,
     duplicateView,
-    openAccordionItems,
-    setOpenAccordionItems,
     globalZoom,
     setGlobalZoomStepIndex,
     globalZoomStepIndex,
@@ -234,10 +207,12 @@ export function WebsiteViewerProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function useWebsiteViewer() {
+export function useWebsiteViewer () {
   const context = useContext(WebsiteViewerContext)
   if (context === undefined) {
-    throw new Error('useWebsiteViewer must be used within a WebsiteViewerProvider')
+    throw new Error(
+      'useWebsiteViewer must be used within a WebsiteViewerProvider'
+    )
   }
   return context
 }

@@ -24,6 +24,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     "http://localhost:3000",
     "http://localhost:5173",
     "https://chriswiz.vercel.app",
+    "https://cherrydub98.vercel.app/",
   ]);
 
   useEffect(() => {

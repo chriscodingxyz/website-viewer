@@ -5,28 +5,27 @@ import { Button } from '@/components/ui/button'
 import { Globe, ZoomIn, ZoomOut } from 'lucide-react'
 import WebsiteView from './WebsiteView'
 import { toast } from 'sonner'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
-} from '@/components/ui/accordion'
-import { useWebsiteViewer, View } from '@/contexts/WebsiteViewerContext'
+import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
+import { useFavorites } from '@/contexts/FavoritesContext'
+import { useHistory } from '@/contexts/HistoryContext'
 
 export default function WebsiteViewer () {
   const [refreshKey] = useState(0)
   const {
+    currentSite,
     views,
     removeView,
     changeViewType,
     duplicateView,
-    openAccordionItems,
-    setOpenAccordionItems,
     globalZoom,
     globalZoomStepIndex,
     setGlobalZoomStepIndex,
-    zoomSteps
+    zoomSteps,
+    setUrlWithHighlight
   } = useWebsiteViewer()
+  
+  const { favorites } = useFavorites()
+  const { history } = useHistory()
 
   // Global zoom functions
   const globalZoomIn = () => {
@@ -52,15 +51,7 @@ export default function WebsiteViewer () {
     toast.success('Global zoom reset to 100%')
   }
 
-  // Group views by the exact URL loaded
-  const groupedViews = views.reduce((acc, view) => {
-    const urlKey = view.url
-    if (!acc[urlKey]) {
-      acc[urlKey] = []
-    }
-    acc[urlKey].push(view)
-    return acc
-  }, {} as Record<string, View[]>)
+  // No grouping needed in single-site mode
 
   return (
     <div>
@@ -82,125 +73,144 @@ export default function WebsiteViewer () {
       `}</style>
 
       {/* Main Content Area */}
-      <div className='p-0'>
-        {/* Adjusted padding for fixed header */}
-        {/* pb-28 for footer clearance, flex-grow to push footer down */}
-        {Object.keys(groupedViews).length === 0 && (
-          <div className='flex flex-col items-center justify-center min-h-full text-center text-muted-foreground py-4 sm:py-8 max-w-xl mx-auto px-2'>
-            <Globe className='w-12 h-12 sm:w-14 sm:h-14 mb-3 sm:mb-4 text-muted-foreground/60' />
-            <h2 className='text-xl sm:text-2xl font-medium mb-2 sm:mb-3 text-foreground'>
-              Website Viewer
-            </h2>
-            <p className='text-sm sm:text-base mb-3 sm:mb-4 text-muted-foreground/80 leading-relaxed max-w-md'>
-              View any website across different device formats simultaneously.
-              Perfect for responsive design testing and development.
-            </p>
-            <div className='space-y-1 text-xs sm:text-sm text-muted-foreground/70'>
-              <p>✓ Desktop, Tablet, and Mobile views</p>
-              <p>✓ Real-time responsive testing</p>
-              <p>✓ Local development server support</p>
+      <div className='pt-20 p-4'>
+        {!currentSite && (
+          <div className='max-w-4xl mx-auto'>
+            {/* Homepage Content */}
+            <div className='text-center mb-8'>
+              <Globe className='w-16 h-16 mb-4 text-muted-foreground/60 mx-auto' />
+              <h1 className='text-3xl font-medium mb-3 text-foreground'>
+                Website Viewer
+              </h1>
+              <p className='text-lg text-muted-foreground/80 leading-relaxed max-w-2xl mx-auto'>
+                View any website across different device formats simultaneously.
+                Perfect for responsive design testing and development.
+              </p>
             </div>
-            <div className='space-y-1 text-xs text-muted-foreground/60 mt-3 sm:mt-4'>
-              <p>⭐ Star button: Quick access to your saved favorites</p>
-              <p>🕒 Clock button: Browse your recently visited URLs</p>
+
+            {/* Features */}
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-8'>
+              <div className='text-center p-4 rounded-lg bg-muted/30'>
+                <h3 className='font-medium mb-2'>✓ All Device Views</h3>
+                <p className='text-sm text-muted-foreground'>Desktop, Tablet, and Mobile viewports</p>
+              </div>
+              <div className='text-center p-4 rounded-lg bg-muted/30'>
+                <h3 className='font-medium mb-2'>✓ Real-time Testing</h3>
+                <p className='text-sm text-muted-foreground'>Instant responsive design validation</p>
+              </div>
+              <div className='text-center p-4 rounded-lg bg-muted/30'>
+                <h3 className='font-medium mb-2'>✓ Local Development</h3>
+                <p className='text-sm text-muted-foreground'>Support for localhost servers</p>
+              </div>
             </div>
-            <p className='text-xs sm:text-sm mt-3 sm:mt-4 px-3 sm:px-4 py-1.5 sm:py-2 bg-muted/50 rounded-lg'>
-              Enter any URL above and press{' '}
-              <kbd className='px-1 sm:px-1.5 py-0.5 bg-background border rounded text-xs'>
-                Enter
-              </kbd>{' '}
-              to get started
-            </p>
+
+            {/* Favorites Section */}
+            {favorites.length > 0 && (
+              <div className='mb-8'>
+                <h2 className='text-xl font-medium mb-4'>⭐ Favorites</h2>
+                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'>
+                  {favorites.map((favorite, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setUrlWithHighlight(favorite)}
+                      className='p-3 text-left rounded-lg border hover:bg-muted/50 transition-colors'
+                    >
+                      <div className='font-medium truncate'>{favorite}</div>
+                      <div className='text-xs text-muted-foreground mt-1'>Click to load</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* History Section */}
+            {history.length > 0 && (
+              <div className='mb-8'>
+                <h2 className='text-xl font-medium mb-4'>🕒 Recent History</h2>
+                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'>
+                  {history.slice(0, 6).map((item, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setUrlWithHighlight(item)}
+                      className='p-3 text-left rounded-lg border hover:bg-muted/50 transition-colors'
+                    >
+                      <div className='font-medium truncate'>{item}</div>
+                      <div className='text-xs text-muted-foreground mt-1'>Click to load</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quick Start */}
+            <div className='text-center'>
+              <p className='text-sm mb-4 px-4 py-2 bg-muted/50 rounded-lg inline-block'>
+                Enter any URL above and press{' '}
+                <kbd className='px-1.5 py-0.5 bg-background border rounded text-xs'>
+                  Enter
+                </kbd>{' '}
+                to get started
+              </p>
+            </div>
           </div>
         )}
-        {/* Website Groups with Clean Accordion */}
-        {Object.keys(groupedViews).length > 0 && (
-          <Accordion
-            type='multiple'
-            value={openAccordionItems}
-            onValueChange={setOpenAccordionItems}
-            className='space-y-1'
-          >
-            {Object.entries(groupedViews).map(([url, viewsInGroup]) => (
-              <AccordionItem
-                key={url}
-                value={url}
-                className='border-b border-muted/30 last:border-b-0'
-              >
-                <AccordionTrigger className='hover:no-underline py-3 hover:bg-muted/20 px-2 rounded-sm'>
-                  <div className='flex items-center justify-between w-full'>
-                    <div className='flex items-center gap-2 flex-1 min-w-0'>
-                      <div className='w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500/60 flex-shrink-0'></div>
-                      <span
-                        className='text-sm font-medium text-foreground truncate'
-                        title={url}
-                      >
-                        {url}
-                      </span>
-                    </div>
-                    <div className='flex items-center gap-1 ml-2 flex-shrink-0'>
-                      <div className='hidden sm:flex items-center gap-1 px-1.5 py-1 bg-muted/30 rounded text-xs'>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          onClick={e => {
-                            e.stopPropagation()
-                            globalZoomOut()
-                          }}
-                          disabled={globalZoomStepIndex === 0}
-                          title='Zoom out'
-                          className='h-5 w-5 p-0'
-                        >
-                          <ZoomOut className='h-2.5 w-2.5' />
-                        </Button>
-                        <span
-                          className='text-xs w-8 text-center tabular-nums cursor-pointer'
-                          onClick={e => {
-                            e.stopPropagation()
-                            resetGlobalZoom()
-                          }}
-                          title='Reset zoom'
-                        >
-                          {Math.round(globalZoom * 100)}%
-                        </span>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          onClick={e => {
-                            e.stopPropagation()
-                            globalZoomIn()
-                          }}
-                          disabled={
-                            globalZoomStepIndex === zoomSteps.length - 1
-                          }
-                          title='Zoom in'
-                          className='h-5 w-5 p-0'
-                        >
-                          <ZoomIn className='h-2.5 w-2.5' />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className='pb-2 sm:pb-3'>
-                  <div className='flex flex-wrap gap-2 sm:gap-3 justify-center sm:justify-start px-0 sm:px-1'>
-                    {viewsInGroup.map(view => (
-                      <WebsiteView
-                        key={view.id}
-                        view={view}
-                        refreshKey={refreshKey}
-                        globalZoom={globalZoom}
-                        onRemove={() => removeView(view.id)}
-                        onTypeChange={type => changeViewType(view.id, type)}
-                        onDuplicate={duplicateView}
-                        index={views.findIndex(v => v.id === view.id)}
-                      />
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+
+        {/* Site Views */}
+        {currentSite && views.length > 0 && (
+          <div>
+            {/* Site Header with Zoom Controls */}
+            <div className='flex items-center justify-between mb-6 p-4 bg-muted/20 rounded-lg'>
+              <div className='flex items-center gap-2'>
+                <div className='w-2 h-2 rounded-full bg-green-500'></div>
+                <h2 className='text-lg font-medium truncate'>{currentSite}</h2>
+              </div>
+              <div className='flex items-center gap-2 px-3 py-2 bg-background rounded-lg border'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={globalZoomOut}
+                  disabled={globalZoomStepIndex === 0}
+                  title='Zoom out'
+                  className='h-6 w-6 p-0'
+                >
+                  <ZoomOut className='h-3 w-3' />
+                </Button>
+                <span
+                  className='text-sm w-12 text-center tabular-nums cursor-pointer'
+                  onClick={resetGlobalZoom}
+                  title='Reset zoom'
+                >
+                  {Math.round(globalZoom * 100)}%
+                </span>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={globalZoomIn}
+                  disabled={globalZoomStepIndex === zoomSteps.length - 1}
+                  title='Zoom in'
+                  className='h-6 w-6 p-0'
+                >
+                  <ZoomIn className='h-3 w-3' />
+                </Button>
+              </div>
+            </div>
+
+            {/* Viewport Grid */}
+            <div className='flex flex-wrap gap-4 justify-center'>
+              {views.map(view => (
+                <WebsiteView
+                  key={view.id}
+                  view={view}
+                  refreshKey={refreshKey}
+                  globalZoom={globalZoom}
+                  onRemove={() => removeView(view.id)}
+                  onTypeChange={type => changeViewType(view.id, type)}
+                  onDuplicate={duplicateView}
+                  index={views.findIndex(v => v.id === view.id)}
+                />
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>
