@@ -63,7 +63,10 @@ export default function WebsiteView ({
   const [displayDimensions] = useState(displayViewDimensions)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [scale, setScale] = useState(1)
-  const [userZoom, setUserZoom] = useState(1) // User-controlled zoom level
+  // Fixed zoom steps for better UX
+  const zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2]
+  const [zoomStepIndex, setZoomStepIndex] = useState(2) // Default to 100% (index 2)
+  const userZoom = zoomSteps[zoomStepIndex]
   const [isCompactView, setIsCompactView] = useState(false) // For responsive layout
   const containerRef = useRef<HTMLDivElement>(null)
   const [loadingState, setLoadingState] = useState<LoadingState>('loading')
@@ -77,13 +80,23 @@ export default function WebsiteView ({
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth
         const displayWidth = displayDimensions[view.type].width
-        const baseScale = Math.min(1, containerWidth / displayWidth)
+        
+        // For zoom levels 100% and below, fit to container
+        // For zoom levels above 100%, expand to show full content
+        let baseScale
+        if (userZoom <= 1) {
+          baseScale = Math.min(1, containerWidth / displayWidth)
+        } else {
+          // At zoom levels above 100%, always show full content
+          baseScale = 1
+        }
+        
         const finalScale = baseScale * userZoom
         setScale(finalScale)
         
-        // Determine if view should be in compact mode based on scaled width
+        // Determine if view should be in compact mode based on final width  
         const currentScaledWidth = displayWidth * finalScale
-        setIsCompactView(currentScaledWidth < 300)
+        setIsCompactView(currentScaledWidth < 350) // Increased threshold for mobile
       }
     }
 
@@ -156,42 +169,83 @@ export default function WebsiteView ({
     }
   }
 
+  const getDeviceIcon = (deviceType: ViewType) => {
+    switch (deviceType) {
+      case 'desktop':
+        return <Monitor className="h-4 w-4 text-blue-600" />
+      case 'tablet':
+        return <Tablet className="h-4 w-4 text-green-600" />
+      case 'mobileLarge':
+        return <Smartphone className="h-4 w-4 text-orange-600" />
+      case 'mobile':
+        return <Smartphone className="h-4 w-4 text-red-600" />
+    }
+  }
+
+  const getDeviceColor = (deviceType: ViewType) => {
+    switch (deviceType) {
+      case 'desktop':
+        return 'bg-blue-100 hover:bg-blue-200 border-blue-300'
+      case 'tablet':
+        return 'bg-green-100 hover:bg-green-200 border-green-300'
+      case 'mobileLarge':
+        return 'bg-orange-100 hover:bg-orange-200 border-orange-300'
+      case 'mobile':
+        return 'bg-red-100 hover:bg-red-200 border-red-300'
+    }
+  }
+
   const zoomIn = () => {
-    setUserZoom(prev => Math.min(prev * 1.25, 3)) // Max 3x zoom
+    setZoomStepIndex(prev => Math.min(prev + 1, zoomSteps.length - 1))
   }
 
   const zoomOut = () => {
-    setUserZoom(prev => Math.max(prev / 1.25, 0.25)) // Min 0.25x zoom
+    setZoomStepIndex(prev => Math.max(prev - 1, 0))
   }
 
   const resetZoom = () => {
-    setUserZoom(1)
+    setZoomStepIndex(2) // Reset to 100%
   }
 
-  // Container uses display dimensions scaled by user zoom
-  const scaledWidth = displayDimensions[view.type].width * scale
+  const cycleDeviceType = () => {
+    const devices: ViewType[] = ['desktop', 'tablet', 'mobileLarge', 'mobile']
+    const currentIndex = devices.indexOf(view.type)
+    const nextIndex = (currentIndex + 1) % devices.length
+    onTypeChange(devices[nextIndex])
+  }
+
+  // Container size - shows full content at all zoom levels
+  const scaledWidth = displayDimensions[view.type].width * scale  
   const scaledHeight = displayDimensions[view.type].height * scale
   
   // Calculate the scale factor to fit actual dimensions into display dimensions
   const contentScale = displayDimensions[view.type].width / actualDimensions[view.type].width
   const finalContentScale = contentScale * scale
   
-  const optionsHeight = isCompactView ? 100 : 90 // More space for stacked controls
+  const optionsHeight = isCompactView ? 80 : 70 // Reduced since dimensions moved to legend
   const borderWidth = 1
 
   return (
     <div
       ref={containerRef}
-      className='relative border rounded-lg overflow-hidden w-full sm:w-auto max-w-[600px]'
+      className='relative border rounded-lg overflow-hidden w-full sm:w-auto'
       style={{
         width: `${scaledWidth + 2 * borderWidth}px`,
-        height: `${scaledHeight + optionsHeight + 2 * borderWidth}px`
+        height: `${scaledHeight + optionsHeight + 2 * borderWidth}px`,
+        maxWidth: userZoom > 1 ? 'none' : '600px' // Remove max-width constraint when zoomed
       }}
     >
       <div className='absolute top-2 left-2 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold z-10'>
         {index + 1}
       </div>
-      <div className='p-2 space-y-2' style={{ height: `${optionsHeight}px` }}>
+      <button
+        onClick={onRemove}
+        className='absolute bottom-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded w-6 h-6 flex items-center justify-center z-20 shadow-sm transition-colors'
+        title='Remove view'
+      >
+        <X className='h-3 w-3' />
+      </button>
+      <div className={`space-y-2 ${isCompactView ? 'p-1' : 'p-2'}`} style={{ height: `${optionsHeight}px` }}>
         <div className='flex items-center justify-between'>
           <div className='flex items-center flex-1 mr-2'>
             <div className='flex items-center gap-2 pl-8'>
@@ -200,44 +254,44 @@ export default function WebsiteView ({
             <div className='flex items-center gap-1'>
               <button
                 onClick={refreshView}
-                className='text-gray-500 hover:text-gray-700 p-1'
+                className='text-gray-500 hover:text-gray-700 p-0.5'
                 title='Refresh view'
               >
-                <RefreshCw className='h-4 w-4' />
+                <RefreshCw className={`${isCompactView ? 'h-3 w-3' : 'h-4 w-4'}`} />
               </button>
               <button
                 onClick={openInNewTab}
-                className='text-gray-500 hover:text-gray-700 p-1'
+                className='text-gray-500 hover:text-gray-700 p-0.5'
                 title='Open in new tab'
               >
-                <ExternalLink className='h-4 w-4' />
+                <ExternalLink className={`${isCompactView ? 'h-3 w-3' : 'h-4 w-4'}`} />
               </button>
               <button
                 onClick={copyUrl}
-                className='text-gray-500 hover:text-gray-700 p-1'
+                className='text-gray-500 hover:text-gray-700 p-0.5'
                 title='Copy URL'
               >
-                <Copy className='h-4 w-4' />
+                <Copy className={`${isCompactView ? 'h-3 w-3' : 'h-4 w-4'}`} />
               </button>
               <button
                 onClick={handleFavoriteToggle}
-                className='text-gray-500 hover:text-gray-700 p-1'
+                className='text-gray-500 hover:text-gray-700 p-0.5'
                 title='Add to favorites'
               >
                 {isFavorite ? (
-                  <Star fill='yellow' className='h-4 w-4 text-yellow-500 ' />
+                  <Star fill='yellow' className={`${isCompactView ? 'h-3 w-3' : 'h-4 w-4'} text-yellow-500`} />
                 ) : (
-                  <Star className='h-4 w-4' />
+                  <Star className={`${isCompactView ? 'h-3 w-3' : 'h-4 w-4'}`} />
                 )}
               </button>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className='text-gray-500 hover:text-gray-700 p-1'
+                  className='text-gray-500 hover:text-gray-700 p-0.5'
                   title='Duplicate view'
                 >
-                  <PlusCircle className='h-4 w-4' />
+                  <PlusCircle className={`${isCompactView ? 'h-3 w-3' : 'h-4 w-4'}`} />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -246,87 +300,73 @@ export default function WebsiteView ({
                     onDuplicate({ ...view, type: 'desktop' })
                   }}
                 >
-                  <Monitor className='mr-2 h-4 w-4' /> Desktop
+                  <Monitor className='mr-2 h-3 w-3' /> Desktop
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     onDuplicate({ ...view, type: 'tablet' })
                   }}
                 >
-                  <Tablet className='mr-2 h-4 w-4' /> Tablet
+                  <Tablet className='mr-2 h-3 w-3' /> Tablet
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     onDuplicate({ ...view, type: 'mobileLarge' })
                   }}
                 >
-                  <Smartphone className='mr-2 h-4 w-4' /> Large Mobile
+                  <Smartphone className='mr-2 h-3 w-3' /> Large Mobile
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     onDuplicate({ ...view, type: 'mobile' })
                   }}
                 >
-                  <Smartphone className='mr-2 h-4 w-4' /> Mobile
+                  <Smartphone className='mr-2 h-3 w-3' /> Mobile
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <Button variant='ghost' size='sm' onClick={onRemove}>
-            <X className='h-4 w-4' />
-            <span className='sr-only'>Remove view</span>
-          </Button>
         </div>
         <div className={`${isCompactView ? 'flex flex-col gap-2' : 'flex justify-between items-center'}`}>
-          <Select value={view.type} onValueChange={onTypeChange}>
-            <SelectTrigger className={`${isCompactView ? 'w-full text-xs' : 'w-[120px] text-sm'}`}>
-              <SelectValue placeholder='Device' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='desktop'>
-                <Monitor className='inline mr-1 h-3 w-3' /> {isCompactView ? 'Desktop' : 'Desktop'}
-              </SelectItem>
-              <SelectItem value='tablet'>
-                <Tablet className='inline mr-1 h-3 w-3' /> {isCompactView ? 'Tablet' : 'Tablet'}
-              </SelectItem>
-              <SelectItem value='mobileLarge'>
-                <Smartphone className='inline mr-1 h-3 w-3' /> {isCompactView ? 'Large' : 'Large'}
-              </SelectItem>
-              <SelectItem value='mobile'>
-                <Smartphone className='inline mr-1 h-3 w-3' /> {isCompactView ? 'Mobile' : 'Mobile'}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <div className={`flex items-center ${isCompactView ? 'justify-center gap-1' : 'gap-1'}`}>
-            <Button 
-              size={isCompactView ? "sm" : "sm"}
-              variant="outline" 
-              onClick={zoomOut}
-              disabled={userZoom <= 0.25}
-              title="Zoom out"
-              className={isCompactView ? 'h-7 w-7 p-0' : ''}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={cycleDeviceType}
+              className={`flex items-center justify-center w-10 h-8 rounded border transition-colors ${getDeviceColor(view.type)}`}
+              title={`${view.type} (${actualDimensions[view.type].width}×${actualDimensions[view.type].height}) - Click to cycle`}
             >
-              <ZoomOut className="h-3 w-3" />
-            </Button>
-            <Button 
-              size={isCompactView ? "sm" : "sm"}
-              variant="ghost" 
-              onClick={resetZoom}
-              className={`text-xs ${isCompactView ? 'px-1 h-7' : 'px-2'}`}
-              title="Reset zoom"
-            >
-              {Math.round(userZoom * 100)}%
-            </Button>
-            <Button 
-              size={isCompactView ? "sm" : "sm"}
-              variant="outline" 
-              onClick={zoomIn}
-              disabled={userZoom >= 3}
-              title="Zoom in"
-              className={isCompactView ? 'h-7 w-7 p-0' : ''}
-            >
-              <ZoomIn className="h-3 w-3" />
-            </Button>
+              {getDeviceIcon(view.type)}
+            </button>
+            <div className="flex items-center gap-1">
+              <Button 
+                size={isCompactView ? "sm" : "sm"}
+                variant="outline" 
+                onClick={zoomOut}
+                disabled={zoomStepIndex === 0}
+                title={`Zoom out to ${zoomStepIndex > 0 ? Math.round(zoomSteps[zoomStepIndex - 1] * 100) : 50}%`}
+                className={isCompactView ? 'h-7 w-7 p-0' : ''}
+              >
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <Button 
+                size={isCompactView ? "sm" : "sm"}
+                variant="ghost" 
+                onClick={resetZoom}
+                className={`text-xs ${isCompactView ? 'px-1 h-7' : 'px-2'}`}
+                title="Reset to 100%"
+              >
+                {Math.round(userZoom * 100)}%
+              </Button>
+              <Button 
+                size={isCompactView ? "sm" : "sm"}
+                variant="outline" 
+                onClick={zoomIn}
+                disabled={zoomStepIndex === zoomSteps.length - 1}
+                title={`Zoom in to ${zoomStepIndex < zoomSteps.length - 1 ? Math.round(zoomSteps[zoomStepIndex + 1] * 100) : 200}%`}
+                className={isCompactView ? 'h-7 w-7 p-0' : ''}
+              >
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
           {/* <Button onClick={captureScreenshot} size="sm" disabled={isCapturing}>
             {isCapturing ? (
@@ -336,9 +376,6 @@ export default function WebsiteView ({
             )}
             Capture
           </Button> */}
-        </div>
-        <div className='text-xs text-center'>
-          {actualDimensions[view.type].width} × {actualDimensions[view.type].height} ({Math.round(userZoom * 100)}%)
         </div>
       </div>
       <div

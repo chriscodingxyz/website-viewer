@@ -341,15 +341,38 @@ export default function WebsiteViewer () {
 
       {views.length > 0 && (
         <div className='mb-4 p-3 bg-muted/50 rounded-lg border'>
-          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-            <Globe className='h-4 w-4' />
-            <span className='font-medium'>Viewing:</span>
-            <div className='flex flex-wrap gap-2'>
-              {[...new Set(views.map(v => v.url))].map((url, index) => (
-                <span key={index} className='px-2 py-1 bg-background rounded text-xs font-mono'>
-                  {url.replace(/^https?:\/\//, '')}
-                </span>
-              ))}
+          <div className='flex flex-col gap-3'>
+            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+              <Globe className='h-4 w-4' />
+              <span className='font-medium'>Viewing:</span>
+              <div className='flex flex-wrap gap-2'>
+                {[...new Set(views.map(v => v.url))].map((url, index) => (
+                  <span key={index} className='px-2 py-1 bg-background rounded text-xs font-mono'>
+                    {url.replace(/^https?:\/\//, '')}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className='flex items-center gap-4 text-xs text-muted-foreground'>
+              <span className='font-medium'>Device Types:</span>
+              <div className='flex items-center gap-2'>
+                <div className='flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded border border-blue-300'>
+                  <Monitor className='h-3 w-3' />
+                  <span>Desktop (1024×768)</span>
+                </div>
+                <div className='flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded border border-green-300'>
+                  <Tablet className='h-3 w-3' />
+                  <span>Tablet (768×1024)</span>
+                </div>
+                <div className='flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 rounded border border-orange-300'>
+                  <Smartphone className='h-3 w-3' />
+                  <span>Large (640×1000)</span>
+                </div>
+                <div className='flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 rounded border border-red-300'>
+                  <Smartphone className='h-3 w-3' />
+                  <span>Mobile (375×667)</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
