@@ -15,18 +15,9 @@ import {
   Star,
   RefreshCw,
   ZoomIn,
-  ZoomOut,
-  ChevronDown,
-  ChevronUp,
-  Eye,
-  EyeOff
+  ZoomOut
 } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '@/components/ui/collapsible'
 import WebsiteView from './WebsiteView'
 import { toast } from 'sonner'
 import {
@@ -38,6 +29,12 @@ import {
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
 import { ScrollArea } from './ui/scroll-area'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 
 // export type ViewType = 'desktop' | 'tablet' | 'mobile'
 
@@ -104,23 +101,16 @@ export default function WebsiteViewer () {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
   const [refreshKey, setRefreshKey] = useState(0)
+  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([])
   const { favorites } = useFavorites()
-  const { history, addToHistory, removeFromHistory } = useHistory()
+  const { history, addToHistory } = useHistory()
 
   // Global zoom state
   const zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2]
   const [globalZoomStepIndex, setGlobalZoomStepIndex] = useState(2) // Default to 100%
   const globalZoom = zoomSteps[globalZoomStepIndex]
 
-  // State for collapsed groups
-  const [collapsedGroups, setCollapsedGroups] = useState<
-    Record<string, boolean>
-  >({})
 
-  const highlightInput = () => {
-    setIsInputHighlighted(true)
-    setTimeout(() => setIsInputHighlighted(false), 1000)
-  }
 
   const setUrlWithHighlight = (url: string) => {
     setUrl(url)
@@ -139,6 +129,10 @@ export default function WebsiteViewer () {
       setNextId(nextId + 1)
       addToHistory(formattedUrl)
       setUrl('')
+      // Auto-open accordion for this URL
+      setOpenAccordionItems(prev => 
+        prev.includes(formattedUrl) ? prev : [...prev, formattedUrl]
+      )
       toast.success(`New ${viewType} view added`)
     } else {
       toast.error('Please enter a valid URL')
@@ -158,6 +152,10 @@ export default function WebsiteViewer () {
       setNextId(nextId + 4)
       addToHistory(formattedUrl)
       setUrl('')
+      // Auto-open accordion for this URL
+      setOpenAccordionItems(prev => 
+        prev.includes(formattedUrl) ? prev : [...prev, formattedUrl]
+      )
     } else {
       toast.error('Please enter a valid URL')
     }
@@ -175,10 +173,6 @@ export default function WebsiteViewer () {
     setViews([])
   }
 
-  const refreshAllViews = () => {
-    setRefreshKey(prev => prev + 1)
-    toast.success('Refreshing all views')
-  }
 
   const duplicateView = (view: View) => {
     setViews(prevViews => [{ ...view, id: nextId }, ...prevViews])
@@ -209,11 +203,7 @@ export default function WebsiteViewer () {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault()
-      if (e.metaKey || e.ctrlKey) {
-        addAllViews()
-      } else {
-        addView('desktop')
-      }
+      addAllViews()
       setShowSuggestions(false)
     } else if (e.key === 'Escape') {
       setShowSuggestions(false)
@@ -251,25 +241,6 @@ export default function WebsiteViewer () {
     toast.success('Global zoom reset to 100%')
   }
 
-  const toggleGroupCollapse = (urlToToggle: string) => {
-    setCollapsedGroups(prev => {
-      const isCurrentlyCollapsed = prev[urlToToggle]
-      const newCollapsedGroups: { [key: string]: boolean } = {}
-
-      if (isCurrentlyCollapsed) {
-        Object.keys(prev).forEach(key => {
-          newCollapsedGroups[key] = true
-        })
-        newCollapsedGroups[urlToToggle] = false
-      } else {
-        Object.keys(prev).forEach(key => {
-          newCollapsedGroups[key] = prev[key]
-        })
-        newCollapsedGroups[urlToToggle] = true
-      }
-      return newCollapsedGroups
-    })
-  }
 
   // Group views by the exact URL loaded
   const groupedViews = views.reduce((acc, view) => {
@@ -304,119 +275,112 @@ export default function WebsiteViewer () {
         {/* Adjusted padding for fixed header */}
         {/* pb-28 for footer clearance, flex-grow to push footer down */}
         {Object.keys(groupedViews).length === 0 && (
-          <div className='flex flex-col items-center justify-center h-full text-center text-muted-foreground pt-20'>
-            <Globe className='w-16 h-16 mb-4 text-gray-400' />
-            <h2 className='text-2xl font-semibold mb-2'>
-              Welcome to Website Viewer
+          <div className='flex flex-col items-center justify-center h-full text-center text-muted-foreground pt-20 max-w-2xl mx-auto'>
+            <Globe className='w-16 h-16 mb-6 text-muted-foreground/60' />
+            <h2 className='text-3xl font-medium mb-4 text-foreground'>
+              Website Viewer
             </h2>
-            <p className='mb-6'>
-              Enter a URL in the bar below to start viewing websites in multiple
-              device formats.
+            <p className='text-lg mb-6 text-muted-foreground/80 leading-relaxed'>
+              View any website across different device formats simultaneously. 
+              Perfect for responsive design testing and development.
             </p>
-            <p className='text-sm'>
-              Tip: Use ⌘⏎ (or Ctrl⏎) to load in all device types at once.
+            <div className='space-y-2 text-sm text-muted-foreground/70'>
+              <p>✓ Desktop, Tablet, and Mobile views</p>
+              <p>✓ Real-time responsive testing</p>
+              <p>✓ Local development server support</p>
+            </div>
+            <p className='text-sm mt-8 px-4 py-2 bg-muted/50 rounded-lg'>
+              Enter any URL above and press <kbd className='px-1.5 py-0.5 bg-background border rounded text-xs'>Enter</kbd> to get started
             </p>
           </div>
         )}
-        {/* Grouped Views - This part is moved inside main and wrapped with container */}
+        {/* Website Groups with Accordion */}
         {Object.keys(groupedViews).length > 0 && (
-          <>
-            {Object.entries(groupedViews).map(([url, viewsInGroup]) => {
-              const isCollapsed = collapsedGroups[url]
-              return (
-                <Collapsible
-                  key={url}
-                  open={!isCollapsed}
-                  onOpenChange={() => toggleGroupCollapse(url)}
-                  className='border rounded-lg bg-card p-3 shadow-md space-y-1'
-                >
-                  <CollapsibleContent className='pt-1'>
-                    {/* Apply pt-1 here for spacing when open */}
-                    <div className='flex flex-wrap gap-4 justify-start'>
-                      {viewsInGroup.map(view => (
-                        <WebsiteView
-                          key={view.id}
-                          view={view}
-                          refreshKey={refreshKey}
-                          globalZoom={globalZoom}
-                          onRemove={() => removeView(view.id)}
-                          onTypeChange={type => changeViewType(view.id, type)}
-                          onDuplicate={duplicateView}
-                          index={views.findIndex(v => v.id === view.id)} // Use original index for numbering
-                        />
-                      ))}
+          <Accordion 
+            type="multiple" 
+            value={openAccordionItems}
+            onValueChange={setOpenAccordionItems}
+            className="space-y-6"
+          >
+            {Object.entries(groupedViews).map(([url, viewsInGroup]) => (
+              <AccordionItem 
+                key={url} 
+                value={url}
+                className="border rounded-lg bg-card/30 px-4"
+              >
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <div className="flex items-center justify-between w-full mr-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-green-500/60"></div>
+                      <span className="text-sm font-medium text-foreground truncate" title={url}>
+                        {url}
+                      </span>
                     </div>
-                  </CollapsibleContent>
-                  {/* Group Footer: URL, Zoom, Collapse Controls */}
-                  <div
-                    className={`flex justify-between items-center mt-2 pt-2 border-t ${
-                      isCollapsed ? '' : '' // Retain for potential future conditional styling, though less relevant now
-                    }`}
-                  >
-                    <h2
-                      className='text-sm font-semibold text-primary truncate flex-1 mr-2'
-                      title={url}
-                    >
-                      {url}
-                    </h2>
-                    <div className='flex items-center gap-2 flex-shrink-0 bg-muted p-1 rounded-md'>
-                      {!isCollapsed && (
-                        <div className='flex items-center gap-1'>
-                          <Button
-                            variant='ghost'
-                            size='icon'
-                            onClick={globalZoomOut}
-                            disabled={globalZoomStepIndex === 0}
-                            title='Zoom out (global)'
-                          >
-                            <ZoomOut className='h-4 w-4' />
-                          </Button>
-                          <span
-                            className='text-xs w-10 text-center tabular-nums cursor-pointer'
-                            onClick={resetGlobalZoom}
-                            title='Reset zoom (global)'
-                          >
-                            {Math.round(globalZoom * 100)}%
-                          </span>
-                          <Button
-                            variant='ghost'
-                            size='icon'
-                            onClick={globalZoomIn}
-                            disabled={
-                              globalZoomStepIndex === zoomSteps.length - 1
-                            }
-                            title='Zoom in (global)'
-                          >
-                            <ZoomIn className='h-4 w-4' />
-                          </Button>
-                        </div>
-                      )}
-                      {!isCollapsed && (
-                        <div className='w-px self-stretch bg-border mx-1'></div>
-                      )} {/* Vertical Separator */}
-                      <CollapsibleTrigger asChild>
+                    <div className="flex items-center gap-2 mr-2">
+                      <div className="flex items-center gap-1.5 px-2 py-1 bg-muted/40 rounded-md">
                         <Button
-                          size='icon'
                           variant='ghost'
-                          title={isCollapsed ? 'Show views' : 'Hide views'}
+                          size='sm'
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            globalZoomOut()
+                          }}
+                          disabled={globalZoomStepIndex === 0}
+                          title='Zoom out (global)'
+                          className='h-6 w-6 p-0'
                         >
-                          {isCollapsed ? (
-                            <Eye className='h-4 w-4' />
-                          ) : (
-                            <EyeOff className='h-4 w-4' />
-                          )}
+                          <ZoomOut className='h-3 w-3' />
                         </Button>
-                      </CollapsibleTrigger>
+                        <span
+                          className='text-xs w-10 text-center tabular-nums cursor-pointer'
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            resetGlobalZoom()
+                          }}
+                          title='Reset zoom (global)'
+                        >
+                          {Math.round(globalZoom * 100)}%
+                        </span>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            globalZoomIn()
+                          }}
+                          disabled={globalZoomStepIndex === zoomSteps.length - 1}
+                          title='Zoom in (global)'
+                          className='h-6 w-6 p-0'
+                        >
+                          <ZoomIn className='h-3 w-3' />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </Collapsible>
-              )
-            })}
-          </>
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className='flex flex-wrap gap-3 justify-start pt-2'>
+                    {viewsInGroup.map(view => (
+                      <WebsiteView
+                        key={view.id}
+                        view={view}
+                        refreshKey={refreshKey}
+                        globalZoom={globalZoom}
+                        onRemove={() => removeView(view.id)}
+                        onTypeChange={type => changeViewType(view.id, type)}
+                        onDuplicate={duplicateView}
+                        index={views.findIndex(v => v.id === view.id)}
+                      />
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         )}
       </main>
       {/* Footer - Fixed at the bottom */}
-      <header className='fixed top-0 left-0 right-0 bg-background border-b p-3 shadow-md z-40'>
+      <header className='fixed top-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b p-3 z-40'>
         <div className='container mx-auto'>
           <div className='flex gap-2 flex-col lg:flex-row'>
             <div className='flex-grow relative w-full lg:w-auto'>
@@ -433,7 +397,7 @@ export default function WebsiteViewer () {
                 onBlur={() =>
                   setTimeout(() => setShowSuggestions(false), 100)
                 }
-                placeholder='example.com or localhost:3000 (⏎ for desktop, ⌘⏎ for all)'
+                placeholder='example.com or localhost:3000'
                 className={`text-[16px] bg-background ${
                   isInputHighlighted ? 'highlight-input' : ''
                 }`}
@@ -452,43 +416,43 @@ export default function WebsiteViewer () {
                 </div>
               )}
             </div>
-            <div className='flex gap-1'>
+            <div className='flex gap-2'>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size='sm' disabled={!formatUrl(url)}>
+                  <Button size='sm' disabled={!formatUrl(url)} className='font-medium'>
                     <Globe className='w-4 h-4 mr-2' />
                     Load
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className='w-56'>
+                <DropdownMenuContent className='w-56 border-muted'>
                   <DropdownMenuItem
                     onClick={addAllViews}
                     disabled={!formatUrl(url)}
-                    className='hover:bg-muted focus:bg-muted text-foreground'
+                    className='focus:bg-muted/50'
                   >
                     <PlusCircle className='mr-2 h-4 w-4' /> All Views
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => addView('desktop')}
-                    className='bg-purple-50 hover:bg-purple-100 text-purple-700 focus:bg-purple-100 focus:text-purple-800'
+                    className='focus:bg-muted/50'
                   >
                     <Monitor className='mr-2 h-4 w-4' /> Desktop
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => addView('tablet')}
-                    className='bg-blue-50 hover:bg-blue-100 text-blue-700 focus:bg-blue-100 focus:text-blue-800'
+                    className='focus:bg-muted/50'
                   >
                     <Tablet className='mr-2 h-4 w-4' /> Tablet
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => addView('mobileLarge')}
-                    className='bg-green-50 hover:bg-green-100 text-green-700 focus:bg-green-100 focus:text-green-800'
+                    className='focus:bg-muted/50'
                   >
                     <Smartphone className='mr-2 h-4 w-4' /> Large Mobile
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => addView('mobile')}
-                    className='bg-orange-50 hover:bg-orange-100 text-orange-700 focus:bg-orange-100 focus:text-orange-800'
+                    className='focus:bg-muted/50'
                   >
                     <Smartphone className='mr-2 h-4 w-4' /> Mobile
                   </DropdownMenuItem>
@@ -497,7 +461,7 @@ export default function WebsiteViewer () {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size='sm' variant='outline'>
+                  <Button size='sm' variant='ghost' className='border-0'>
                     <Star
                       className='w-4 h-4 text-yellow-500'
                       fill={favorites.length > 0 ? 'yellow' : 'transparent'}
@@ -520,7 +484,7 @@ export default function WebsiteViewer () {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size='sm' variant='outline'>
+                  <Button size='sm' variant='ghost' className='border-0'>
                     <Clock className='w-4 h-4' />
                   </Button>
                 </DropdownMenuTrigger>
@@ -544,7 +508,8 @@ export default function WebsiteViewer () {
                   <Button
                     size={'sm'}
                     onClick={clearAllViews}
-                    variant='destructive'
+                    variant='ghost'
+                    className='text-destructive hover:text-destructive hover:bg-destructive/10'
                   >
                     <Trash2 size={18} />
                   </Button>

@@ -54,7 +54,8 @@ Views are automatically scaled to fit container width while maintaining aspect r
 Uses **shadcn/ui** components with:
 - Radix UI primitives for accessible components
 - Tailwind CSS for styling with custom CSS variables
-- Lucide React for icons
+- Phosphor Icons for the footer social icons
+- Lucide React for UI icons
 - Sonner for toast notifications
 
 ### Styling Notes
@@ -63,9 +64,18 @@ Uses **shadcn/ui** components with:
 - 16px input font size to prevent mobile zoom
 - Custom CSS animation for URL input highlighting
 - Responsive design with mobile-first approach
+- Minimalistic design with subtle colors and reduced visual clutter
+- Clean header without shadow, using backdrop blur for modern look
 
 ### URL Handling
 
 - Automatic protocol detection (adds https:// for regular domains, http:// for localhost)
 - Validation for both standard URLs and localhost development servers
 - URL formatting and validation in `WebsiteViewer.tsx:39-71`
+
+### User Interaction
+
+- **Enter key**: Loads all viewport types (desktop, tablet, mobileLarge, mobile) at once
+- **URL suggestions**: Shows recent history, favorites, and common dev ports
+- **Responsive UI**: Optimized for both desktop and mobile usage
+- **Minimalistic controls**: Clean interface with subtle hover states

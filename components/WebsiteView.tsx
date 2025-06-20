@@ -19,7 +19,6 @@ import {
   Copy,
   Loader2,
   AlertCircle,
-  CheckCircle,
   Settings
 } from 'lucide-react'
 import { View, ViewType } from './WebsiteViewer'
@@ -179,7 +178,7 @@ export default function WebsiteView ({
       case 'loading':
         return <Loader2 className='h-3 w-3 animate-spin text-primary' />
       case 'loaded':
-        return <CheckCircle className='h-3 w-3 text-primary' />
+        return null // No icon when loaded
       case 'error':
         return <AlertCircle className='h-3 w-3 text-destructive' />
     }
