@@ -12,7 +12,8 @@ import {
   Tablet,
   Smartphone,
   PlusCircle,
-  Star
+  Star,
+  RefreshCw
 } from 'lucide-react'
 import WebsiteView from './WebsiteView'
 import { toast } from 'sonner'
@@ -34,6 +35,7 @@ export interface View {
   id: number
   url: string
   type: ViewType
+  refreshKey?: number
 }
 
 const isValidUrl = (url: string): boolean => {
@@ -70,11 +72,26 @@ const formatUrl = (inputUrl: string): string | null => {
   return isValidUrl(formattedUrl) ? formattedUrl : null
 }
 
+const commonDevPorts = [
+  'localhost:3000',
+  'localhost:3001', 
+  'localhost:5173',
+  'localhost:8080',
+  'localhost:4000',
+  'localhost:8000',
+  'localhost:8888',
+  '127.0.0.1:3000',
+  '127.0.0.1:5173'
+]
+
 export default function WebsiteViewer () {
   const [url, setUrl] = useState('')
   const [views, setViews] = useState<View[]>([])
   const [nextId, setNextId] = useState(1)
   const [isInputHighlighted, setIsInputHighlighted] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
+  const [refreshKey, setRefreshKey] = useState(0)
   const { favorites } = useFavorites()
   const { history, addToHistory, removeFromHistory } = useHistory()
 
@@ -136,10 +153,55 @@ export default function WebsiteViewer () {
     setViews([])
   }
 
+  const refreshAllViews = () => {
+    setRefreshKey(prev => prev + 1)
+    toast.success('Refreshing all views')
+  }
+
   const duplicateView = (view: View) => {
     setViews(prevViews => [{ ...view, id: nextId }, ...prevViews])
     setNextId(nextId + 1)
     toast.success(`New ${view.type} view added`)
+  }
+
+  const handleUrlChange = (value: string) => {
+    setUrl(value)
+    
+    if (value.length > 0) {
+      const allSuggestions = [...commonDevPorts, ...history, ...favorites]
+      const filtered = allSuggestions
+        .filter(suggestion => 
+          suggestion.toLowerCase().includes(value.toLowerCase()) && 
+          suggestion !== value
+        )
+        .slice(0, 6)
+      
+      setFilteredSuggestions(filtered)
+      setShowSuggestions(filtered.length > 0)
+    } else {
+      setShowSuggestions(false)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (e.metaKey || e.ctrlKey) {
+        addAllViews()
+      } else {
+        addView('desktop')
+      }
+      setShowSuggestions(false)
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false)
+    }
+  }
+
+  const selectSuggestion = (suggestion: string) => {
+    setUrl(suggestion)
+    setShowSuggestions(false)
+    setIsInputHighlighted(true)
+    setTimeout(() => setIsInputHighlighted(false), 1000)
   }
 
   return (
@@ -162,16 +224,34 @@ export default function WebsiteViewer () {
       `}</style>
       <div className='space-y-2 container mx-auto rounded-md'>
         <div className='flex gap-2 flex-col lg:flex-row'>
-          <Input
-            id='url-input'
-            type='text'
-            value={url}
-            onChange={e => setUrl(e.target.value)}
-            placeholder='example.com or localhost:3000'
-            className={`flex-grow text-[16px] bg-background ${
-              isInputHighlighted ? 'highlight-input' : ''
-            }`}
-          />
+          <div className='flex-grow relative'>
+            <Input
+              id='url-input'
+              type='text'
+              value={url}
+              onChange={e => handleUrlChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => url.length > 0 && setShowSuggestions(filteredSuggestions.length > 0)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
+              placeholder='example.com or localhost:3000 (⏎ for desktop, ⌘⏎ for all)'
+              className={`text-[16px] bg-background ${
+                isInputHighlighted ? 'highlight-input' : ''
+              }`}
+            />
+            {showSuggestions && (
+              <div className='absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto'>
+                {filteredSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => selectSuggestion(suggestion)}
+                    className='w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground text-sm border-b last:border-b-0'
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div className='flex gap-1'>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -246,9 +326,14 @@ export default function WebsiteViewer () {
             </DropdownMenu>
 
             {views.length > 0 && (
-              <Button size={'sm'} onClick={clearAllViews} variant='destructive'>
-                <Trash2 size={18} />
-              </Button>
+              <>
+                <Button size={'sm'} onClick={refreshAllViews} variant='outline'>
+                  <RefreshCw size={16} />
+                </Button>
+                <Button size={'sm'} onClick={clearAllViews} variant='destructive'>
+                  <Trash2 size={18} />
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -259,6 +344,7 @@ export default function WebsiteViewer () {
           <WebsiteView
             key={view.id}
             view={view}
+            refreshKey={refreshKey}
             onRemove={() => removeView(view.id)}
             onTypeChange={type => changeViewType(view.id, type)}
             onDuplicate={duplicateView}
