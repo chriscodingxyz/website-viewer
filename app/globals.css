@@ -110,3 +110,18 @@
 .responsive-text-3xl {
   font-size: clamp(2.44rem, 2.38vw + 1.85rem, 3.75rem);
 }
+
+/* Responsive accordion utilities */
+.accordion-content-responsive {
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  padding-bottom: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .accordion-content-responsive {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-bottom: 0.75rem;
+  }
+}

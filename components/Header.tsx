@@ -22,47 +22,30 @@ import {
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
 import { ScrollArea } from './ui/scroll-area'
-import { ViewType } from './WebsiteViewer'
+import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 
-export interface HeaderProps {
-  url: string
-  setUrl: (url: string) => void
-  handleUrlChange: (value: string) => void
-  handleKeyDown: (e: React.KeyboardEvent) => void
-  isInputHighlighted: boolean
-  showSuggestions: boolean
-  filteredSuggestions: string[]
-  setShowSuggestions: (show: boolean) => void
-  selectSuggestion: (suggestion: string) => void
-  formatUrl: (url: string) => string | null
-  addAllViews: () => void
-  addView: (type: ViewType) => void
-  setUrlWithHighlight: (url: string) => void
-  clearAllViews: () => void
-  views: any[]
-}
-
-export function Header ({
-  url,
-  handleUrlChange,
-  handleKeyDown,
-  isInputHighlighted,
-  showSuggestions,
-  filteredSuggestions,
-  setShowSuggestions,
-  selectSuggestion,
-  formatUrl,
-  addAllViews,
-  addView,
-  setUrlWithHighlight,
-  clearAllViews,
-  views
-}: HeaderProps) {
+export function Header () {
   const { favorites } = useFavorites()
   const { history } = useHistory()
+  const {
+    url,
+    handleUrlChange,
+    handleKeyDown,
+    isInputHighlighted,
+    showSuggestions,
+    filteredSuggestions,
+    setShowSuggestions,
+    selectSuggestion,
+    formatUrl,
+    addAllViews,
+    addView,
+    setUrlWithHighlight,
+    clearAllViews,
+    views
+  } = useWebsiteViewer()
 
   return (
-    <header className='bg-background border-b py-3 flex-shrink-0'>
+    <header className='bg-background border-b py-3 px-2 flex-shrink-0'>
       <div>
         <div className='flex gap-2 flex-col lg:flex-row'>
           <div className='flex-grow relative w-full lg:w-auto'>

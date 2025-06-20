@@ -111,7 +111,7 @@ export default function WebsiteView ({
 
         // Determine if view should be in compact mode based on final width
         const currentScaledWidth = displayWidth * finalScale
-        setIsCompactView(currentScaledWidth < 350) // Increased threshold for mobile
+        setIsCompactView(currentScaledWidth < 320) // Optimized threshold for mobile
       }
     }
 
@@ -244,7 +244,7 @@ export default function WebsiteView ({
       style={{
         width: `${scaledWidth + 2 * borderWidth}px`,
         height: `${scaledHeight + optionsHeight + 2 * borderWidth}px`,
-        maxWidth: globalZoom > 1 ? 'none' : '600px' // Remove max-width constraint when zoomed
+        maxWidth: globalZoom > 1 ? 'none' : 'none' // Remove max-width constraints for better space utilization
       }}
     >
       <div
