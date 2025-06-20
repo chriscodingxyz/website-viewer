@@ -339,7 +339,7 @@ export default function WebsiteViewer () {
         </div>
       </div>
 
-      <div className='flex flex-wrap gap-6 justify-center'>
+      <div className='flex flex-wrap gap-4 justify-center max-w-full overflow-x-auto'>
         {views.map((view, index) => (
           <WebsiteView
             key={view.id}

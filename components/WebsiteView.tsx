@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { Monitor, Tablet, Smartphone, X, Star, PlusCircle, RefreshCw, ExternalLink, Copy, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
+import { Monitor, Tablet, Smartphone, X, Star, PlusCircle, RefreshCw, ExternalLink, Copy, Loader2, AlertCircle, CheckCircle, ZoomIn, ZoomOut } from 'lucide-react'
 import { View, ViewType } from './WebsiteViewer'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { toast } from 'sonner'
@@ -24,11 +24,20 @@ import {
 //   mobile: { width: 375, height: 667 }
 // }
 
-const defaultViewDimensions = {
+// Actual device dimensions for iframe content 
+const actualViewDimensions = {
   desktop: { width: 1024, height: 768 },
   tablet: { width: 768, height: 1024 },
-  mobileLarge: { width: 640, height: 1000 }, // Just under sm: breakpoint (640px)
-  mobile: { width: 375, height: 667 } // Standard phones like iPhone SE
+  mobileLarge: { width: 640, height: 1000 },
+  mobile: { width: 375, height: 667 }
+}
+
+// Display dimensions for container (scaled down for layout)
+const displayViewDimensions = {
+  desktop: { width: 400, height: 300 }, // 2.56x scale down
+  tablet: { width: 384, height: 512 }, // 2x scale down  
+  mobileLarge: { width: 320, height: 500 }, // 2x scale down
+  mobile: { width: 187, height: 333 } // 2x scale down
 }
 
 type WebsiteViewProps = {
@@ -50,9 +59,11 @@ export default function WebsiteView ({
   onDuplicate,
   index
 }: WebsiteViewProps) {
-  const [viewDimensions] = useState(defaultViewDimensions)
+  const [actualDimensions] = useState(actualViewDimensions)
+  const [displayDimensions] = useState(displayViewDimensions)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [scale, setScale] = useState(1)
+  const [userZoom, setUserZoom] = useState(1) // User-controlled zoom level
   const containerRef = useRef<HTMLDivElement>(null)
   const [loadingState, setLoadingState] = useState<LoadingState>('loading')
   const [loadStartTime, setLoadStartTime] = useState<number>(Date.now())
@@ -64,16 +75,17 @@ export default function WebsiteView ({
     const updateScale = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth
-        const viewWidth = viewDimensions[view.type].width
-        const newScale = Math.min(1, containerWidth / viewWidth)
-        setScale(newScale)
+        const displayWidth = displayDimensions[view.type].width
+        const baseScale = Math.min(1, containerWidth / displayWidth)
+        const finalScale = baseScale * userZoom
+        setScale(finalScale)
       }
     }
 
     updateScale()
     window.addEventListener('resize', updateScale)
     return () => window.removeEventListener('resize', updateScale)
-  }, [view.type, viewDimensions])
+  }, [view.type, displayDimensions, userZoom])
 
   useEffect(() => {
     setLoadingState('loading')
@@ -139,15 +151,33 @@ export default function WebsiteView ({
     }
   }
 
-  const scaledWidth = viewDimensions[view.type].width * scale
-  const scaledHeight = viewDimensions[view.type].height * scale
+  const zoomIn = () => {
+    setUserZoom(prev => Math.min(prev * 1.25, 3)) // Max 3x zoom
+  }
+
+  const zoomOut = () => {
+    setUserZoom(prev => Math.max(prev / 1.25, 0.25)) // Min 0.25x zoom
+  }
+
+  const resetZoom = () => {
+    setUserZoom(1)
+  }
+
+  // Container uses display dimensions scaled by user zoom
+  const scaledWidth = displayDimensions[view.type].width * scale
+  const scaledHeight = displayDimensions[view.type].height * scale
+  
+  // Calculate the scale factor to fit actual dimensions into display dimensions
+  const contentScale = displayDimensions[view.type].width / actualDimensions[view.type].width
+  const finalContentScale = contentScale * scale
+  
   const optionsHeight = 90
   const borderWidth = 1
 
   return (
     <div
       ref={containerRef}
-      className='relative border rounded-lg overflow-hidden w-full sm:w-auto'
+      className='relative border rounded-lg overflow-hidden w-full sm:w-auto max-w-[600px]'
       style={{
         width: `${scaledWidth + 2 * borderWidth}px`,
         height: `${scaledHeight + optionsHeight + 2 * borderWidth}px`
@@ -247,36 +277,65 @@ export default function WebsiteView ({
         </div>
         <div className='flex justify-between items-center'>
           <Select value={view.type} onValueChange={onTypeChange}>
-            <SelectTrigger className='w-[210px]'>
+            <SelectTrigger className='w-[180px]'>
               <SelectValue placeholder='View type' />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value='desktop'>
                 <Monitor className='inline mr-1 h-4 w-4' /> Desktop{' '}
                 <span className='text-[10px] text-muted-foreground'>
-                  1024 x 768
+                  1024×768
                 </span>
               </SelectItem>
               <SelectItem value='tablet'>
                 <Tablet className='inline mr-1 h-4 w-4' /> Tablet{' '}
                 <span className='text-[10px] text-muted-foreground'>
-                  768 x 1024
+                  768×1024
                 </span>
               </SelectItem>
               <SelectItem value='mobileLarge'>
                 <Smartphone className='inline mr-1 h-4 w-4' /> Large Mobile{' '}
                 <span className='text-[10px] text-muted-foreground'>
-                  428 x 926
+                  640×1000
                 </span>
               </SelectItem>
               <SelectItem value='mobile'>
                 <Smartphone className='inline mr-1 h-4 w-4' /> Mobile{' '}
                 <span className='text-[10px] text-muted-foreground'>
-                  375 x 667
+                  375×667
                 </span>
               </SelectItem>
             </SelectContent>
           </Select>
+          <div className='flex items-center gap-1'>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={zoomOut}
+              disabled={userZoom <= 0.25}
+              title="Zoom out"
+            >
+              <ZoomOut className="h-3 w-3" />
+            </Button>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={resetZoom}
+              className="text-xs px-2"
+              title="Reset zoom"
+            >
+              {Math.round(userZoom * 100)}%
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={zoomIn}
+              disabled={userZoom >= 3}
+              title="Zoom in"
+            >
+              <ZoomIn className="h-3 w-3" />
+            </Button>
+          </div>
           {/* <Button onClick={captureScreenshot} size="sm" disabled={isCapturing}>
             {isCapturing ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -287,7 +346,7 @@ export default function WebsiteView ({
           </Button> */}
         </div>
         <div className='text-xs text-center'>
-          {viewDimensions[view.type].width} x {viewDimensions[view.type].height}
+          {actualDimensions[view.type].width} × {actualDimensions[view.type].height} ({Math.round(userZoom * 100)}%)
         </div>
       </div>
       <div
@@ -303,9 +362,9 @@ export default function WebsiteView ({
           onLoad={handleIframeLoad}
           onError={handleIframeError}
           style={{
-            width: `${viewDimensions[view.type].width}px`,
-            height: `${viewDimensions[view.type].height}px`,
-            transform: `scale(${scale})`,
+            width: `${actualDimensions[view.type].width}px`,
+            height: `${actualDimensions[view.type].height}px`,
+            transform: `scale(${finalContentScale})`,
             transformOrigin: 'top left'
           }}
           title={`View ${view.id}`}
