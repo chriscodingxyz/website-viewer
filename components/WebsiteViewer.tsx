@@ -63,7 +63,7 @@ export default function WebsiteViewer () {
   }, {} as Record<string, View[]>)
 
   return (
-    <div className='h-full flex flex-col'>
+    <div>
       <style jsx global>{`
         @keyframes highlightInput {
           0% {
@@ -82,7 +82,7 @@ export default function WebsiteViewer () {
       `}</style>
 
       {/* Main Content Area */}
-      <div className='flex-1 overflow-auto p-0'>
+      <div className='p-0'>
         {/* Adjusted padding for fixed header */}
         {/* pb-28 for footer clearance, flex-grow to push footer down */}
         {Object.keys(groupedViews).length === 0 && (

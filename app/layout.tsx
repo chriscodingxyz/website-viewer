@@ -27,14 +27,14 @@ export default function RootLayout ({
 }>) {
   return (
     <html lang='en' suppressHydrationWarning>
-      <body className={`${ibmPlexMono.className} flex flex-col h-screen`}>
+      <body className={`${ibmPlexMono.className} min-h-screen flex flex-col`}>
         <Toaster richColors />
         <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
           <FavoritesProvider>
             <HistoryProvider>
               <WebsiteViewerProvider>
                 <Header />
-                <main className='flex-grow overflow-auto'>{children}</main>
+                <main className='flex-1'>{children}</main>
                 <Footer />
               </WebsiteViewerProvider>
             </HistoryProvider>
