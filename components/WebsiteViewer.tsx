@@ -300,30 +300,30 @@ export default function WebsiteViewer () {
             </p>
           </div>
         )}
-        {/* Website Groups with Accordion */}
+        {/* Website Groups with Clean Accordion */}
         {Object.keys(groupedViews).length > 0 && (
           <Accordion 
             type="multiple" 
             value={openAccordionItems}
             onValueChange={setOpenAccordionItems}
-            className="space-y-6"
+            className="space-y-1"
           >
             {Object.entries(groupedViews).map(([url, viewsInGroup]) => (
               <AccordionItem 
                 key={url} 
                 value={url}
-                className="border rounded-lg bg-card/30 px-4"
+                className="border-b border-muted/30 last:border-b-0"
               >
-                <AccordionTrigger className="hover:no-underline py-4">
-                  <div className="flex items-center justify-between w-full mr-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 rounded-full bg-green-500/60"></div>
+                <AccordionTrigger className="hover:no-underline py-3 hover:bg-muted/20 px-2 rounded-sm">
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500/60 flex-shrink-0"></div>
                       <span className="text-sm font-medium text-foreground truncate" title={url}>
                         {url}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 mr-2">
-                      <div className="flex items-center gap-1.5 px-2 py-1 bg-muted/40 rounded-md">
+                    <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                      <div className="hidden sm:flex items-center gap-1 px-1.5 py-1 bg-muted/30 rounded text-xs">
                         <Button
                           variant='ghost'
                           size='sm'
@@ -332,18 +332,18 @@ export default function WebsiteViewer () {
                             globalZoomOut()
                           }}
                           disabled={globalZoomStepIndex === 0}
-                          title='Zoom out (global)'
-                          className='h-6 w-6 p-0'
+                          title='Zoom out'
+                          className='h-5 w-5 p-0'
                         >
-                          <ZoomOut className='h-3 w-3' />
+                          <ZoomOut className='h-2.5 w-2.5' />
                         </Button>
                         <span
-                          className='text-xs w-10 text-center tabular-nums cursor-pointer'
+                          className='text-xs w-8 text-center tabular-nums cursor-pointer'
                           onClick={(e) => {
                             e.stopPropagation()
                             resetGlobalZoom()
                           }}
-                          title='Reset zoom (global)'
+                          title='Reset zoom'
                         >
                           {Math.round(globalZoom * 100)}%
                         </span>
@@ -355,17 +355,17 @@ export default function WebsiteViewer () {
                             globalZoomIn()
                           }}
                           disabled={globalZoomStepIndex === zoomSteps.length - 1}
-                          title='Zoom in (global)'
-                          className='h-6 w-6 p-0'
+                          title='Zoom in'
+                          className='h-5 w-5 p-0'
                         >
-                          <ZoomIn className='h-3 w-3' />
+                          <ZoomIn className='h-2.5 w-2.5' />
                         </Button>
                       </div>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="pb-4">
-                  <div className='flex flex-wrap gap-3 justify-start pt-2'>
+                <AccordionContent className="pb-3">
+                  <div className='flex flex-wrap gap-2 sm:gap-3 justify-start px-2'>
                     {viewsInGroup.map(view => (
                       <WebsiteView
                         key={view.id}

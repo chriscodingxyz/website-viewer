@@ -62,8 +62,8 @@ export function Header ({
   const { history } = useHistory()
 
   return (
-    <header className='bg-background border-b pb-2 flex-shrink-0'>
-      <div className='w-full'>
+    <header className='bg-background border-b py-3 flex-shrink-0'>
+      <div>
         <div className='flex gap-2 flex-col lg:flex-row'>
           <div className='flex-grow relative w-full lg:w-auto'>
             <Input
