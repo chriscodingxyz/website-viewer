@@ -21,6 +21,11 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from '@/components/ui/collapsible'
 import WebsiteView from './WebsiteView'
 import { toast } from 'sonner'
 import {
@@ -245,13 +250,29 @@ export default function WebsiteViewer () {
     toast.success('Global zoom reset to 100%')
   }
 
-  const toggleGroupCollapse = (groupUrl: string) => {
-    setCollapsedGroups(prev => ({ ...prev, [groupUrl]: !prev[groupUrl] }))
+  const toggleGroupCollapse = (urlToToggle: string) => {
+    setCollapsedGroups(prev => {
+      const isCurrentlyCollapsed = prev[urlToToggle]
+      const newCollapsedGroups: { [key: string]: boolean } = {}
+
+      if (isCurrentlyCollapsed) {
+        Object.keys(prev).forEach(key => {
+          newCollapsedGroups[key] = true
+        })
+        newCollapsedGroups[urlToToggle] = false
+      } else {
+        Object.keys(prev).forEach(key => {
+          newCollapsedGroups[key] = prev[key]
+        })
+        newCollapsedGroups[urlToToggle] = true
+      }
+      return newCollapsedGroups
+    })
   }
 
   // Group views by the exact URL loaded
   const groupedViews = views.reduce((acc, view) => {
-    const urlKey = view.url // Use the exact URL as the key
+    const urlKey = view.url
     if (!acc[urlKey]) {
       acc[urlKey] = []
     }
@@ -267,7 +288,7 @@ export default function WebsiteViewer () {
             box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
           }
           50% {
-            box-shadow: 0 0 0 4px blue;
+            box-shadow: 0 0 0 4px hsl(var(--ring));
           }
           100% {
             box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
@@ -357,8 +378,12 @@ export default function WebsiteViewer () {
               <DropdownMenuTrigger asChild>
                 <Button size='sm' variant='outline'>
                   <Star
-                    className='w-4 h-4 text-yellow-500'
-                    fill={favorites.length > 0 ? 'yellow' : 'transparent'}
+                    className='w-4 h-4 text-primary'
+                    fill={
+                      favorites.length > 0
+                        ? 'hsl(var(--primary))'
+                        : 'transparent'
+                    }
                   />
                 </Button>
               </DropdownMenuTrigger>
@@ -398,9 +423,7 @@ export default function WebsiteViewer () {
 
             {views.length > 0 && (
               <>
-                <Button size={'sm'} onClick={refreshAllViews} variant='outline'>
-                  <RefreshCw size={16} />
-                </Button>
+                {/* Refresh All button removed */}
                 <Button
                   size={'sm'}
                   onClick={clearAllViews}
@@ -416,43 +439,30 @@ export default function WebsiteViewer () {
 
       {Object.keys(groupedViews).length > 0 && (
         <div className='space-y-6'>
-          {/* Simplified Global Bar */}
-          {Object.keys(groupedViews).length > 0 && (
-            <div className='flex items-center justify-between p-2 bg-muted/50 rounded-lg border sticky top-0 z-30 backdrop-blur-sm mb-4'>
-              <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                <Globe className='h-4 w-4' />
-                <span className='font-medium'>
-                  {Object.keys(groupedViews).length} site
-                  {Object.keys(groupedViews).length > 1 ? 's' : ''},{' '}
-                  {views.length} view{views.length > 1 ? 's' : ''}
-                </span>
-              </div>
-              {/* Global controls like 'Refresh All' or 'Clear All' could go here if needed */}
-            </div>
-          )}
+          {/* Simplified Global Bar REMOVED */}
 
           {/* Main content area for grouped views */}
           {Object.entries(groupedViews).map(([url, viewsInGroup]) => {
             const isCollapsed = collapsedGroups[url]
             return (
-              <div
+              <Collapsible
                 key={url}
-                className={`border rounded-lg bg-card ${
-                  isCollapsed ? 'p-2 shadow-none' : 'space-y-1 p-3 shadow-md'
-                }`}
+                open={!isCollapsed}
+                onOpenChange={() => toggleGroupCollapse(url)}
+                className='border rounded-lg bg-card p-3 shadow-md space-y-1'
               >
                 <div
                   className={`flex justify-between items-center ${
-                    isCollapsed ? '' : 'mb-2 pb-2 border-b'
+                    isCollapsed ? '' : ''
                   }`}
                 >
                   <h2
-                    className='text-md font-semibold text-primary truncate flex-1 mr-2'
+                    className='text-sm font-semibold text-primary truncate flex-1 mr-2'
                     title={url}
                   >
                     {url}
                   </h2>
-                  <div className='flex items-center gap-2 flex-shrink-0'>
+                  <div className='flex items-center gap-2 flex-shrink-0 bg-muted p-1 rounded-md'>
                     {!isCollapsed && (
                       <div className='flex items-center gap-1'>
                         <Button
@@ -484,23 +494,29 @@ export default function WebsiteViewer () {
                         </Button>
                       </div>
                     )}
-                    <Button
-                      size='icon'
-                      variant='ghost'
-                      onClick={() => toggleGroupCollapse(url)}
-                      title={isCollapsed ? 'Show views' : 'Hide views'}
-                    >
-                      {isCollapsed ? (
-                        <Eye className='h-4 w-4' />
-                      ) : (
-                        <EyeOff className='h-4 w-4' />
-                      )}
-                    </Button>
+                    {!isCollapsed && (
+                      <div className='w-px self-stretch bg-border mx-1'></div>
+                    )}{' '}
+                    {/* Vertical Separator */}
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        size='icon'
+                        variant='ghost'
+                        title={isCollapsed ? 'Show views' : 'Hide views'}
+                      >
+                        {isCollapsed ? (
+                          <Eye className='h-4 w-4' />
+                        ) : (
+                          <EyeOff className='h-4 w-4' />
+                        )}
+                      </Button>
+                    </CollapsibleTrigger>
                   </div>
                 </div>
-
-                {!isCollapsed && (
-                  <div className='flex flex-wrap gap-4 justify-start pt-1'>
+                <CollapsibleContent className='pt-1'>
+                  {' '}
+                  {/* Apply pt-1 here for spacing when open */}
+                  <div className='flex flex-wrap gap-4 justify-start'>
                     {viewsInGroup.map(view => (
                       <WebsiteView
                         key={view.id}
@@ -514,8 +530,8 @@ export default function WebsiteViewer () {
                       />
                     ))}
                   </div>
-                )}
-              </div>
+                </CollapsibleContent>
+              </Collapsible>
             )
           })}
         </div>

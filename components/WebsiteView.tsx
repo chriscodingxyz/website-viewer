@@ -177,11 +177,11 @@ export default function WebsiteView ({
   const getStatusIcon = () => {
     switch (loadingState) {
       case 'loading':
-        return <Loader2 className='h-3 w-3 animate-spin text-blue-500' />
+        return <Loader2 className='h-3 w-3 animate-spin text-primary' />
       case 'loaded':
-        return <CheckCircle className='h-3 w-3 text-green-500' />
+        return <CheckCircle className='h-3 w-3 text-primary' />
       case 'error':
-        return <AlertCircle className='h-3 w-3 text-red-500' />
+        return <AlertCircle className='h-3 w-3 text-destructive' />
     }
   }
 
@@ -224,12 +224,7 @@ export default function WebsiteView ({
     }
   }
 
-  const cycleDeviceType = () => {
-    const devices: ViewType[] = ['desktop', 'tablet', 'mobileLarge', 'mobile']
-    const currentIndex = devices.indexOf(view.type)
-    const nextIndex = (currentIndex + 1) % devices.length
-    onTypeChange(devices[nextIndex])
-  }
+  const deviceTypes: ViewType[] = ['desktop', 'tablet', 'mobileLarge', 'mobile']
 
   // Container size - shows full content at all zoom levels
   const scaledWidth = displayDimensions[view.type].width * scale
@@ -260,23 +255,48 @@ export default function WebsiteView ({
         style={{ height: `${optionsHeight}px` }}
       >
         <div className='flex items-center gap-2'>
-          <div className='bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold'>
-            {index + 1}
-          </div>
-          <div className='flex items-center gap-1'>
-            <button
-              onClick={cycleDeviceType}
-              className={`w-8 h-8 rounded border-2 transition-colors shadow-sm flex items-center justify-center ${getDeviceColor(
-                view.type
-              )}`}
-              title={`${view.type} - Click to cycle device type`}
-            >
-              {getDeviceIcon(view.type)}
-            </button>
-            <span className='text-xs text-gray-500 font-medium'>
-              {getDeviceName(view.type)}
-            </span>
-          </div>
+          {/* Index number display removed */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={`flex items-center gap-1 p-1 rounded transition-colors shadow-sm ${getDeviceColor(
+                  view.type
+                )} hover:opacity-90`}
+                title={`Change device type (current: ${getDeviceName(
+                  view.type
+                )})`}
+              >
+                <div
+                  className={`w-6 h-6 rounded border-2 flex items-center justify-center ${getDeviceColor(
+                    view.type
+                  )}`}
+                >
+                  {getDeviceIcon(view.type)}
+                </div>
+                <span className='text-xs w-16 truncate pr-1'>
+                  {getDeviceName(view.type)}
+                </span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='start' className='w-48'>
+              {deviceTypes.map(deviceType => (
+                <DropdownMenuItem
+                  key={deviceType}
+                  onClick={() => onTypeChange(deviceType)}
+                  className={`${getDeviceColor(
+                    deviceType
+                  )} focus:${getDeviceColor(deviceType)
+                    .replace('bg-', 'bg-')
+                    .replace('-50', '-100')} mb-1 last:mb-0`}
+                >
+                  <div className='w-5 h-5 mr-2 flex items-center justify-center'>
+                    {getDeviceIcon(deviceType)}
+                  </div>
+                  {getDeviceName(deviceType)}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           {getStatusIcon()}
         </div>
 
@@ -284,7 +304,7 @@ export default function WebsiteView ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className='text-gray-500 hover:text-gray-700 p-0.5'
+                className='text-muted-foreground hover:text-foreground p-0.5'
                 title='More options'
               >
                 <Settings className='h-4 w-4' />
@@ -305,10 +325,8 @@ export default function WebsiteView ({
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleFavoriteToggle}>
                 <Star
-                  className={`mr-2 h-4 w-4 ${
-                    isFavorite ? 'text-yellow-500' : ''
-                  }`}
-                  fill={isFavorite ? 'yellow' : 'transparent'}
+                  className={`mr-2 h-4 w-4 ${isFavorite ? 'text-primary' : ''}`}
+                  fill={isFavorite ? 'hsl(var(--primary))' : 'transparent'}
                 />
                 <span>
                   {isFavorite ? 'Remove from favorites' : 'Add to favorites'}
@@ -356,7 +374,7 @@ export default function WebsiteView ({
           </DropdownMenu>
           <button
             onClick={onRemove}
-            className='bg-red-500 hover:bg-red-600 text-white rounded w-6 h-6 flex items-center justify-center shadow-sm transition-colors'
+            className='bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded w-6 h-6 flex items-center justify-center shadow-sm transition-colors'
             title='Remove view'
           >
             <X className='h-3 w-3' />
@@ -394,8 +412,8 @@ export default function WebsiteView ({
         {loadingState === 'error' && (
           <div className='absolute inset-0 flex items-center justify-center bg-background/90'>
             <div className='text-center'>
-              <AlertCircle className='h-8 w-8 text-red-500 mx-auto mb-2' />
-              <p className='text-sm text-red-600'>Failed to load</p>
+              <AlertCircle className='h-8 w-8 text-destructive mx-auto mb-2' />
+              <p className='text-sm text-destructive'>Failed to load</p>
               <Button
                 size='sm'
                 variant='outline'
