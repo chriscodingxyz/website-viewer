@@ -80,7 +80,7 @@ const formatUrl = (inputUrl: string): string | null => {
 
 const commonDevPorts = [
   'localhost:3000',
-  'localhost:3001', 
+  'localhost:3001',
   'localhost:5173',
   'localhost:8080',
   'localhost:4000',
@@ -100,12 +100,12 @@ export default function WebsiteViewer () {
   const [refreshKey, setRefreshKey] = useState(0)
   const { favorites } = useFavorites()
   const { history, addToHistory, removeFromHistory } = useHistory()
-  
+
   // Global zoom state
   const zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2]
   const [globalZoomStepIndex, setGlobalZoomStepIndex] = useState(2) // Default to 100%
   const globalZoom = zoomSteps[globalZoomStepIndex]
-  
+
   // Info panel visibility state
   const [showInfoPanel, setShowInfoPanel] = useState(true)
 
@@ -180,16 +180,17 @@ export default function WebsiteViewer () {
 
   const handleUrlChange = (value: string) => {
     setUrl(value)
-    
+
     if (value.length > 0) {
       const allSuggestions = [...commonDevPorts, ...history, ...favorites]
       const filtered = allSuggestions
-        .filter(suggestion => 
-          suggestion.toLowerCase().includes(value.toLowerCase()) && 
-          suggestion !== value
+        .filter(
+          suggestion =>
+            suggestion.toLowerCase().includes(value.toLowerCase()) &&
+            suggestion !== value
         )
         .slice(0, 6)
-      
+
       setFilteredSuggestions(filtered)
       setShowSuggestions(filtered.length > 0)
     } else {
@@ -221,12 +222,20 @@ export default function WebsiteViewer () {
   // Global zoom functions
   const globalZoomIn = () => {
     setGlobalZoomStepIndex(prev => Math.min(prev + 1, zoomSteps.length - 1))
-    toast.success(`Global zoom: ${Math.round(zoomSteps[Math.min(globalZoomStepIndex + 1, zoomSteps.length - 1)] * 100)}%`)
+    toast.success(
+      `Global zoom: ${Math.round(
+        zoomSteps[Math.min(globalZoomStepIndex + 1, zoomSteps.length - 1)] * 100
+      )}%`
+    )
   }
 
   const globalZoomOut = () => {
     setGlobalZoomStepIndex(prev => Math.max(prev - 1, 0))
-    toast.success(`Global zoom: ${Math.round(zoomSteps[Math.max(globalZoomStepIndex - 1, 0)] * 100)}%`)
+    toast.success(
+      `Global zoom: ${Math.round(
+        zoomSteps[Math.max(globalZoomStepIndex - 1, 0)] * 100
+      )}%`
+    )
   }
 
   const resetGlobalZoom = () => {
@@ -265,7 +274,10 @@ export default function WebsiteViewer () {
               value={url}
               onChange={e => handleUrlChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              onFocus={() => url.length > 0 && setShowSuggestions(filteredSuggestions.length > 0)}
+              onFocus={() =>
+                url.length > 0 &&
+                setShowSuggestions(filteredSuggestions.length > 0)
+              }
               onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
               placeholder='example.com or localhost:3000 (⏎ for desktop, ⌘⏎ for all)'
               className={`text-[16px] bg-background ${
@@ -364,7 +376,11 @@ export default function WebsiteViewer () {
                 <Button size={'sm'} onClick={refreshAllViews} variant='outline'>
                   <RefreshCw size={16} />
                 </Button>
-                <Button size={'sm'} onClick={clearAllViews} variant='destructive'>
+                <Button
+                  size={'sm'}
+                  onClick={clearAllViews}
+                  variant='destructive'
+                >
                   <Trash2 size={18} />
                 </Button>
               </>
@@ -380,53 +396,69 @@ export default function WebsiteViewer () {
             <div className='flex items-center gap-2 text-sm text-muted-foreground'>
               <Globe className='h-4 w-4' />
               <span className='font-medium'>
-                {new Set(views.map(v => v.url)).size} site{new Set(views.map(v => v.url)).size > 1 ? 's' : ''}, {views.length} view{views.length > 1 ? 's' : ''}
+                {new Set(views.map(v => v.url)).size} site
+                {new Set(views.map(v => v.url)).size > 1 ? 's' : ''},{' '}
+                {views.length} view{views.length > 1 ? 's' : ''}
               </span>
             </div>
             <div className='flex items-center gap-2'>
               {/* Global Zoom Controls - Always visible */}
               <div className='flex items-center gap-1'>
-                <span className='text-xs text-muted-foreground font-medium hidden sm:inline'>Zoom:</span>
-                <Button 
-                  size="sm"
-                  variant="outline" 
+                <span className='text-xs text-muted-foreground font-medium hidden sm:inline'>
+                  Zoom:
+                </span>
+                <Button
+                  size='sm'
+                  variant='outline'
                   onClick={globalZoomOut}
                   disabled={globalZoomStepIndex === 0}
-                  title={`Zoom out all views to ${globalZoomStepIndex > 0 ? Math.round(zoomSteps[globalZoomStepIndex - 1] * 100) : 50}%`}
-                  className="h-6 w-6 p-0"
+                  title={`Zoom out all views to ${
+                    globalZoomStepIndex > 0
+                      ? Math.round(zoomSteps[globalZoomStepIndex - 1] * 100)
+                      : 50
+                  }%`}
+                  className='h-6 w-6 p-0'
                 >
-                  <ZoomOut className="h-3 w-3" />
+                  <ZoomOut className='h-3 w-3' />
                 </Button>
-                <Button 
-                  size="sm"
-                  variant="ghost" 
+                <Button
+                  size='sm'
+                  variant='ghost'
                   onClick={resetGlobalZoom}
-                  className="text-xs px-1 h-6 min-w-[32px]"
-                  title="Reset all views to 100%"
+                  className='text-xs px-1 h-6 min-w-[32px]'
+                  title='Reset all views to 100%'
                 >
                   {Math.round(globalZoom * 100)}%
                 </Button>
-                <Button 
-                  size="sm"
-                  variant="outline" 
+                <Button
+                  size='sm'
+                  variant='outline'
                   onClick={globalZoomIn}
                   disabled={globalZoomStepIndex === zoomSteps.length - 1}
-                  title={`Zoom in all views to ${globalZoomStepIndex < zoomSteps.length - 1 ? Math.round(zoomSteps[globalZoomStepIndex + 1] * 100) : 200}%`}
-                  className="h-6 w-6 p-0"
+                  title={`Zoom in all views to ${
+                    globalZoomStepIndex < zoomSteps.length - 1
+                      ? Math.round(zoomSteps[globalZoomStepIndex + 1] * 100)
+                      : 200
+                  }%`}
+                  className='h-6 w-6 p-0'
                 >
-                  <ZoomIn className="h-3 w-3" />
+                  <ZoomIn className='h-3 w-3' />
                 </Button>
               </div>
-              
+
               {/* Toggle Info Panel Button */}
               <Button
-                size="sm"
-                variant="ghost"
+                size='sm'
+                variant='ghost'
                 onClick={toggleInfoPanel}
-                className="h-6 w-6 p-0"
+                className='h-6 w-6 p-0'
                 title={showInfoPanel ? 'Hide details' : 'Show details'}
               >
-                {showInfoPanel ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                {showInfoPanel ? (
+                  <EyeOff className='h-3 w-3' />
+                ) : (
+                  <Eye className='h-3 w-3' />
+                )}
               </Button>
             </div>
           </div>
@@ -440,32 +472,55 @@ export default function WebsiteViewer () {
                   <div className='flex-1'>
                     <span className='font-medium block mb-2'>Viewing:</span>
                     <div className='flex flex-wrap gap-2'>
-                      {[...new Set(views.map(v => v.url))].map((url, index) => (
-                        <span key={index} className='px-2 py-1 bg-background rounded text-xs font-mono break-all'>
-                          {url.replace(/^https?:\/\//, '')}
-                        </span>
-                      ))}
+                      {Array.from(new Set(views.map(v => v.url))).map(
+                        (url, index) => (
+                          <span
+                            key={index}
+                            className='px-2 py-1 bg-background rounded text-xs font-mono break-all'
+                          >
+                            {url.replace(/^https?:\/\//, '')}
+                          </span>
+                        )
+                      )}
                     </div>
                   </div>
                 </div>
                 <div className='text-xs text-muted-foreground'>
-                  <span className='font-medium block mb-2'>Device Types & Dimensions:</span>
+                  <span className='font-medium block mb-2'>
+                    Device Types & Dimensions:
+                  </span>
                   <div className='grid grid-cols-2 lg:grid-cols-4 gap-2'>
                     <div className='flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded border border-blue-300'>
                       <Monitor className='h-3 w-3 flex-shrink-0' />
-                      <span className='text-xs'>Desktop<br className='sm:hidden'/><span className='hidden sm:inline'> </span>(1024×768)</span>
+                      <span className='text-xs'>
+                        Desktop
+                        <br className='sm:hidden' />
+                        <span className='hidden sm:inline'> </span>(1024×768)
+                      </span>
                     </div>
                     <div className='flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded border border-green-300'>
                       <Tablet className='h-3 w-3 flex-shrink-0' />
-                      <span className='text-xs'>Tablet<br className='sm:hidden'/><span className='hidden sm:inline'> </span>(768×1024)</span>
+                      <span className='text-xs'>
+                        Tablet
+                        <br className='sm:hidden' />
+                        <span className='hidden sm:inline'> </span>(768×1024)
+                      </span>
                     </div>
                     <div className='flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 rounded border border-orange-300'>
                       <Smartphone className='h-3 w-3 flex-shrink-0' />
-                      <span className='text-xs'>Large<br className='sm:hidden'/><span className='hidden sm:inline'> </span>(640×1000)</span>
+                      <span className='text-xs'>
+                        Large
+                        <br className='sm:hidden' />
+                        <span className='hidden sm:inline'> </span>(640×1000)
+                      </span>
                     </div>
                     <div className='flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 rounded border border-red-300'>
                       <Smartphone className='h-3 w-3 flex-shrink-0' />
-                      <span className='text-xs'>Mobile<br className='sm:hidden'/><span className='hidden sm:inline'> </span>(375×667)</span>
+                      <span className='text-xs'>
+                        Mobile
+                        <br className='sm:hidden' />
+                        <span className='hidden sm:inline'> </span>(375×667)
+                      </span>
                     </div>
                   </div>
                 </div>
