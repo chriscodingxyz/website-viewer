@@ -2,33 +2,16 @@
 
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   Globe,
-  Trash2,
-  Heart,
-  Clock,
-  Monitor,
-  Tablet,
-  Smartphone,
-  PlusCircle,
-  Star,
-  RefreshCw,
   ZoomIn,
   ZoomOut
 } from 'lucide-react'
-import ThemeToggle from '@/components/ThemeToggle'
+import { Header } from '@/components/Header'
 import WebsiteView from './WebsiteView'
 import { toast } from 'sonner'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from './ui/dropdown-menu'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
-import { ScrollArea } from './ui/scroll-area'
 import {
   Accordion,
   AccordionContent,
@@ -100,7 +83,7 @@ export default function WebsiteViewer () {
   const [isInputHighlighted, setIsInputHighlighted] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [refreshKey] = useState(0)
   const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([])
   const { favorites } = useFavorites()
   const { history, addToHistory } = useHistory()
@@ -379,146 +362,23 @@ export default function WebsiteViewer () {
           </Accordion>
         )}
       </main>
-      {/* Footer - Fixed at the bottom */}
-      <header className='fixed top-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b p-3 z-40'>
-        <div className='container mx-auto'>
-          <div className='flex gap-2 flex-col lg:flex-row'>
-            <div className='flex-grow relative w-full lg:w-auto'>
-              <Input
-                id='url-input'
-                type='text'
-                value={url}
-                onChange={e => handleUrlChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onFocus={() =>
-                  url.length > 0 &&
-                  setShowSuggestions(filteredSuggestions.length > 0)
-                }
-                onBlur={() =>
-                  setTimeout(() => setShowSuggestions(false), 100)
-                }
-                placeholder='example.com or localhost:3000'
-                className={`text-[16px] bg-background ${
-                  isInputHighlighted ? 'highlight-input' : ''
-                }`}
-              />
-              {showSuggestions && (
-                <div className='absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto'>
-                  {filteredSuggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => selectSuggestion(suggestion)}
-                      className='w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground text-sm border-b last:border-b-0'
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className='flex gap-2'>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size='sm' disabled={!formatUrl(url)} className='font-medium'>
-                    <Globe className='w-4 h-4 mr-2' />
-                    Load
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className='w-56 border-muted'>
-                  <DropdownMenuItem
-                    onClick={addAllViews}
-                    disabled={!formatUrl(url)}
-                    className='focus:bg-muted/50'
-                  >
-                    <PlusCircle className='mr-2 h-4 w-4' /> All Views
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addView('desktop')}
-                    className='focus:bg-muted/50'
-                  >
-                    <Monitor className='mr-2 h-4 w-4' /> Desktop
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addView('tablet')}
-                    className='focus:bg-muted/50'
-                  >
-                    <Tablet className='mr-2 h-4 w-4' /> Tablet
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addView('mobileLarge')}
-                    className='focus:bg-muted/50'
-                  >
-                    <Smartphone className='mr-2 h-4 w-4' /> Large Mobile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => addView('mobile')}
-                    className='focus:bg-muted/50'
-                  >
-                    <Smartphone className='mr-2 h-4 w-4' /> Mobile
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size='sm' variant='ghost' className='border-0'>
-                    <Star
-                      className='w-4 h-4 text-yellow-500'
-                      fill={favorites.length > 0 ? 'yellow' : 'transparent'}
-                    />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className='w-72'>
-                  <ScrollArea className='max-h-[300px]'>
-                    {favorites.map((item, index) => (
-                      <DropdownMenuItem
-                        key={index}
-                        onSelect={() => setUrlWithHighlight(item)}
-                      >
-                        {item}
-                      </DropdownMenuItem>
-                    ))}
-                  </ScrollArea>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size='sm' variant='ghost' className='border-0'>
-                    <Clock className='w-4 h-4' />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className='w-72'>
-                  <ScrollArea className='max-h-[300px]'>
-                    {history.map((item, index) => (
-                      <DropdownMenuItem
-                        key={index}
-                        onSelect={() => setUrlWithHighlight(item)}
-                      >
-                        {item}
-                      </DropdownMenuItem>
-                    ))}
-                  </ScrollArea>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {views.length > 0 && (
-                <>
-                  {/* Refresh All button removed */}
-                  <Button
-                    size={'sm'}
-                    onClick={clearAllViews}
-                    variant='ghost'
-                    className='text-destructive hover:text-destructive hover:bg-destructive/10'
-                  >
-                    <Trash2 size={18} />
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header
+        url={url}
+        setUrl={setUrl}
+        handleUrlChange={handleUrlChange}
+        handleKeyDown={handleKeyDown}
+        isInputHighlighted={isInputHighlighted}
+        showSuggestions={showSuggestions}
+        filteredSuggestions={filteredSuggestions}
+        setShowSuggestions={setShowSuggestions}
+        selectSuggestion={selectSuggestion}
+        formatUrl={formatUrl}
+        addAllViews={addAllViews}
+        addView={addView}
+        setUrlWithHighlight={setUrlWithHighlight}
+        clearAllViews={clearAllViews}
+        views={views}
+      />
     </div>
   )
 }

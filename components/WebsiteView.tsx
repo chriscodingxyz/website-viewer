@@ -258,21 +258,15 @@ export default function WebsiteView ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className={`flex items-center gap-1 p-1 rounded transition-colors shadow-sm ${getDeviceColor(
+                className={`flex items-center gap-2 px-2 py-1 rounded border-2 transition-colors hover:opacity-80 ${getDeviceColor(
                   view.type
-                )} hover:opacity-90`}
+                )}`}
                 title={`Change device type (current: ${getDeviceName(
                   view.type
                 )})`}
               >
-                <div
-                  className={`w-6 h-6 rounded border-2 flex items-center justify-center ${getDeviceColor(
-                    view.type
-                  )}`}
-                >
-                  {getDeviceIcon(view.type)}
-                </div>
-                <span className='text-xs w-16 truncate pr-1'>
+                {getDeviceIcon(view.type)}
+                <span className='text-xs font-medium truncate'>
                   {getDeviceName(view.type)}
                 </span>
               </button>
@@ -282,16 +276,13 @@ export default function WebsiteView ({
                 <DropdownMenuItem
                   key={deviceType}
                   onClick={() => onTypeChange(deviceType)}
-                  className={`${getDeviceColor(
-                    deviceType
-                  )} focus:${getDeviceColor(deviceType)
-                    .replace('bg-', 'bg-')
-                    .replace('-50', '-100')} mb-1 last:mb-0`}
+                  className={`flex items-center gap-3 ${view.type === deviceType ? 'bg-accent' : ''} focus:bg-accent`}
                 >
-                  <div className='w-5 h-5 mr-2 flex items-center justify-center'>
-                    {getDeviceIcon(deviceType)}
-                  </div>
-                  {getDeviceName(deviceType)}
+                  {getDeviceIcon(deviceType)}
+                  <span className='font-medium'>{getDeviceName(deviceType)}</span>
+                  {view.type === deviceType && (
+                    <div className='ml-auto w-2 h-2 rounded-full bg-primary'></div>
+                  )}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
