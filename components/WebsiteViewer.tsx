@@ -339,6 +339,22 @@ export default function WebsiteViewer () {
         </div>
       </div>
 
+      {views.length > 0 && (
+        <div className='mb-4 p-3 bg-muted/50 rounded-lg border'>
+          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+            <Globe className='h-4 w-4' />
+            <span className='font-medium'>Viewing:</span>
+            <div className='flex flex-wrap gap-2'>
+              {[...new Set(views.map(v => v.url))].map((url, index) => (
+                <span key={index} className='px-2 py-1 bg-background rounded text-xs font-mono'>
+                  {url.replace(/^https?:\/\//, '')}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className='flex flex-wrap gap-4 justify-center max-w-full overflow-x-auto'>
         {views.map((view, index) => (
           <WebsiteView

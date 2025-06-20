@@ -64,6 +64,7 @@ export default function WebsiteView ({
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [scale, setScale] = useState(1)
   const [userZoom, setUserZoom] = useState(1) // User-controlled zoom level
+  const [isCompactView, setIsCompactView] = useState(false) // For responsive layout
   const containerRef = useRef<HTMLDivElement>(null)
   const [loadingState, setLoadingState] = useState<LoadingState>('loading')
   const [loadStartTime, setLoadStartTime] = useState<number>(Date.now())
@@ -79,6 +80,10 @@ export default function WebsiteView ({
         const baseScale = Math.min(1, containerWidth / displayWidth)
         const finalScale = baseScale * userZoom
         setScale(finalScale)
+        
+        // Determine if view should be in compact mode based on scaled width
+        const currentScaledWidth = displayWidth * finalScale
+        setIsCompactView(currentScaledWidth < 300)
       }
     }
 
@@ -171,7 +176,7 @@ export default function WebsiteView ({
   const contentScale = displayDimensions[view.type].width / actualDimensions[view.type].width
   const finalContentScale = contentScale * scale
   
-  const optionsHeight = 90
+  const optionsHeight = isCompactView ? 100 : 90 // More space for stacked controls
   const borderWidth = 1
 
   return (
@@ -191,9 +196,6 @@ export default function WebsiteView ({
           <div className='flex items-center flex-1 mr-2'>
             <div className='flex items-center gap-2 pl-8'>
               {getStatusIcon()}
-              <p className='responsive-text-sm font-medium truncate flex-1'>
-                {view.url}
-              </p>
             </div>
             <div className='flex items-center gap-1'>
               <button
@@ -275,63 +277,53 @@ export default function WebsiteView ({
             <span className='sr-only'>Remove view</span>
           </Button>
         </div>
-        <div className='flex justify-between items-center'>
+        <div className={`${isCompactView ? 'flex flex-col gap-2' : 'flex justify-between items-center'}`}>
           <Select value={view.type} onValueChange={onTypeChange}>
-            <SelectTrigger className='w-[180px]'>
-              <SelectValue placeholder='View type' />
+            <SelectTrigger className={`${isCompactView ? 'w-full text-xs' : 'w-[120px] text-sm'}`}>
+              <SelectValue placeholder='Device' />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value='desktop'>
-                <Monitor className='inline mr-1 h-4 w-4' /> Desktop{' '}
-                <span className='text-[10px] text-muted-foreground'>
-                  1024×768
-                </span>
+                <Monitor className='inline mr-1 h-3 w-3' /> {isCompactView ? 'Desktop' : 'Desktop'}
               </SelectItem>
               <SelectItem value='tablet'>
-                <Tablet className='inline mr-1 h-4 w-4' /> Tablet{' '}
-                <span className='text-[10px] text-muted-foreground'>
-                  768×1024
-                </span>
+                <Tablet className='inline mr-1 h-3 w-3' /> {isCompactView ? 'Tablet' : 'Tablet'}
               </SelectItem>
               <SelectItem value='mobileLarge'>
-                <Smartphone className='inline mr-1 h-4 w-4' /> Large Mobile{' '}
-                <span className='text-[10px] text-muted-foreground'>
-                  640×1000
-                </span>
+                <Smartphone className='inline mr-1 h-3 w-3' /> {isCompactView ? 'Large' : 'Large'}
               </SelectItem>
               <SelectItem value='mobile'>
-                <Smartphone className='inline mr-1 h-4 w-4' /> Mobile{' '}
-                <span className='text-[10px] text-muted-foreground'>
-                  375×667
-                </span>
+                <Smartphone className='inline mr-1 h-3 w-3' /> {isCompactView ? 'Mobile' : 'Mobile'}
               </SelectItem>
             </SelectContent>
           </Select>
-          <div className='flex items-center gap-1'>
+          <div className={`flex items-center ${isCompactView ? 'justify-center gap-1' : 'gap-1'}`}>
             <Button 
-              size="sm" 
+              size={isCompactView ? "sm" : "sm"}
               variant="outline" 
               onClick={zoomOut}
               disabled={userZoom <= 0.25}
               title="Zoom out"
+              className={isCompactView ? 'h-7 w-7 p-0' : ''}
             >
               <ZoomOut className="h-3 w-3" />
             </Button>
             <Button 
-              size="sm" 
+              size={isCompactView ? "sm" : "sm"}
               variant="ghost" 
               onClick={resetZoom}
-              className="text-xs px-2"
+              className={`text-xs ${isCompactView ? 'px-1 h-7' : 'px-2'}`}
               title="Reset zoom"
             >
               {Math.round(userZoom * 100)}%
             </Button>
             <Button 
-              size="sm" 
+              size={isCompactView ? "sm" : "sm"}
               variant="outline" 
               onClick={zoomIn}
               disabled={userZoom >= 3}
               title="Zoom in"
+              className={isCompactView ? 'h-7 w-7 p-0' : ''}
             >
               <ZoomIn className="h-3 w-3" />
             </Button>
