@@ -380,7 +380,7 @@ export default function WebsiteViewer () {
             <div className='flex items-center gap-2 text-sm text-muted-foreground'>
               <Globe className='h-4 w-4' />
               <span className='font-medium'>
-                {[...new Set(views.map(v => v.url))].length} site{[...new Set(views.map(v => v.url))].length > 1 ? 's' : ''}, {views.length} view{views.length > 1 ? 's' : ''}
+                {new Set(views.map(v => v.url)).size} site{new Set(views.map(v => v.url)).size > 1 ? 's' : ''}, {views.length} view{views.length > 1 ? 's' : ''}
               </span>
             </div>
             <div className='flex items-center gap-2'>
