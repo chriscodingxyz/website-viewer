@@ -38,10 +38,10 @@ export default function WebsiteViewer () {
   }
 
   const globalZoomOut = () => {
-    setGlobalZoomStepIndex(Math.max(globalZoomStepIndex - 1, 0))
+    setGlobalZoomStepIndex(Math.max(globalZoomStepIndex - 1, 2))
     toast.success(
       `Global zoom: ${Math.round(
-        zoomSteps[Math.max(globalZoomStepIndex - 1, 0)] * 100
+        zoomSteps[Math.max(globalZoomStepIndex - 1, 2)] * 100
       )}%`
     )
   }
@@ -83,73 +83,21 @@ export default function WebsiteViewer () {
                 Website Viewer
               </h1>
               <p className='text-lg text-muted-foreground/80 leading-relaxed max-w-2xl mx-auto'>
-                View any website across different device formats simultaneously.
-                Perfect for responsive design testing and development.
+                Ready to view websites in multiple formats? Just click the dropdown in the header
+                and enter any URL to get started.
               </p>
             </div>
 
-            {/* Features */}
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-8'>
-              <div className='text-center p-4 rounded-lg bg-muted/30'>
-                <h3 className='font-medium mb-2'>✓ All Device Views</h3>
-                <p className='text-sm text-muted-foreground'>Desktop, Tablet, and Mobile viewports</p>
-              </div>
-              <div className='text-center p-4 rounded-lg bg-muted/30'>
-                <h3 className='font-medium mb-2'>✓ Real-time Testing</h3>
-                <p className='text-sm text-muted-foreground'>Instant responsive design validation</p>
-              </div>
-              <div className='text-center p-4 rounded-lg bg-muted/30'>
-                <h3 className='font-medium mb-2'>✓ Local Development</h3>
-                <p className='text-sm text-muted-foreground'>Support for localhost servers</p>
-              </div>
-            </div>
-
-            {/* Favorites Section */}
-            {favorites.length > 0 && (
-              <div className='mb-8'>
-                <h2 className='text-xl font-medium mb-4'>⭐ Favorites</h2>
-                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'>
-                  {favorites.map((favorite, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setUrlWithHighlight(favorite)}
-                      className='p-3 text-left rounded-lg border hover:bg-muted/50 transition-colors'
-                    >
-                      <div className='font-medium truncate'>{favorite}</div>
-                      <div className='text-xs text-muted-foreground mt-1'>Click to load</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* History Section */}
-            {history.length > 0 && (
-              <div className='mb-8'>
-                <h2 className='text-xl font-medium mb-4'>🕒 Recent History</h2>
-                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'>
-                  {history.slice(0, 6).map((item, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setUrlWithHighlight(item)}
-                      className='p-3 text-left rounded-lg border hover:bg-muted/50 transition-colors'
-                    >
-                      <div className='font-medium truncate'>{item}</div>
-                      <div className='text-xs text-muted-foreground mt-1'>Click to load</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* No Favorites or Recent History sections here - they're in the combobox */}
 
             {/* Quick Start */}
             <div className='text-center'>
               <p className='text-sm mb-4 px-4 py-2 bg-muted/50 rounded-lg inline-block'>
-                Enter any URL above and press{' '}
+                Click the dropdown in the header or press{' '}
                 <kbd className='px-1.5 py-0.5 bg-background border rounded text-xs'>
-                  Enter
+                  ⌘K
                 </kbd>{' '}
-                to get started
+                to enter a website URL
               </p>
             </div>
           </div>
@@ -159,17 +107,13 @@ export default function WebsiteViewer () {
         {currentSite && views.length > 0 && (
           <div>
             {/* Site Header with Zoom Controls */}
-            <div className='flex items-center justify-between mb-6 p-4 bg-muted/20 rounded-lg'>
-              <div className='flex items-center gap-2'>
-                <div className='w-2 h-2 rounded-full bg-green-500'></div>
-                <h2 className='text-lg font-medium truncate'>{currentSite}</h2>
-              </div>
+            <div className='flex items-center justify-end mb-6 p-4 bg-muted/20 rounded-lg'>
               <div className='flex items-center gap-2 px-3 py-2 bg-background rounded-lg border'>
                 <Button
                   variant='ghost'
                   size='sm'
                   onClick={globalZoomOut}
-                  disabled={globalZoomStepIndex === 0}
+                  disabled={globalZoomStepIndex === 2}
                   title='Zoom out'
                   className='h-6 w-6 p-0'
                 >

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Globe, Check, ChevronDown, Star, Clock, Zap } from 'lucide-react'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
@@ -42,10 +42,27 @@ export function Header () {
 
   const [open, setOpen] = useState(false)
 
+  // Add keyboard shortcut handler (Command+K or Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check for Command+K (Mac) or Ctrl+K (Windows/Linux)
+      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+        event.preventDefault()
+        setOpen(prev => !prev)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   // Function to handle selection from combobox
   const onSelect = (selectedValue: string) => {
     selectSuggestion(selectedValue)
     setOpen(false)
+    // Automatically load the site when selected from dropdown
+    // Pass the selected value directly to avoid race condition
+    loadSite(selectedValue)
   }
 
   return (
@@ -56,27 +73,27 @@ export function Header () {
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button
-                  variant="outline"
-                  role="combobox"
+                  variant='outline'
+                  role='combobox'
                   aria-expanded={open}
                   className={cn(
-                    'w-full justify-between text-[16px] h-10 px-3 py-2', 
+                    'w-full justify-between text-[16px] h-10 px-3 py-2',
                     isInputHighlighted && 'highlight-input'
                   )}
                 >
-                  {url ? url : "example.com or localhost:3000"}
-                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  {url ? url : 'Enter website URL...'}
+                  <ChevronDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent 
-                className="p-0" 
-                align="start" 
+              <PopoverContent
+                className='p-0'
+                align='start'
                 sideOffset={5}
                 style={{ width: 'var(--radix-popover-trigger-width)' }}
               >
                 <Command className='w-full'>
                   <CommandInput
-                    placeholder='Search URL...'
+                    placeholder='Enter website URL to view...'
                     value={url}
                     onValueChange={handleUrlChange}
                     onKeyDown={e => {
@@ -92,49 +109,68 @@ export function Header () {
                     No URL found.
                   </CommandEmpty>
                   <CommandList>
-                    {filteredSuggestions.length > 0 && (
-                      <CommandGroup heading='Suggestions'>
-                        {filteredSuggestions.map((suggestion, index) => (
-                          <CommandItem
-                            key={`suggestion-${index}`}
-                            onSelect={() => onSelect(suggestion)}
-                            className='cursor-pointer flex items-center w-full'
-                          >
-                            <Zap className='mr-2 h-4 w-4 flex-shrink-0' />
-                            <span className='truncate'>{suggestion}</span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
+                    {url.length > 0 ? (
+                      // Show filtered suggestions when typing
+                      filteredSuggestions.length > 0 && (
+                        <CommandGroup heading='Suggestions'>
+                          {filteredSuggestions.map((suggestion, index) => (
+                            <CommandItem
+                              key={`suggestion-${index}`}
+                              onSelect={() => onSelect(suggestion)}
+                              className='cursor-pointer flex items-center w-full'
+                            >
+                              <Zap className='mr-2 h-4 w-4 flex-shrink-0' />
+                              <span className='truncate'>{suggestion}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      )
+                    ) : (
+                      // Show categorized lists when input is empty
+                      <>
+                        {favorites.length > 0 && (
+                          <CommandGroup heading='Favorites'>
+                            {favorites.map((fav, index) => (
+                              <CommandItem
+                                key={`favorite-${index}`}
+                                onSelect={() => onSelect(fav)}
+                                className='cursor-pointer flex items-center w-full'
+                              >
+                                <Star className='mr-2 h-4 w-4 text-yellow-500 flex-shrink-0' />
+                                <span className='truncate'>{fav}</span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        )}
 
-                    {favorites.length > 0 && (
-                      <CommandGroup heading='Favorites'>
-                        {favorites.map((fav, index) => (
-                          <CommandItem
-                            key={`favorite-${index}`}
-                            onSelect={() => onSelect(fav)}
-                            className='cursor-pointer flex items-center w-full'
-                          >
-                            <Star className='mr-2 h-4 w-4 text-yellow-500 flex-shrink-0' />
-                            <span className='truncate'>{fav}</span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
+                        {history.length > 0 && (
+                          <CommandGroup heading='Recent'>
+                            {history.map((item, index) => (
+                              <CommandItem
+                                key={`history-${index}`}
+                                onSelect={() => onSelect(item)}
+                                className='cursor-pointer flex items-center w-full'
+                              >
+                                <Clock className='mr-2 h-4 w-4 text-slate-400 flex-shrink-0' />
+                                <span className='truncate'>{item}</span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        )}
 
-                    {history.length > 0 && (
-                      <CommandGroup heading='History'>
-                        {history.map((item, index) => (
-                          <CommandItem
-                            key={`history-${index}`}
-                            onSelect={() => onSelect(item)}
-                            className='cursor-pointer flex items-center w-full'
-                          >
-                            <Clock className='mr-2 h-4 w-4 text-slate-400 flex-shrink-0' />
-                            <span className='truncate'>{item}</span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
+                        <CommandGroup heading='Quick Start'>
+                          {['localhost:3000', 'localhost:3001', 'localhost:5173'].map((port, index) => (
+                            <CommandItem
+                              key={`port-${index}`}
+                              onSelect={() => onSelect(port)}
+                              className='cursor-pointer flex items-center w-full'
+                            >
+                              <Zap className='mr-2 h-4 w-4 flex-shrink-0' />
+                              <span className='truncate'>{port}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </>
                     )}
                   </CommandList>
                 </Command>
@@ -145,7 +181,7 @@ export function Header () {
             <Button
               size='sm'
               disabled={!formatUrl(url)}
-              onClick={loadSite}
+              onClick={() => loadSite()}
               className='px-3'
               title='Load site'
             >

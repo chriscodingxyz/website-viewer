@@ -15,36 +15,29 @@ export interface View {
 }
 
 const isValidUrl = (url: string): boolean => {
-  const urlPattern =
-    /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/
-  const localhostPattern =
-    /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?(\/.*)?$/
-  return urlPattern.test(url) || localhostPattern.test(url)
+  try {
+    new URL(url)
+    return true
+  } catch {
+    return false
+  }
 }
 
 const formatUrl = (inputUrl: string): string | null => {
-  let formattedUrl = inputUrl.trim().toLowerCase()
-
-  if (
-    formattedUrl.includes('localhost') ||
-    formattedUrl.includes('127.0.0.1')
-  ) {
-    if (
-      !formattedUrl.startsWith('http://') &&
-      !formattedUrl.startsWith('https://')
-    ) {
-      formattedUrl = 'http://' + formattedUrl
+  if (!inputUrl || inputUrl.trim() === '') return null
+  
+  let formattedUrl = inputUrl.trim()
+  
+  // Add protocol if missing
+  if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+    // Use http:// for localhost, https:// for everything else
+    if (formattedUrl.includes('localhost') || formattedUrl.includes('127.0.0.1')) {
+      formattedUrl = `http://${formattedUrl}`
+    } else {
+      formattedUrl = `https://${formattedUrl}`
     }
-    return isValidUrl(formattedUrl) ? formattedUrl : null
   }
-
-  if (
-    !formattedUrl.startsWith('http://') &&
-    !formattedUrl.startsWith('https://')
-  ) {
-    formattedUrl = 'https://' + formattedUrl
-  }
-
+  
   return isValidUrl(formattedUrl) ? formattedUrl : null
 }
 
@@ -73,7 +66,7 @@ interface WebsiteViewerContextType {
   handleKeyDown: (e: React.KeyboardEvent) => void
   selectSuggestion: (suggestion: string) => void
   formatUrl: (url: string) => string | null
-  loadSite: () => void
+  loadSite: (urlOverride?: string) => void
   setUrlWithHighlight: (url: string) => void
   removeView: (id: number) => void
   changeViewType: (id: number, type: ViewType) => void
@@ -111,8 +104,9 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setTimeout(() => setIsInputHighlighted(false), 1000)
   }
 
-  const loadSite = () => {
-    const formattedUrl = formatUrl(url)
+  const loadSite = (urlOverride?: string) => {
+    const urlToUse = urlOverride || url
+    const formattedUrl = formatUrl(urlToUse)
     if (formattedUrl) {
       // Replace all views with new site's 4 viewports
       setViews([
@@ -124,7 +118,8 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
       setCurrentSite(formattedUrl)
       setNextId(nextId + 4)
       addToHistory(formattedUrl)
-      setUrl('')
+      // Keep the URL in the field instead of clearing it
+      setUrl(formattedUrl)
       toast.success('Site loaded in all viewports')
     } else {
       toast.error('Please enter a valid URL')
@@ -161,7 +156,14 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
       setFilteredSuggestions(suggestions)
       setShowSuggestions(suggestions.length > 0)
     } else {
-      setShowSuggestions(false)
+      // Show all suggestions when input is empty
+      const allSuggestions = [
+        ...history,
+        ...favorites,
+        ...commonDevPorts.filter(port => !history.includes(port))
+      ]
+      setFilteredSuggestions(allSuggestions)
+      setShowSuggestions(allSuggestions.length > 0)
     }
   }
 
