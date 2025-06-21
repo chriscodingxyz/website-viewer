@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { toast } from 'sonner'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
@@ -93,6 +93,19 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   const { favorites } = useFavorites()
   const { history, addToHistory } = useHistory()
 
+  // Load site from URL params on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const siteParam = urlParams.get('site')
+    if (siteParam) {
+      const formattedUrl = formatUrl(siteParam)
+      if (formattedUrl) {
+        setUrl(formattedUrl)
+        loadSiteInternal(formattedUrl)
+      }
+    }
+  }, [])
+
   // Global zoom state
   const zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2]
   const [globalZoomStepIndex, setGlobalZoomStepIndex] = useState(2) // Default to 100%
@@ -104,22 +117,30 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setTimeout(() => setIsInputHighlighted(false), 1000)
   }
 
+  const loadSiteInternal = (formattedUrl: string) => {
+    // Replace all views with new site's 4 viewports
+    setViews([
+      { id: nextId, url: formattedUrl, type: 'desktop' },
+      { id: nextId + 1, url: formattedUrl, type: 'tablet' },
+      { id: nextId + 2, url: formattedUrl, type: 'mobileLarge' },
+      { id: nextId + 3, url: formattedUrl, type: 'mobile' }
+    ])
+    setCurrentSite(formattedUrl)
+    setNextId(nextId + 4)
+    addToHistory(formattedUrl)
+    // Keep the URL in the field instead of clearing it
+    setUrl(formattedUrl)
+  }
+
   const loadSite = (urlOverride?: string) => {
     const urlToUse = urlOverride || url
     const formattedUrl = formatUrl(urlToUse)
     if (formattedUrl) {
-      // Replace all views with new site's 4 viewports
-      setViews([
-        { id: nextId, url: formattedUrl, type: 'desktop' },
-        { id: nextId + 1, url: formattedUrl, type: 'tablet' },
-        { id: nextId + 2, url: formattedUrl, type: 'mobileLarge' },
-        { id: nextId + 3, url: formattedUrl, type: 'mobile' }
-      ])
-      setCurrentSite(formattedUrl)
-      setNextId(nextId + 4)
-      addToHistory(formattedUrl)
-      // Keep the URL in the field instead of clearing it
-      setUrl(formattedUrl)
+      loadSiteInternal(formattedUrl)
+      // Update URL search params
+      const urlParams = new URLSearchParams(window.location.search)
+      urlParams.set('site', formattedUrl)
+      window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`)
       toast.success('Site loaded in all viewports')
     } else {
       toast.error('Please enter a valid URL')
