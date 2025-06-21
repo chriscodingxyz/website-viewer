@@ -265,17 +265,19 @@ export default function WebsiteView ({
     >
       <div
         className='flex items-center justify-between p-0'
-        style={{ height: `${optionsHeight}px` }}
+        style={{ 
+          height: `${optionsHeight}px`,
+          background: `rgb(var(--device-color) / 0.08)`
+        }}
       >
         <div className='flex items-center gap-2'>
           {/* Index number display removed */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className='flex items-center gap-2 px-3 rounded-tl-xl text-sm font-medium transition-all duration-200 hover:brightness-95 border-0 shadow-none'
+                className='flex items-center gap-2 px-3 rounded-tl-xl text-sm font-medium transition-all duration-200 hover:bg-white/10 border-0 shadow-none'
                 style={{
                   color: `rgb(var(--device-color))`,
-                  background: `linear-gradient(135deg, rgb(var(--device-color) / 0.08), rgb(var(--device-color) / 0.04))`,
                   height: `${optionsHeight}px`
                 }}
                 title={`Change device type (current: ${getDeviceName(
