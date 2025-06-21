@@ -120,40 +120,6 @@ export default function WebsiteViewer () {
         {/* Site Views */}
         {currentSite && views.length > 0 && (
           <div>
-            {/* Enhanced Zoom Controls */}
-            <div className='flex items-center justify-center mb-8'>
-              <div className='flex items-center gap-1 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border shadow-lg hover:shadow-xl transition-all duration-300'>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={globalZoomOut}
-                  disabled={globalZoomStepIndex === 2}
-                  title='Zoom out (Min: 100%)'
-                  className='h-8 w-8 p-0 rounded-full hover:bg-gray-100 disabled:opacity-30 transition-all duration-200'
-                >
-                  <ZoomOut className='h-4 w-4' />
-                </Button>
-                <div className='flex items-center gap-1 mx-2'>
-                  <span
-                    className='text-sm font-medium w-14 text-center tabular-nums cursor-pointer hover:text-blue-600 transition-colors px-2 py-1 rounded-md hover:bg-blue-50'
-                    onClick={resetGlobalZoom}
-                    title='Click to reset zoom to 100%'
-                  >
-                    {Math.round(globalZoom * 100)}%
-                  </span>
-                </div>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={globalZoomIn}
-                  disabled={globalZoomStepIndex === zoomSteps.length - 1}
-                  title='Zoom in (Max: 200%)'
-                  className='h-8 w-8 p-0 rounded-full hover:bg-gray-100 disabled:opacity-30 transition-all duration-200'
-                >
-                  <ZoomIn className='h-4 w-4' />
-                </Button>
-              </div>
-            </div>
 
             {/* Viewport Grid */}
             <div className='flex flex-wrap gap-6 justify-center items-start'>
