@@ -187,13 +187,13 @@ export default function WebsiteView ({
   const getDeviceIcon = (deviceType: ViewType) => {
     switch (deviceType) {
       case 'desktop':
-        return <Monitor className='h-4 w-4 text-purple-600' />
+        return <Monitor className='h-4 w-4' />
       case 'tablet':
-        return <Tablet className='h-4 w-4 text-blue-600' />
+        return <Tablet className='h-4 w-4' />
       case 'mobileLarge':
-        return <Smartphone className='h-4 w-4 text-green-600' />
+        return <Smartphone className='h-4 w-4' />
       case 'mobile':
-        return <Smartphone className='h-4 w-4 text-orange-600' />
+        return <Smartphone className='h-4 w-4' />
     }
   }
 
@@ -210,16 +210,16 @@ export default function WebsiteView ({
     }
   }
 
-  const getDeviceColor = (deviceType: ViewType) => {
+  const getDeviceClass = (deviceType: ViewType) => {
     switch (deviceType) {
       case 'desktop':
-        return 'border-purple-500 bg-purple-50 text-purple-700'
+        return 'device-desktop'
       case 'tablet':
-        return 'border-blue-500 bg-blue-50 text-blue-700'
+        return 'device-tablet'
       case 'mobileLarge':
-        return 'border-green-500 bg-green-50 text-green-700'
+        return 'device-mobile-large'
       case 'mobile':
-        return 'border-orange-500 bg-orange-50 text-orange-700'
+        return 'device-mobile'
     }
   }
 
@@ -240,11 +240,14 @@ export default function WebsiteView ({
   return (
     <div
       ref={containerRef}
-      className='relative border rounded-lg overflow-hidden w-full sm:w-auto'
+      className={`relative rounded-xl overflow-hidden w-full sm:w-auto hover-lift animate-fade-in device-border ${
+        getDeviceClass(view.type)
+      }`}
       style={{
         width: `${scaledWidth + 2 * borderWidth}px`,
         height: `${scaledHeight + optionsHeight + 2 * borderWidth}px`,
-        maxWidth: globalZoom > 1 ? 'none' : 'none' // Remove max-width constraints for better space utilization
+        maxWidth: globalZoom > 1 ? 'none' : 'none',
+        animationDelay: `${index * 0.1}s`
       }}
     >
       <div
@@ -258,15 +261,17 @@ export default function WebsiteView ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className={`flex items-center gap-2 px-2 py-1 rounded border-2 transition-colors hover:opacity-80 ${getDeviceColor(
-                  view.type
-                )}`}
+                className='flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 bg-white/80 backdrop-blur-sm border shadow-sm hover:shadow-md'
+                style={{
+                  color: `rgb(var(--device-color))`,
+                  borderColor: `rgb(var(--device-color) / 0.3)`
+                }}
                 title={`Change device type (current: ${getDeviceName(
                   view.type
                 )})`}
               >
                 {getDeviceIcon(view.type)}
-                <span className='text-xs font-medium truncate'>
+                <span className='truncate'>
                   {getDeviceName(view.type)}
                 </span>
               </button>
@@ -368,15 +373,15 @@ export default function WebsiteView ({
           </DropdownMenu>
           <button
             onClick={onRemove}
-            className='bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded w-6 h-6 flex items-center justify-center shadow-sm transition-colors'
+            className='bg-red-500/10 hover:bg-red-500/20 text-red-600 hover:text-red-700 rounded-lg w-8 h-8 flex items-center justify-center transition-all duration-200 hover:scale-110 border border-red-200/50 hover:border-red-300/50'
             title='Remove view'
           >
-            <X className='h-3 w-3' />
+            <X className='h-4 w-4' />
           </button>
         </div>
       </div>
       <div
-        className='relative overflow-hidden bg-background mx-auto border-t'
+        className='relative overflow-hidden bg-white mx-auto shadow-inner'
         style={{
           width: `${scaledWidth}px`,
           height: `${scaledHeight}px`
@@ -396,23 +401,28 @@ export default function WebsiteView ({
           title={`View ${view.id}`}
         />
         {loadingState === 'loading' && (
-          <div className='absolute inset-0 flex items-center justify-center bg-background/80'>
-            <div className='flex items-center gap-2'>
-              <Loader2 className='h-6 w-6 animate-spin' />
-              <span className='text-sm'>Loading...</span>
+          <div className='absolute inset-0 flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm'>
+            <div className='flex flex-col items-center gap-3 p-6 rounded-xl bg-white/80 shadow-lg border'>
+              <div 
+                className='w-8 h-8 rounded-full animate-spin'
+                style={{
+                  background: `conic-gradient(from 0deg, transparent, rgb(var(--device-color)))`
+                }}
+              />
+              <span className='text-sm font-medium text-gray-600'>Loading site...</span>
             </div>
           </div>
         )}
         {loadingState === 'error' && (
-          <div className='absolute inset-0 flex items-center justify-center bg-background/90'>
-            <div className='text-center'>
-              <AlertCircle className='h-8 w-8 text-destructive mx-auto mb-2' />
-              <p className='text-sm text-destructive'>Failed to load</p>
+          <div className='absolute inset-0 flex items-center justify-center bg-white/95 backdrop-blur-sm'>
+            <div className='text-center p-6 rounded-xl bg-white/80 shadow-lg border'>
+              <AlertCircle className='h-10 w-10 text-red-500 mx-auto mb-3' />
+              <p className='text-sm font-medium text-red-600 mb-3'>Failed to load site</p>
               <Button
                 size='sm'
                 variant='outline'
                 onClick={refreshView}
-                className='mt-2'
+                className='border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300'
               >
                 <RefreshCw className='h-4 w-4 mr-1' />
                 Retry

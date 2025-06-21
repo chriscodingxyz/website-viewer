@@ -73,7 +73,7 @@ export default function WebsiteViewer () {
       `}</style>
 
       {/* Main Content Area */}
-      <div className='pt-20 p-4'>
+      <div className='pt-20 p-4 min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30'>
         {!currentSite && (
           <div className='max-w-4xl mx-auto'>
             {/* Homepage Content */}
@@ -92,13 +92,24 @@ export default function WebsiteViewer () {
 
             {/* Quick Start */}
             <div className='text-center'>
-              <p className='text-sm mb-4 px-4 py-2 bg-muted/50 rounded-lg inline-block'>
-                Click the dropdown in the header or press{' '}
-                <kbd className='px-1.5 py-0.5 bg-background border rounded text-xs'>
-                  ⌘K
-                </kbd>{' '}
-                to enter a website URL
-              </p>
+              <div className='max-w-md mx-auto p-6 bg-white/70 backdrop-blur-sm rounded-2xl border shadow-lg'>
+                <div className='mb-4'>
+                  <Globe className='h-12 w-12 mx-auto text-blue-500 mb-3' />
+                  <h2 className='text-xl font-semibold text-gray-800 mb-2'>
+                    Website Viewer
+                  </h2>
+                  <p className='text-gray-600 text-sm'>
+                    View websites across different device sizes
+                  </p>
+                </div>
+                <div className='text-sm text-gray-500 p-3 bg-gray-50/80 rounded-lg'>
+                  Click the search bar above or press{' '}
+                  <kbd className='px-2 py-1 bg-white border rounded-md text-xs font-mono shadow-sm'>
+                    ⌘K
+                  </kbd>{' '}
+                  to get started
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -106,42 +117,44 @@ export default function WebsiteViewer () {
         {/* Site Views */}
         {currentSite && views.length > 0 && (
           <div>
-            {/* Site Header with Zoom Controls */}
-            <div className='flex items-center justify-end mb-6 p-4 bg-muted/20 rounded-lg'>
-              <div className='flex items-center gap-2 px-3 py-2 bg-background rounded-lg border'>
+            {/* Enhanced Zoom Controls */}
+            <div className='flex items-center justify-center mb-8'>
+              <div className='flex items-center gap-1 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border shadow-lg hover:shadow-xl transition-all duration-300'>
                 <Button
                   variant='ghost'
                   size='sm'
                   onClick={globalZoomOut}
                   disabled={globalZoomStepIndex === 2}
-                  title='Zoom out'
-                  className='h-6 w-6 p-0'
+                  title='Zoom out (Min: 100%)'
+                  className='h-8 w-8 p-0 rounded-full hover:bg-gray-100 disabled:opacity-30 transition-all duration-200'
                 >
-                  <ZoomOut className='h-3 w-3' />
+                  <ZoomOut className='h-4 w-4' />
                 </Button>
-                <span
-                  className='text-sm w-12 text-center tabular-nums cursor-pointer'
-                  onClick={resetGlobalZoom}
-                  title='Reset zoom'
-                >
-                  {Math.round(globalZoom * 100)}%
-                </span>
+                <div className='flex items-center gap-1 mx-2'>
+                  <span
+                    className='text-sm font-medium w-14 text-center tabular-nums cursor-pointer hover:text-blue-600 transition-colors px-2 py-1 rounded-md hover:bg-blue-50'
+                    onClick={resetGlobalZoom}
+                    title='Click to reset zoom to 100%'
+                  >
+                    {Math.round(globalZoom * 100)}%
+                  </span>
+                </div>
                 <Button
                   variant='ghost'
                   size='sm'
                   onClick={globalZoomIn}
                   disabled={globalZoomStepIndex === zoomSteps.length - 1}
-                  title='Zoom in'
-                  className='h-6 w-6 p-0'
+                  title='Zoom in (Max: 200%)'
+                  className='h-8 w-8 p-0 rounded-full hover:bg-gray-100 disabled:opacity-30 transition-all duration-200'
                 >
-                  <ZoomIn className='h-3 w-3' />
+                  <ZoomIn className='h-4 w-4' />
                 </Button>
               </div>
             </div>
 
             {/* Viewport Grid */}
-            <div className='flex flex-wrap gap-4 justify-center'>
-              {views.map(view => (
+            <div className='flex flex-wrap gap-6 justify-center items-start'>
+              {views.map((view, index) => (
                 <WebsiteView
                   key={view.id}
                   view={view}
@@ -150,7 +163,7 @@ export default function WebsiteViewer () {
                   onRemove={() => removeView(view.id)}
                   onTypeChange={type => changeViewType(view.id, type)}
                   onDuplicate={duplicateView}
-                  index={views.findIndex(v => v.id === view.id)}
+                  index={index}
                 />
               ))}
             </div>
