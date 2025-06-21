@@ -41,6 +41,23 @@ const formatUrl = (inputUrl: string): string | null => {
   return isValidUrl(formattedUrl) ? formattedUrl : null
 }
 
+// Helper function to strip protocol and trailing slash for clean URL params
+const stripUrlForParams = (fullUrl: string): string => {
+  return fullUrl
+    .replace(/^https?:\/\//, '') // Remove protocol
+    .replace(/\/$/, '') // Remove trailing slash
+}
+
+// Helper function to add protocol based on domain for URL params
+const addProtocolFromDomain = (domain: string): string => {
+  // Auto-detect protocol: localhost = http, everything else = https
+  if (domain.includes('localhost') || domain.includes('127.0.0.1')) {
+    return `http://${domain}`
+  } else {
+    return `https://${domain}`
+  }
+}
+
 const commonDevPorts = [
   'localhost:3000',
   'localhost:3001',
@@ -98,10 +115,11 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     const urlParams = new URLSearchParams(window.location.search)
     const siteParam = urlParams.get('site')
     if (siteParam) {
-      const formattedUrl = formatUrl(siteParam)
-      if (formattedUrl) {
-        setUrl(formattedUrl)
-        loadSiteInternal(formattedUrl)
+      // Auto-add protocol based on domain
+      const fullUrl = addProtocolFromDomain(siteParam)
+      if (isValidUrl(fullUrl)) {
+        setUrl(fullUrl)
+        loadSiteInternal(fullUrl)
       }
     }
   }, [])
@@ -137,9 +155,10 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     const formattedUrl = formatUrl(urlToUse)
     if (formattedUrl) {
       loadSiteInternal(formattedUrl)
-      // Update URL search params
+      // Update URL search params with clean domain (no protocol/trailing slash)
       const urlParams = new URLSearchParams(window.location.search)
-      urlParams.set('site', formattedUrl)
+      const cleanDomain = stripUrlForParams(formattedUrl)
+      urlParams.set('site', cleanDomain)
       window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`)
       toast.success('Site loaded in all viewports')
     } else {
