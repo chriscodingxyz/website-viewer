@@ -223,6 +223,19 @@ export default function WebsiteView ({
     }
   }
 
+  const getDeviceColorStyle = (deviceType: ViewType) => {
+    switch (deviceType) {
+      case 'desktop':
+        return { color: 'rgb(59 130 246)', backgroundColor: 'rgb(59 130 246 / 0.05)' } // blue
+      case 'tablet':
+        return { color: 'rgb(34 197 94)', backgroundColor: 'rgb(34 197 94 / 0.05)' } // green
+      case 'mobileLarge':
+        return { color: 'rgb(249 115 22)', backgroundColor: 'rgb(249 115 22 / 0.05)' } // orange
+      case 'mobile':
+        return { color: 'rgb(168 85 247)', backgroundColor: 'rgb(168 85 247 / 0.05)' } // purple
+    }
+  }
+
   const deviceTypes: ViewType[] = ['desktop', 'tablet', 'mobileLarge', 'mobile']
 
   // Container size - shows full content at all zoom levels
@@ -251,9 +264,7 @@ export default function WebsiteView ({
       }}
     >
       <div
-        className={`flex items-center justify-between ${
-          isCompactView ? 'p-1' : 'p-2'
-        }`}
+        className='flex items-center justify-between p-0'
         style={{ height: `${optionsHeight}px` }}
       >
         <div className='flex items-center gap-2'>
@@ -261,10 +272,11 @@ export default function WebsiteView ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className='flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 bg-white/80 backdrop-blur-sm border shadow-sm hover:shadow-md'
+                className='flex items-center gap-2 px-3 rounded-tl-xl text-sm font-medium transition-all duration-200 hover:brightness-95 border-0 shadow-none'
                 style={{
                   color: `rgb(var(--device-color))`,
-                  borderColor: `rgb(var(--device-color) / 0.3)`
+                  background: `linear-gradient(135deg, rgb(var(--device-color) / 0.08), rgb(var(--device-color) / 0.04))`,
+                  height: `${optionsHeight}px`
                 }}
                 title={`Change device type (current: ${getDeviceName(
                   view.type
@@ -281,16 +293,17 @@ export default function WebsiteView ({
                 <DropdownMenuItem
                   key={deviceType}
                   onClick={() => onTypeChange(deviceType)}
-                  className={`flex items-center gap-3 ${
-                    view.type === deviceType ? 'bg-accent' : ''
-                  } focus:bg-accent`}
+                  className={`flex items-center gap-3 border-l-3 transition-all duration-200 ${
+                    view.type === deviceType ? 'border-l-current' : 'border-l-transparent'
+                  }`}
+                  style={getDeviceColorStyle(deviceType)}
                 >
                   {getDeviceIcon(deviceType)}
                   <span className='font-medium'>
                     {getDeviceName(deviceType)}
                   </span>
                   {view.type === deviceType && (
-                    <div className='ml-auto w-2 h-2 rounded-full bg-primary'></div>
+                    <div className='ml-auto w-2 h-2 rounded-full' style={{ backgroundColor: getDeviceColorStyle(deviceType).color }}></div>
                   )}
                 </DropdownMenuItem>
               ))}
@@ -373,7 +386,8 @@ export default function WebsiteView ({
           </DropdownMenu>
           <button
             onClick={onRemove}
-            className='bg-red-500/10 hover:bg-red-500/20 text-red-600 hover:text-red-700 rounded-lg w-8 h-8 flex items-center justify-center transition-all duration-200 hover:scale-110 border border-red-200/50 hover:border-red-300/50'
+            className='bg-red-500/8 hover:bg-red-500/15 text-red-600 hover:text-red-700 rounded-tr-xl w-8 flex items-center justify-center transition-all duration-200 hover:brightness-95 border-0 shadow-none'
+            style={{ height: `${optionsHeight}px` }}
             title='Remove view'
           >
             <X className='h-4 w-4' />
@@ -381,10 +395,11 @@ export default function WebsiteView ({
         </div>
       </div>
       <div
-        className='relative overflow-hidden bg-white mx-auto shadow-inner'
+        className='relative overflow-hidden bg-white rounded-b-xl shadow-inner'
         style={{
           width: `${scaledWidth}px`,
-          height: `${scaledHeight}px`
+          height: `${scaledHeight}px`,
+          margin: '0 2px 2px 2px'
         }}
       >
         <iframe
