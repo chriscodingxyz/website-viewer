@@ -66,9 +66,12 @@ export function Header () {
   }
 
   return (
-    <header className='fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b py-3 px-2'>
-      <div>
-        <div className='flex gap-2 flex-row items-center'>
+    <header className='fixed top-0 left-0 right-0 z-50 py-4 px-3' style={{
+      background: 'rgba(255,255,255,0.8)',
+      backdropFilter: 'blur(20px)'
+    }}>
+      <div className='max-w-7xl mx-auto'>
+        <div className='flex gap-4 flex-row items-center'>
           <div className='flex-grow relative'>
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
@@ -77,19 +80,35 @@ export function Header () {
                   role='combobox'
                   aria-expanded={open}
                   className={cn(
-                    'w-full justify-between text-[16px] h-10 px-3 py-2',
+                    'w-full justify-between text-[16px] h-12 px-4 py-2 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]',
                     isInputHighlighted && 'highlight-input'
                   )}
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(255,255,255,0.9), rgba(248,250,252,0.9))',
+                    border: '1px solid rgba(59,130,246,0.2)',
+                    borderRadius: '16px'
+                  }}
                 >
-                  {url ? url : 'Enter website URL...'}
-                  <ChevronDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                  <span className={cn(
+                    'truncate',
+                    url ? 'text-gray-800' : 'text-gray-500'
+                  )}>
+                    {url ? url : '🌐 Enter website URL to view...'}
+                  </span>
+                  <ChevronDown className='ml-3 h-4 w-4 shrink-0 text-blue-500/70' />
                 </Button>
               </PopoverTrigger>
               <PopoverContent
-                className='p-0'
+                className='p-0 border-0 shadow-2xl'
                 align='start'
-                sideOffset={5}
-                style={{ width: 'var(--radix-popover-trigger-width)' }}
+                sideOffset={8}
+                style={{ 
+                  width: 'var(--radix-popover-trigger-width)',
+                  background: 'linear-gradient(145deg, rgba(255,255,255,0.95), rgba(248,250,252,0.95))',
+                  backdropFilter: 'blur(20px)',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(59,130,246,0.1)'
+                }}
               >
                 <Command className='w-full'>
                   <CommandInput
@@ -177,15 +196,21 @@ export function Header () {
               </PopoverContent>
             </Popover>
           </div>
-          <div className='flex gap-2'>
+          <div className='flex gap-3'>
             <Button
               size='sm'
               disabled={!formatUrl(url)}
               onClick={() => loadSite()}
-              className='px-3'
-              title='Load site'
+              className='h-12 px-4 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-40 disabled:transform-none'
+              style={{
+                background: formatUrl(url) 
+                  ? 'linear-gradient(145deg, rgba(59,130,246,0.9), rgba(37,99,235,0.9))'
+                  : 'linear-gradient(145deg, rgba(156,163,175,0.6), rgba(107,114,128,0.6))',
+                borderRadius: '16px'
+              }}
+              title='Load website in all viewports'
             >
-              <Globe className='w-4 h-4' />
+              <Globe className='w-5 h-5 text-white' />
             </Button>
           </div>
         </div>

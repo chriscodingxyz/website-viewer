@@ -58,13 +58,16 @@ export default function WebsiteViewer () {
       <style jsx global>{`
         @keyframes highlightInput {
           0% {
-            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7), 0 8px 25px rgba(0,0,0,0.1);
+            transform: scale(1);
           }
           50% {
-            box-shadow: 0 0 0 4px hsl(var(--ring));
+            box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2), 0 12px 35px rgba(59, 130, 246, 0.3);
+            transform: scale(1.02);
           }
           100% {
-            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0), 0 8px 25px rgba(0,0,0,0.1);
+            transform: scale(1);
           }
         }
         .highlight-input {
@@ -73,7 +76,7 @@ export default function WebsiteViewer () {
       `}</style>
 
       {/* Main Content Area */}
-      <div className='pt-20 p-4 min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30'>
+      <div className='pt-24 p-4 min-h-screen'>
         {!currentSite && (
           <div className='max-w-4xl mx-auto'>
             {/* Homepage Content */}
