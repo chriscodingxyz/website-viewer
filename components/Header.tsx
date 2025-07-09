@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Globe, Check, ChevronDown, Star, Clock, Zap, ZoomIn, ZoomOut } from 'lucide-react'
+import { Globe, Check, ChevronDown, Star, Clock, Zap, ZoomIn, ZoomOut, Users } from 'lucide-react'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
@@ -207,6 +207,14 @@ export function Header () {
                 </Command>
               </PopoverContent>
             </Popover>
+            
+            {/* Shared View Indicator */}
+            {typeof window !== 'undefined' && (window as any).sharedAnnotationData && (
+              <div className='absolute -bottom-6 left-0 flex items-center gap-2 text-xs text-primary bg-primary/10 px-2 py-1 rounded-full'>
+                <Users className='w-3 h-3' />
+                <span>Shared view</span>
+              </div>
+            )}
           </div>
           <div className='flex gap-3'>
             <Button

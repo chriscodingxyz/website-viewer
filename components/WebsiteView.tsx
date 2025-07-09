@@ -19,11 +19,17 @@ import {
   Copy,
   Loader2,
   AlertCircle,
-  Settings
+  Settings,
+  Camera,
+  MessageSquare,
+  Share,
+  Mail
 } from 'lucide-react'
+import html2canvas from 'html2canvas'
 import { View, ViewType } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { toast } from 'sonner'
+import { AnnotationPin, Annotation } from './AnnotationPin'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,11 +90,52 @@ export default function WebsiteView ({
   const [scale, setScale] = useState(1)
   const [isCompactView, setIsCompactView] = useState(false) // For responsive layout
   const containerRef = useRef<HTMLDivElement>(null)
+  const viewportRef = useRef<HTMLDivElement>(null) // Still needed for accurate click positioning
   const [loadingState, setLoadingState] = useState<LoadingState>('loading')
   const [loadStartTime, setLoadStartTime] = useState<number>(Date.now())
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
+  
+  // Annotation state
+  const [annotations, setAnnotations] = useState<Annotation[]>([])
+  const [isAnnotationMode, setIsAnnotationMode] = useState(false)
 
   const isFavorite = favorites.includes(view.url)
+
+  // Load annotations from localStorage or shared data
+  useEffect(() => {
+    // Check for shared data first
+    const sharedData = (window as any).sharedAnnotationData
+    if (sharedData && sharedData.url === view.url) {
+      // Handle new structure with allAnnotations
+      if (sharedData.allAnnotations && sharedData.allAnnotations[view.type]) {
+        setAnnotations(sharedData.allAnnotations[view.type])
+        return
+      }
+      // Handle legacy structure for backwards compatibility
+      else if (sharedData.type === view.type && sharedData.annotations) {
+        setAnnotations(sharedData.annotations)
+        return
+      }
+    }
+    
+    // Fallback to localStorage
+    const key = `annotations-${view.url}-${view.type}`
+    const saved = localStorage.getItem(key)
+    if (saved) {
+      try {
+        setAnnotations(JSON.parse(saved))
+      } catch (error) {
+        console.error('Failed to load annotations:', error)
+      }
+    }
+  }, [view.url, view.type])
+
+  // Save annotations to localStorage
+  const saveAnnotations = (newAnnotations: Annotation[]) => {
+    const key = `annotations-${view.url}-${view.type}`
+    localStorage.setItem(key, JSON.stringify(newAnnotations))
+    setAnnotations(newAnnotations)
+  }
 
   useEffect(() => {
     const updateScale = () => {
@@ -170,6 +217,195 @@ export default function WebsiteView ({
     } catch (err) {
       console.error('Failed to copy URL:', err)
       toast.error('Failed to copy URL')
+    }
+  }
+
+  const takeScreenshot = async () => {
+    if (!containerRef.current) return
+    
+    try {
+      toast.loading('Capturing screenshot...', { id: 'screenshot' })
+      
+      const canvas = await html2canvas(containerRef.current, {
+        useCORS: true,
+        allowTaint: true,
+        scale: 1,
+        backgroundColor: '#ffffff'
+      })
+      
+      // Create download link
+      const link = document.createElement('a')
+      link.download = `${getDeviceName(view.type).toLowerCase()}-${new URL(view.url).hostname}-${Date.now()}.png`
+      link.href = canvas.toDataURL()
+      link.click()
+      
+      toast.success('Screenshot captured!', { id: 'screenshot' })
+    } catch (error) {
+      console.error('Screenshot failed:', error)
+      toast.error('Failed to capture screenshot', { id: 'screenshot' })
+    }
+  }
+
+  const handleViewportClick = (e: React.MouseEvent) => {
+    if (!isAnnotationMode || !viewportRef.current) return
+    
+    // Use the viewport container for accurate positioning
+    const rect = viewportRef.current.getBoundingClientRect()
+    
+    // Get click position relative to the viewport container
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    
+    // Ensure the click is within the viewport bounds
+    if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
+      return
+    }
+    
+    const newAnnotation: Annotation = {
+      id: `${Date.now()}-${Math.random()}`,
+      x,
+      y,
+      text: '',
+      timestamp: Date.now()
+    }
+    
+    const updatedAnnotations = [...annotations, newAnnotation]
+    saveAnnotations(updatedAnnotations)
+    setIsAnnotationMode(false)
+  }
+
+  const updateAnnotation = (id: string, text: string) => {
+    const updatedAnnotations = annotations.map(ann => 
+      ann.id === id ? { ...ann, text } : ann
+    )
+    saveAnnotations(updatedAnnotations)
+  }
+
+  const deleteAnnotation = (id: string) => {
+    const updatedAnnotations = annotations.filter(ann => ann.id !== id)
+    saveAnnotations(updatedAnnotations)
+  }
+
+
+  const getViewportColor = (viewportType: ViewType): string => {
+    switch (viewportType) {
+      case 'desktop':
+        return 'rgb(59, 130, 246)' // blue
+      case 'tablet':
+        return 'rgb(34, 197, 94)' // green
+      case 'mobileLarge':
+        return 'rgb(249, 115, 22)' // orange
+      case 'mobile':
+        return 'rgb(168, 85, 247)' // purple
+    }
+  }
+
+  const toggleAnnotationMode = () => {
+    setIsAnnotationMode(!isAnnotationMode)
+  }
+
+  const shareWithAnnotations = async () => {
+    try {
+      // Collect annotations from all viewports for this URL
+      const allViewportAnnotations: Record<string, Annotation[]> = {}
+      const viewportTypes: ViewType[] = ['desktop', 'tablet', 'mobileLarge', 'mobile']
+      
+      viewportTypes.forEach(viewportType => {
+        const key = `annotations-${view.url}-${viewportType}`
+        const saved = localStorage.getItem(key)
+        if (saved) {
+          try {
+            const annotations = JSON.parse(saved)
+            if (annotations.length > 0) {
+              allViewportAnnotations[viewportType] = annotations
+            }
+          } catch (error) {
+            console.error(`Failed to load annotations for ${viewportType}:`, error)
+          }
+        }
+      })
+      
+      // Include current viewport annotations even if not saved yet
+      if (annotations.length > 0) {
+        allViewportAnnotations[view.type] = annotations
+      }
+      
+      const shareData = {
+        url: view.url,
+        allAnnotations: allViewportAnnotations,
+        timestamp: Date.now(),
+        sharedFrom: view.type // Which viewport the share was initiated from
+      }
+      
+      const encodedData = btoa(JSON.stringify(shareData))
+      const shareUrl = `${window.location.origin}${window.location.pathname}?share=${encodedData}`
+      
+      await navigator.clipboard.writeText(shareUrl)
+      const annotationCount = Object.values(allViewportAnnotations).reduce((sum, anns) => sum + anns.length, 0)
+      toast.success(`Shareable link copied! (${annotationCount} annotations across all viewports)`)
+    } catch (error) {
+      console.error('Failed to share:', error)
+      toast.error('Failed to create shareable link')
+    }
+  }
+
+  const emailAnnotations = async () => {
+    try {
+      // First generate the shareable link
+      const allViewportAnnotations: Record<string, Annotation[]> = {}
+      const viewportTypes: ViewType[] = ['desktop', 'tablet', 'mobileLarge', 'mobile']
+      
+      viewportTypes.forEach(viewportType => {
+        const key = `annotations-${view.url}-${viewportType}`
+        const saved = localStorage.getItem(key)
+        if (saved) {
+          try {
+            const annotations = JSON.parse(saved)
+            if (annotations.length > 0) {
+              allViewportAnnotations[viewportType] = annotations
+            }
+          } catch (error) {
+            console.error(`Failed to load annotations for ${viewportType}:`, error)
+          }
+        }
+      })
+      
+      if (annotations.length > 0) {
+        allViewportAnnotations[view.type] = annotations
+      }
+      
+      const shareData = {
+        url: view.url,
+        allAnnotations: allViewportAnnotations,
+        timestamp: Date.now(),
+        sharedFrom: view.type
+      }
+      
+      const encodedData = btoa(JSON.stringify(shareData))
+      const shareUrl = `${window.location.origin}${window.location.pathname}?share=${encodedData}`
+      
+      // Create email content
+      const annotationCount = Object.values(allViewportAnnotations).reduce((sum, anns) => sum + anns.length, 0)
+      const subject = `Website Feedback: ${new URL(view.url).hostname}`
+      const body = `Hi!
+
+I've reviewed the website and added ${annotationCount} annotations across different device viewports.
+
+Please check the feedback here:
+${shareUrl}
+
+Website: ${view.url}
+Date: ${new Date().toLocaleDateString()}
+
+Best regards`
+
+      const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+      window.location.href = mailtoUrl
+      
+      toast.success('Email draft opened with shareable link!')
+    } catch (error) {
+      console.error('Failed to create email:', error)
+      toast.error('Failed to create email')
     }
   }
 
@@ -288,6 +524,11 @@ export default function WebsiteView ({
                 <span className='truncate'>
                   {getDeviceName(view.type)}
                 </span>
+                {annotations.length > 0 && (
+                  <div className='bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold'>
+                    {annotations.length}
+                  </div>
+                )}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='start' className='w-48'>
@@ -325,6 +566,14 @@ export default function WebsiteView ({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
+              <DropdownMenuItem onClick={takeScreenshot}>
+                <Camera className='mr-2 h-4 w-4' />
+                <span>Screenshot</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={toggleAnnotationMode}>
+                <MessageSquare className={`mr-2 h-4 w-4 ${isAnnotationMode ? 'text-primary' : ''}`} />
+                <span>{isAnnotationMode ? 'Cancel annotation' : 'Add annotation'}</span>
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={refreshView}>
                 <RefreshCw className='mr-2 h-4 w-4' />
                 <span>Refresh</span>
@@ -337,6 +586,18 @@ export default function WebsiteView ({
                 <Copy className='mr-2 h-4 w-4' />
                 <span>Copy URL</span>
               </DropdownMenuItem>
+              {annotations.length > 0 && (
+                <>
+                  <DropdownMenuItem onClick={shareWithAnnotations}>
+                    <Share className='mr-2 h-4 w-4' />
+                    <span>Share with annotations</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={emailAnnotations}>
+                    <Mail className='mr-2 h-4 w-4' />
+                    <span>Email feedback</span>
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuItem onClick={handleFavoriteToggle}>
                 <Star
                   className={`mr-2 h-4 w-4 ${isFavorite ? 'text-primary' : ''}`}
@@ -397,12 +658,14 @@ export default function WebsiteView ({
         </div>
       </div>
       <div
-        className='relative overflow-hidden bg-white rounded-b-xl shadow-inner'
+        ref={viewportRef}
+        className={`viewport-container relative overflow-hidden bg-white rounded-b-xl shadow-inner ${isAnnotationMode ? 'cursor-crosshair' : ''}`}
         style={{
           width: `${scaledWidth}px`,
           height: `${scaledHeight}px`,
           margin: '0 2px 2px 2px'
         }}
+        onClick={handleViewportClick}
       >
         <iframe
           ref={iframeRef}
@@ -413,7 +676,8 @@ export default function WebsiteView ({
             width: `${actualDimensions[view.type].width}px`,
             height: `${actualDimensions[view.type].height}px`,
             transform: `scale(${finalContentScale})`,
-            transformOrigin: 'top left'
+            transformOrigin: 'top left',
+            pointerEvents: isAnnotationMode ? 'none' : 'auto'
           }}
           title={`View ${view.id}`}
         />
@@ -447,6 +711,28 @@ export default function WebsiteView ({
             </div>
           </div>
         )}
+        
+        {/* Annotation Mode Overlay */}
+        {isAnnotationMode && (
+          <div className='absolute inset-0 bg-primary/10 backdrop-blur-sm flex items-center justify-center z-30'>
+            <div className='bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg text-sm font-medium'>
+              Click anywhere to add an annotation
+            </div>
+          </div>
+        )}
+        
+        {/* Annotation Pins */}
+        {annotations.map((annotation, index) => (
+          <AnnotationPin
+            key={annotation.id}
+            annotation={annotation}
+            onUpdate={updateAnnotation}
+            onDelete={deleteAnnotation}
+            isEditing={annotation.text === ''}
+            number={index + 1}
+            color={getViewportColor(view.type)}
+          />
+        ))}
       </div>
     </div>
   )

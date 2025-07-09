@@ -57,6 +57,9 @@ Uses **shadcn/ui** components with:
 - Phosphor Icons for the footer social icons
 - Lucide React for UI icons
 - Sonner for toast notifications
+- **cmdk** for command palette functionality
+- **axios** for HTTP requests
+- **zod** for validation schemas
 
 ### Styling Notes
 
@@ -76,6 +79,39 @@ Uses **shadcn/ui** components with:
 ### User Interaction
 
 - **Enter key**: Loads all viewport types (desktop, tablet, mobileLarge, mobile) at once
+- **Command Palette**: Press ⌘K (Mac) or Ctrl+K (Windows/Linux) to open URL selector
 - **URL suggestions**: Shows recent history, favorites, and common dev ports
+- **Global Zoom**: 50%-200% zoom control with ⌘ + ZoomIn/ZoomOut buttons (desktop only)
+- **URL Sharing**: Sites can be shared via URL parameters (`?site=domain.com`)
 - **Responsive UI**: Optimized for both desktop and mobile usage
 - **Minimalistic controls**: Clean interface with subtle hover states
+
+### Zoom System
+
+The application includes a global zoom system:
+- **Zoom Levels**: 50%, 75%, 100% (default), 125%, 150%, 200%
+- **Controls**: ZoomIn/ZoomOut buttons with keyboard shortcuts
+- **Scope**: Affects all viewport instances simultaneously
+- **Reset**: Click the percentage display to reset to 100%
+- **Persistence**: Zoom level maintained during session
+- **Mobile**: Zoom controls hidden on mobile devices for space efficiency
+
+### Command Palette Features
+
+Built with cmdk library for advanced command functionality:
+- **Keyboard Shortcut**: ⌘K (Mac) or Ctrl+K (Windows/Linux) triggers the palette
+- **Smart Suggestions**: Categorized suggestions (Favorites, Recent, Quick Start)
+- **Filtered Search**: Real-time filtering as user types
+- **Auto-loading**: Selected URLs automatically load in all viewports
+- **Categories**: 
+  - Favorites (starred URLs with star icon)
+  - Recent (history with clock icon)
+  - Quick Start (common dev ports with zap icon)
+
+### URL Parameter System
+
+For sharing and bookmarking specific sites:
+- **Format**: `?site=domain.com` (protocol and trailing slashes auto-stripped)
+- **Auto-detection**: Automatically detects protocol based on domain
+- **Browser Integration**: Updates browser URL when sites are loaded
+- **Deep Linking**: Direct access to specific sites via shared URLs

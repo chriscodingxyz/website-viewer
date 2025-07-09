@@ -113,13 +113,31 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   // Load site from URL params on mount
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
-    const siteParam = urlParams.get('site')
-    if (siteParam) {
-      // Auto-add protocol based on domain
-      const fullUrl = addProtocolFromDomain(siteParam)
-      if (isValidUrl(fullUrl)) {
-        setUrl(fullUrl)
-        loadSiteInternal(fullUrl)
+    
+    // Check for shared data first
+    const shareParam = urlParams.get('share')
+    if (shareParam) {
+      try {
+        const sharedData = JSON.parse(atob(shareParam))
+        if (sharedData.url && isValidUrl(sharedData.url)) {
+          setUrl(sharedData.url)
+          loadSiteInternal(sharedData.url)
+          // Store shared data for components to access
+          window.sharedAnnotationData = sharedData
+        }
+      } catch (error) {
+        console.error('Failed to parse shared data:', error)
+      }
+    } else {
+      // Fallback to regular site parameter
+      const siteParam = urlParams.get('site')
+      if (siteParam) {
+        // Auto-add protocol based on domain
+        const fullUrl = addProtocolFromDomain(siteParam)
+        if (isValidUrl(fullUrl)) {
+          setUrl(fullUrl)
+          loadSiteInternal(fullUrl)
+        }
       }
     }
   }, [])

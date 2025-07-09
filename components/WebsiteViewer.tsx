@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Globe, ZoomIn, ZoomOut } from 'lucide-react'
+import { Globe, ZoomIn, ZoomOut, Monitor } from 'lucide-react'
 import WebsiteView from './WebsiteView'
 import { toast } from 'sonner'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
@@ -78,40 +78,56 @@ export default function WebsiteViewer () {
       {/* Main Content Area */}
       <div className='pt-24 p-4 min-h-screen'>
         {!currentSite && (
-          <div className='max-w-4xl mx-auto'>
-            {/* Homepage Content */}
-            <div className='text-center mb-8'>
-              <Globe className='w-16 h-16 mb-4 text-muted-foreground/60 mx-auto' />
-              <h1 className='text-3xl font-medium mb-3 text-foreground'>
-                Website Viewer
+          <div className='max-w-5xl mx-auto'>
+            {/* Hero Section */}
+            <div className='text-center mb-12'>
+              <Globe className='w-20 h-20 mb-6 text-primary mx-auto' />
+              <h1 className='text-4xl font-bold mb-4 text-foreground'>
+                Test responsive designs instantly
               </h1>
-              <p className='text-lg text-muted-foreground/80 leading-relaxed max-w-2xl mx-auto'>
-                Ready to view websites in multiple formats? Just click the dropdown in the header
-                and enter any URL to get started.
+              <p className='text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto mb-8'>
+                View any website across desktop, tablet, and mobile viewports simultaneously. 
+                Perfect for developers, designers, and teams building responsive experiences.
               </p>
+              <div className='inline-flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-4 py-2 rounded-full'>
+                Press{' '}
+                <kbd className='px-2 py-1 bg-background border rounded text-xs font-mono shadow-sm'>
+                  ⌘K
+                </kbd>{' '}
+                to get started
+              </div>
             </div>
 
-            {/* No Favorites or Recent History sections here - they're in the combobox */}
-
-            {/* Quick Start */}
-            <div className='text-center'>
-              <div className='max-w-md mx-auto p-6 bg-white/70 backdrop-blur-sm rounded-2xl border shadow-lg'>
-                <div className='mb-4'>
-                  <Globe className='h-12 w-12 mx-auto text-blue-500 mb-3' />
-                  <h2 className='text-xl font-semibold text-gray-800 mb-2'>
-                    Website Viewer
-                  </h2>
-                  <p className='text-gray-600 text-sm'>
-                    View websites across different device sizes
-                  </p>
+            {/* Feature Grid */}
+            <div className='grid md:grid-cols-3 gap-6 mb-12'>
+              <div className='text-center p-6 rounded-2xl bg-card/50 border'>
+                <div className='w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4'>
+                  <Monitor className='w-6 h-6 text-blue-600' />
                 </div>
-                <div className='text-sm text-gray-500 p-3 bg-gray-50/80 rounded-lg'>
-                  Click the search bar above or press{' '}
-                  <kbd className='px-2 py-1 bg-white border rounded-md text-xs font-mono shadow-sm'>
-                    ⌘K
-                  </kbd>{' '}
-                  to get started
+                <h3 className='font-semibold mb-2'>Multi-Viewport Testing</h3>
+                <p className='text-sm text-muted-foreground'>
+                  See desktop, tablet, and mobile views side-by-side in real-time
+                </p>
+              </div>
+              
+              <div className='text-center p-6 rounded-2xl bg-card/50 border'>
+                <div className='w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4'>
+                  <ZoomIn className='w-6 h-6 text-green-600' />
                 </div>
+                <h3 className='font-semibold mb-2'>Global Zoom Control</h3>
+                <p className='text-sm text-muted-foreground'>
+                  Zoom all viewports together from 50% to 200% for detailed inspection
+                </p>
+              </div>
+              
+              <div className='text-center p-6 rounded-2xl bg-card/50 border'>
+                <div className='w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4'>
+                  <Globe className='w-6 h-6 text-purple-600' />
+                </div>
+                <h3 className='font-semibold mb-2'>Instant URL Sharing</h3>
+                <p className='text-sm text-muted-foreground'>
+                  Share specific sites with team members via simple URLs
+                </p>
               </div>
             </div>
           </div>
