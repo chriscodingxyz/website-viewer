@@ -78,36 +78,21 @@ export default function WebsiteViewer () {
       {/* Main Content Area */}
       <div className='pt-24 p-4 min-h-screen'>
         {!currentSite && (
-          <div className='max-w-4xl mx-auto'>
-            {/* Homepage Content */}
-            <div className='text-center mb-8'>
-              <Globe className='w-16 h-16 mb-4 text-muted-foreground/60 mx-auto' />
-              <h1 className='text-3xl font-medium mb-3 text-foreground'>
-                Website Viewer
-              </h1>
-              <p className='text-lg text-muted-foreground/80 leading-relaxed max-w-2xl mx-auto'>
-                Ready to view websites in multiple formats? Just click the dropdown in the header
-                and enter any URL to get started.
-              </p>
-            </div>
-
-            {/* No Favorites or Recent History sections here - they're in the combobox */}
-
-            {/* Quick Start */}
+          <div className='flex items-center justify-center min-h-[calc(100vh-6rem)]'>
             <div className='text-center'>
-              <div className='max-w-md mx-auto p-6 bg-white/70 backdrop-blur-sm rounded-2xl border shadow-lg'>
+              <div className='max-w-md mx-auto p-6 bg-card/70 backdrop-blur-sm rounded-2xl border shadow-lg'>
                 <div className='mb-4'>
-                  <Globe className='h-12 w-12 mx-auto text-blue-500 mb-3' />
-                  <h2 className='text-xl font-semibold text-gray-800 mb-2'>
+                  <Globe className='h-12 w-12 mx-auto text-primary mb-3' />
+                  <h1 className='text-xl font-semibold text-foreground mb-2'>
                     Website Viewer
-                  </h2>
-                  <p className='text-gray-600 text-sm'>
+                  </h1>
+                  <p className='text-muted-foreground text-sm'>
                     View websites across different device sizes
                   </p>
                 </div>
-                <div className='text-sm text-gray-500 p-3 bg-gray-50/80 rounded-lg'>
+                <div className='text-sm text-muted-foreground p-3 bg-muted/80 rounded-lg'>
                   Click the search bar above or press{' '}
-                  <kbd className='px-2 py-1 bg-white border rounded-md text-xs font-mono shadow-sm'>
+                  <kbd className='px-2 py-1 bg-background border rounded-md text-xs font-mono shadow-sm'>
                     ⌘K
                   </kbd>{' '}
                   to get started
