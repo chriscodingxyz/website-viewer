@@ -110,10 +110,13 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   const { favorites } = useFavorites()
   const { history, addToHistory } = useHistory()
 
-  // Load site from URL params on mount
+  // Load site and zoom from URL params on mount
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const siteParam = urlParams.get('site')
+    const zoomParam = urlParams.get('zoom')
+    let shouldUpdateUrl = false
+    
     if (siteParam) {
       // Auto-add protocol based on domain
       const fullUrl = addProtocolFromDomain(siteParam)
@@ -121,6 +124,26 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
         setUrl(fullUrl)
         loadSiteInternal(fullUrl)
       }
+    }
+    
+    if (zoomParam) {
+      const zoomValue = parseInt(zoomParam)
+      const validZooms = [100, 125, 150, 200]
+      if (validZooms.includes(zoomValue)) {
+        const stepIndex = zoomSteps.findIndex(step => step === zoomValue / 100)
+        if (stepIndex !== -1) {
+          setGlobalZoomStepIndex(stepIndex)
+        }
+      } else {
+        // Invalid zoom value - remove it from URL
+        urlParams.delete('zoom')
+        shouldUpdateUrl = true
+      }
+    }
+    
+    // Update URL if we removed invalid zoom parameter
+    if (shouldUpdateUrl) {
+      window.history.replaceState({}, '', `${window.location.pathname}?${urlParams}`)
     }
   }, [])
 
@@ -150,16 +173,33 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setUrl(formattedUrl)
   }
 
+  const updateUrlParams = () => {
+    const urlParams = new URLSearchParams(window.location.search)
+    
+    // Update site param if we have a current site
+    if (currentSite) {
+      const cleanDomain = stripUrlForParams(currentSite)
+      urlParams.set('site', cleanDomain)
+    }
+    
+    // Update zoom param if not default (100%)
+    const zoomPercent = Math.round(globalZoom * 100)
+    const validZooms = [100, 125, 150, 200]
+    if (validZooms.includes(zoomPercent) && zoomPercent !== 100) {
+      urlParams.set('zoom', zoomPercent.toString())
+    } else {
+      urlParams.delete('zoom')
+    }
+    
+    window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`)
+  }
+
   const loadSite = (urlOverride?: string) => {
     const urlToUse = urlOverride || url
     const formattedUrl = formatUrl(urlToUse)
     if (formattedUrl) {
       loadSiteInternal(formattedUrl)
-      // Update URL search params with clean domain (no protocol/trailing slash)
-      const urlParams = new URLSearchParams(window.location.search)
-      const cleanDomain = stripUrlForParams(formattedUrl)
-      urlParams.set('site', cleanDomain)
-      window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`)
+      updateUrlParams()
       toast.success('Site loaded in all viewports')
     } else {
       toast.error('Please enter a valid URL')
@@ -178,6 +218,12 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setViews(prevViews => [{ ...view, id: nextId }, ...prevViews])
     setNextId(nextId + 1)
     toast.success(`New ${view.type} view added`)
+  }
+
+  const updateGlobalZoom = (stepIndex: number) => {
+    setGlobalZoomStepIndex(stepIndex)
+    // Update URL params after state is set
+    setTimeout(() => updateUrlParams(), 0)
   }
 
   const clearSite = () => {
@@ -237,7 +283,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     changeViewType,
     duplicateView,
     globalZoom,
-    setGlobalZoomStepIndex,
+    setGlobalZoomStepIndex: updateGlobalZoom,
     globalZoomStepIndex,
     zoomSteps
   }
