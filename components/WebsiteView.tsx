@@ -243,8 +243,9 @@ export default function WebsiteView ({
   const scaledHeight = displayDimensions[view.type].height * scale
 
   // Calculate the scale factor to fit actual dimensions into display dimensions
-  const contentScale =
-    displayDimensions[view.type].width / actualDimensions[view.type].width
+  // Account for the 4px margin (2px on each side) in the iframe container
+  const availableWidth = displayDimensions[view.type].width - 4
+  const contentScale = availableWidth / actualDimensions[view.type].width
   const finalContentScale = contentScale * scale
 
   const optionsHeight = isCompactView ? 40 : 35 // Minimal height - just action buttons
@@ -253,7 +254,7 @@ export default function WebsiteView ({
   return (
     <div
       ref={containerRef}
-      className={`relative rounded-xl overflow-hidden w-full sm:w-auto hover-lift animate-fade-in device-border ${
+      className={`relative rounded-t-xl overflow-hidden w-full sm:w-auto hover-lift animate-fade-in device-border ${
         getDeviceClass(view.type)
       }`}
       style={{
@@ -397,9 +398,9 @@ export default function WebsiteView ({
         </div>
       </div>
       <div
-        className='relative overflow-hidden bg-white rounded-b-xl shadow-inner'
+        className='relative overflow-hidden bg-white shadow-inner'
         style={{
-          width: `${scaledWidth}px`,
+          width: `${scaledWidth - 4}px`,
           height: `${scaledHeight}px`,
           margin: '0 2px 2px 2px'
         }}
