@@ -19,7 +19,8 @@ import {
   Copy,
   Loader2,
   AlertCircle,
-  Settings
+  Settings,
+  Expand
 } from 'lucide-react'
 import { View, ViewType } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
@@ -34,6 +35,13 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose
+} from '@/components/ui/dialog'
 
 // const defaultViewDimensions = {
 //   desktop: { width: 1024, height: 768 },
@@ -86,6 +94,8 @@ export default function WebsiteView ({
   const containerRef = useRef<HTMLDivElement>(null)
   const [loadingState, setLoadingState] = useState<LoadingState>('loading')
   const [loadStartTime, setLoadStartTime] = useState<number>(Date.now())
+  const [isEnlargeDialogOpen, setIsEnlargeDialogOpen] = useState(false)
+  const [enlargeDialogScale, setEnlargeDialogScale] = useState(1)
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
 
   const isFavorite = favorites.includes(view.url)
@@ -134,6 +144,34 @@ export default function WebsiteView ({
       }
     }
   }, [refreshKey])
+
+  // Calculate responsive scale for enlarge dialog
+  useEffect(() => {
+    if (isEnlargeDialogOpen) {
+      const calculateScale = () => {
+        const headerHeight = 50
+        const actualWidth = actualDimensions[view.type].width
+        const actualHeight = actualDimensions[view.type].height + headerHeight
+        
+        // Use 90% of viewport dimensions for maximum dialog size
+        const maxWidth = window.innerWidth * 0.9
+        const maxHeight = window.innerHeight * 0.9
+        
+        // Calculate scale factors for both dimensions
+        const widthScale = maxWidth / actualWidth
+        const heightScale = maxHeight / actualHeight
+        
+        // Use the smaller scale to ensure both dimensions fit
+        const scale = Math.min(widthScale, heightScale, 1) // Don't scale up, only down
+        
+        setEnlargeDialogScale(scale)
+      }
+      
+      calculateScale()
+      window.addEventListener('resize', calculateScale)
+      return () => window.removeEventListener('resize', calculateScale)
+    }
+  }, [isEnlargeDialogOpen, view.type, actualDimensions])
 
   const handleFavoriteToggle = () => {
     if (isFavorite) {
@@ -388,6 +426,13 @@ export default function WebsiteView ({
             </DropdownMenuContent>
           </DropdownMenu>
           <button
+            onClick={() => setIsEnlargeDialogOpen(true)}
+            className='text-muted-foreground hover:text-foreground p-0.5'
+            title='Enlarge view'
+          >
+            <Expand className='h-4 w-4' />
+          </button>
+          <button
             onClick={onRemove}
             className='bg-red-500/8 hover:bg-red-500/15 text-red-600 hover:text-red-700 rounded-tr-xl w-8 flex items-center justify-center transition-all duration-200 hover:brightness-95 border-0 shadow-none'
             style={{ height: `${optionsHeight}px` }}
@@ -449,6 +494,49 @@ export default function WebsiteView ({
           </div>
         )}
       </div>
+
+      {/* Enlarge Dialog */}
+      <Dialog open={isEnlargeDialogOpen} onOpenChange={setIsEnlargeDialogOpen}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-transparent border-0 shadow-none flex items-center justify-center">
+          <div 
+            className="relative rounded-xl overflow-hidden bg-white shadow-2xl border"
+            style={{
+              width: `${(actualDimensions[view.type].width + 2) * enlargeDialogScale}px`,
+              height: `${(actualDimensions[view.type].height + 50) * enlargeDialogScale}px`
+            }}
+          >
+            <DialogHeader className="p-0">
+              <div 
+                className="flex items-center justify-between px-4 py-3 rounded-t-xl"
+                style={{
+                  backgroundColor: getDeviceColorStyle(view.type).backgroundColor,
+                  color: getDeviceColorStyle(view.type).color
+                }}
+              >
+                <DialogTitle className="text-base font-semibold flex items-center gap-2">
+                  {getDeviceIcon(view.type)}
+                  {getDeviceName(view.type)} - {actualDimensions[view.type].width}×{actualDimensions[view.type].height}
+                </DialogTitle>
+                <DialogClose className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Close</span>
+                </DialogClose>
+              </div>
+            </DialogHeader>
+            <div className="relative bg-white overflow-hidden">
+              <iframe
+                src={view.url}
+                style={{
+                  width: `${actualDimensions[view.type].width * enlargeDialogScale}px`,
+                  height: `${actualDimensions[view.type].height * enlargeDialogScale}px`,
+                  border: 'none'
+                }}
+                title={`Enlarged view ${view.id}`}
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
