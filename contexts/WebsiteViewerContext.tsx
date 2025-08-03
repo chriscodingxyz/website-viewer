@@ -116,6 +116,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
   
+  
   // Metadata state
   const [metadata, setMetadata] = useState<WebsiteMetadata | null>(null)
   const [metadataLoading, setMetadataLoading] = useState(false)
@@ -155,7 +156,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
       }
     }
     
-    // Update URL if we removed invalid zoom parameter
+    // Update URL if we removed invalid parameters
     if (shouldUpdateUrl) {
       window.history.replaceState({}, '', `${window.location.pathname}?${urlParams}`)
     }
@@ -204,6 +205,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     } else {
       urlParams.delete('zoom')
     }
+    
     
     window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`)
   }

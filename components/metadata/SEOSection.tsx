@@ -2,8 +2,6 @@
 
 import React from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Copy, CheckCircle, AlertTriangle, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
@@ -39,16 +37,153 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
     return { score, maxScore, percentage: Math.round((score / maxScore) * 100) }
   }
 
-  const getScoreColor = (percentage: number) => {
-    if (percentage >= 80) return 'text-green-600'
-    if (percentage >= 60) return 'text-yellow-600'
-    return 'text-red-600'
-  }
 
   const getScoreIcon = (percentage: number) => {
     if (percentage >= 80) return <CheckCircle className="h-5 w-5 text-green-500" />
     if (percentage >= 60) return <AlertTriangle className="h-5 w-5 text-yellow-500" />
     return <XCircle className="h-5 w-5 text-red-500" />
+  }
+
+  // Enhanced status system for individual SEO elements
+  const getElementStatus = (label: string, value?: string) => {
+    if (!value) {
+      // Determine severity of missing element
+      const criticalElements = ['Title', 'Description', 'Language', 'Viewport']
+      const isCritical = criticalElements.includes(label)
+      
+      return {
+        status: 'missing',
+        icon: <XCircle className="h-4 w-4 text-red-500" />,
+        badge: isCritical ? 'CRITICAL: MISSING' : 'MISSING',
+        color: 'red',
+        bgClass: 'bg-red-50/80 border-red-200/60',
+        textClass: 'text-red-700',
+        badgeClass: isCritical ? 'bg-red-100 text-red-700 border-red-200' : 'bg-red-100 text-red-700 border-red-200'
+      }
+    }
+    
+    // Title length validation
+    if (label === 'Title') {
+      const length = value.length
+      if (length >= 30 && length <= 60) {
+        return {
+          status: 'perfect',
+          icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+          badge: 'PERFECT',
+          color: 'green',
+          bgClass: 'bg-green-50/80 border-green-200/60',
+          textClass: 'text-green-700',
+          badgeClass: 'bg-green-100 text-green-700 border-green-200'
+        }
+      } else if ((length >= 20 && length < 30) || (length > 60 && length <= 70)) {
+        return {
+          status: 'warning',
+          icon: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
+          badge: length < 30 ? 'TOO SHORT' : 'TOO LONG',
+          color: 'yellow',
+          bgClass: 'bg-yellow-50/80 border-yellow-200/60',
+          textClass: 'text-yellow-700',
+          badgeClass: 'bg-yellow-100 text-yellow-700 border-yellow-200'
+        }
+      } else {
+        return {
+          status: 'critical',
+          icon: <XCircle className="h-4 w-4 text-red-500" />,
+          badge: length < 20 ? 'CRITICAL: TOO SHORT' : 'CRITICAL: TOO LONG',
+          color: 'red',
+          bgClass: 'bg-red-50/80 border-red-200/60',
+          textClass: 'text-red-700',
+          badgeClass: 'bg-red-100 text-red-700 border-red-200'
+        }
+      }
+    }
+    
+    // Description length validation
+    if (label === 'Description') {
+      const length = value.length
+      if (length >= 120 && length <= 160) {
+        return {
+          status: 'perfect',
+          icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+          badge: 'PERFECT',
+          color: 'green',
+          bgClass: 'bg-green-50/80 border-green-200/60',
+          textClass: 'text-green-700',
+          badgeClass: 'bg-green-100 text-green-700 border-green-200'
+        }
+      } else if ((length >= 100 && length < 120) || (length > 160 && length <= 180)) {
+        return {
+          status: 'warning',
+          icon: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
+          badge: length < 120 ? 'TOO SHORT' : 'TOO LONG',
+          color: 'yellow',
+          bgClass: 'bg-yellow-50/80 border-yellow-200/60',
+          textClass: 'text-yellow-700',
+          badgeClass: 'bg-yellow-100 text-yellow-700 border-yellow-200'
+        }
+      } else {
+        return {
+          status: 'critical',
+          icon: <XCircle className="h-4 w-4 text-red-500" />,
+          badge: length < 100 ? 'CRITICAL: TOO SHORT' : 'CRITICAL: TOO LONG',
+          color: 'red',
+          bgClass: 'bg-red-50/80 border-red-200/60',
+          textClass: 'text-red-700',
+          badgeClass: 'bg-red-100 text-red-700 border-red-200'
+        }
+      }
+    }
+    
+    // Special handling for technical SEO elements
+    if (label === 'Language' || label === 'Viewport') {
+      // These are critical for SEO and accessibility
+      return {
+        status: 'perfect',
+        icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+        badge: 'EXCELLENT',
+        color: 'green',
+        bgClass: 'bg-green-50/80 border-green-200/60',
+        textClass: 'text-green-700',
+        badgeClass: 'bg-green-100 text-green-700 border-green-200'
+      }
+    }
+    
+    if (label === 'Robots') {
+      // Robots meta is important for indexing control
+      return {
+        status: 'perfect',
+        icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+        badge: 'CONFIGURED',
+        color: 'green',
+        bgClass: 'bg-green-50/80 border-green-200/60',
+        textClass: 'text-green-700',
+        badgeClass: 'bg-green-100 text-green-700 border-green-200'
+      }
+    }
+    
+    if (label === 'Author') {
+      // Author is optional, so it's good but not critical
+      return {
+        status: 'perfect',
+        icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+        badge: 'GOOD',
+        color: 'green',
+        bgClass: 'bg-green-50/80 border-green-200/60',
+        textClass: 'text-green-700',
+        badgeClass: 'bg-green-100 text-green-700 border-green-200'
+      }
+    }
+    
+    // For other elements (Keywords, Canonical URL, etc.) - just present or missing
+    return {
+      status: 'perfect',
+      icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+      badge: 'PRESENT',
+      color: 'green',
+      bgClass: 'bg-green-50/80 border-green-200/60',
+      textClass: 'text-green-700',
+      badgeClass: 'bg-green-100 text-green-700 border-green-200'
+    }
   }
 
   const seoScore = getSEOScore()
@@ -61,87 +196,92 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
     label: string
     value?: string
     recommendation?: string 
-  }) => (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="font-medium text-sm">{label}</span>
-        {value && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => copyToClipboard(value, label)}
-            className="h-6 w-6 p-0"
-          >
-            <Copy className="h-3 w-3" />
-          </Button>
-        )}
+  }) => {
+    const status = getElementStatus(label, value)
+    
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {status.icon}
+            <span className="font-semibold text-gray-800 text-sm">{label}</span>
+            <div className={`px-2 py-1 rounded-md text-xs font-bold border ${status.badgeClass}`}>
+              {status.badge}
+            </div>
+          </div>
+          {value && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => copyToClipboard(value, label)}
+              className="h-7 w-7 p-0 hover:bg-orange-100/60 text-orange-600 hover:text-orange-700"
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+        
+        <div className={`p-4 rounded-xl border ${status.bgClass}`}>
+          {value ? (
+            <>
+              <p className={`text-sm break-words font-medium ${status.textClass}`}>{value}</p>
+              {(label === 'Title' || label === 'Description') && value.length > 0 && (
+                <div className="mt-3 flex items-center gap-2">
+                  <div className={`px-2 py-1 rounded-md text-xs font-bold ${status.badgeClass}`}>
+                    {value.length} chars
+                  </div>
+                  <p className={`text-xs font-medium ${status.textClass}`}>
+                    {label === 'Title' && 'Optimal: 30-60 characters'}
+                    {label === 'Description' && 'Optimal: 120-160 characters'}
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <p className={`text-sm font-bold ${status.textClass}`}>Missing {label}</p>
+              {recommendation && (
+                <p className={`text-xs mt-2 font-medium ${status.textClass}`}>{recommendation}</p>
+              )}
+            </>
+          )}
+        </div>
       </div>
-      {value ? (
-        <div className="bg-muted p-3 rounded-md">
-          <p className="text-sm break-words">{value}</p>
-          {label === 'Title' && value.length > 0 && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Length: {value.length} characters
-              {value.length < 30 && ' (too short, recommended: 30-60)'}
-              {value.length > 60 && ' (too long, recommended: 30-60)'}
-            </p>
-          )}
-          {label === 'Description' && value.length > 0 && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Length: {value.length} characters
-              {value.length < 120 && ' (too short, recommended: 120-160)'}
-              {value.length > 160 && ' (too long, recommended: 120-160)'}
-            </p>
-          )}
-        </div>
-      ) : (
-        <div className="bg-red-50 border border-red-200 p-3 rounded-md">
-          <p className="text-sm text-red-600">Missing</p>
-          {recommendation && (
-            <p className="text-xs text-red-500 mt-1">{recommendation}</p>
-          )}
-        </div>
-      )}
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="space-y-6">
       {/* SEO Score Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-3">
+      <div className="bg-white/50 backdrop-blur-sm border border-orange-200/60 rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
             {getScoreIcon(seoScore.percentage)}
-            <span>SEO Score</span>
-            <Badge className={getScoreColor(seoScore.percentage)}>
-              {seoScore.score}/{seoScore.maxScore} ({seoScore.percentage}%)
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className={`h-2 rounded-full transition-all duration-300 ${
-                seoScore.percentage >= 80 ? 'bg-green-500' :
-                seoScore.percentage >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-              }`}
-              style={{ width: `${seoScore.percentage}%` }}
-            />
+            <h3 className="text-lg font-semibold text-gray-800">SEO Score</h3>
           </div>
-          <p className="text-sm text-muted-foreground mt-2">
-            {seoScore.percentage >= 80 && 'Excellent SEO optimization!'}
-            {seoScore.percentage >= 60 && seoScore.percentage < 80 && 'Good SEO, with room for improvement.'}
-            {seoScore.percentage < 60 && 'SEO needs improvement. Consider adding missing elements.'}
-          </p>
-        </CardContent>
-      </Card>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-gray-800">{seoScore.score}/{seoScore.maxScore}</div>
+            <div className="text-sm text-orange-600 font-medium">{seoScore.percentage}%</div>
+          </div>
+        </div>
+        
+        <div className="w-full bg-orange-100/60 rounded-full h-3 mb-3">
+          <div 
+            className="h-3 rounded-full transition-all duration-500 bg-gradient-to-r from-orange-400 to-red-400"
+            style={{ width: `${seoScore.percentage}%` }}
+          />
+        </div>
+        <p className="text-sm text-gray-700 font-medium">
+          {seoScore.percentage >= 80 && 'Excellent SEO optimization!'}
+          {seoScore.percentage >= 60 && seoScore.percentage < 80 && 'Good SEO, with room for improvement.'}
+          {seoScore.percentage < 60 && 'SEO needs improvement. Consider adding missing elements.'}
+        </p>
+      </div>
 
       {/* Basic SEO Elements */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Basic SEO Elements</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <div className="bg-white/50 backdrop-blur-sm border border-orange-200/60 rounded-2xl p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-gray-800 mb-6">Basic SEO Elements</h3>
+        <div className="space-y-6">
           <MetadataRow 
             label="Title" 
             value={seo.title}
@@ -165,15 +305,13 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
             value={seo.canonical}
             recommendation="Add canonical URL to prevent duplicate content issues"
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Technical SEO */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Technical SEO</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <div className="bg-white/50 backdrop-blur-sm border border-orange-200/60 rounded-2xl p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-gray-800 mb-6">Technical SEO</h3>
+        <div className="space-y-6">
           <MetadataRow 
             label="Language" 
             value={seo.language}
@@ -197,8 +335,8 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
             value={seo.author}
             recommendation="Optional: Add author meta tag for content attribution"
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

@@ -3,15 +3,15 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Globe, ZoomIn, ZoomOut } from 'lucide-react'
-import WebsiteView from './WebsiteView'
-import AnalysisSheet from './AnalysisSheet'
 import { toast } from 'sonner'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
+import SectionContainer from './SectionContainer'
 
 export default function WebsiteViewer () {
   const [refreshKey] = useState(0)
+  
   const {
     currentSite,
     views,
@@ -61,6 +61,10 @@ export default function WebsiteViewer () {
   return (
     <div>
       <style jsx global>{`
+        html {
+          scroll-behavior: smooth;
+        }
+        
         @keyframes highlightInput {
           0% {
             box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7), 0 8px 25px rgba(0,0,0,0.1);
@@ -81,7 +85,7 @@ export default function WebsiteViewer () {
       `}</style>
 
       {/* Main Content Area */}
-      <div className='pt-24 p-4 pb-20 min-h-screen'>
+      <div className='pt-24 min-h-screen'>
         {!currentSite && (
           <div className='flex items-center justify-center min-h-[calc(100vh-6rem)]'>
             <div className='text-center'>
@@ -107,38 +111,9 @@ export default function WebsiteViewer () {
           </div>
         )}
 
-        {/* Site Views */}
-        {currentSite && views.length > 0 && (
-          <div>
-
-            {/* Viewport Grid */}
-            <div className='flex flex-wrap gap-6 justify-center items-start'>
-              {views.map((view, index) => (
-                <WebsiteView
-                  key={view.id}
-                  view={view}
-                  refreshKey={refreshKey}
-                  globalZoom={globalZoom}
-                  onRemove={() => removeView(view.id)}
-                  onTypeChange={type => changeViewType(view.id, type)}
-                  onDuplicate={duplicateView}
-                  index={index}
-                />
-              ))}
-            </div>
-
-          </div>
-        )}
+        {/* Section Layout Content */}
+        {currentSite && <SectionContainer />}
       </div>
-
-      {/* Analysis Sheet - Always present but only shows when there's a site or when triggered */}
-      <AnalysisSheet
-        url={currentSite || ''}
-        metadata={metadata}
-        metadataLoading={metadataLoading}
-        metadataError={metadataError}
-        onExtractMetadata={() => fetchMetadata()}
-      />
     </div>
   )
 }

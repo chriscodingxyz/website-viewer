@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Copy, ExternalLink } from 'lucide-react'
 import { FacebookLogo, TwitterLogo, LinkedinLogo } from '@phosphor-icons/react'
@@ -33,14 +32,12 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
     const domain = new URL(metadata.url).hostname
 
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FacebookLogo className="h-5 w-5 text-blue-600" weight="fill" />
-            Facebook Preview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-white/50 backdrop-blur-sm border border-orange-200/60 rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <FacebookLogo className="h-5 w-5 text-blue-600" weight="fill" />
+          <h3 className="text-lg font-semibold text-gray-800">Facebook Preview</h3>
+        </div>
+        <div>
           <div className="border rounded-lg overflow-hidden bg-white max-w-lg">
             {image && (
               <div className="relative w-full h-48 bg-gray-100">
@@ -67,8 +64,8 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
           </div>
           
           {/* Open Graph metadata */}
-          <div className="mt-4 space-y-3">
-            <h4 className="font-medium">Open Graph Data</h4>
+          <div className="mt-6 space-y-4">
+            <h4 className="font-semibold text-gray-800 text-base">Open Graph Data</h4>
             {[
               { label: 'og:title', value: openGraph.title },
               { label: 'og:description', value: openGraph.description },
@@ -78,16 +75,16 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
               { label: 'og:site_name', value: openGraph.siteName }
             ].map(({ label, value }) => (
               value && (
-                <div key={label} className="flex items-center justify-between p-2 bg-muted rounded">
-                  <div>
-                    <span className="text-xs font-mono text-muted-foreground">{label}</span>
-                    <p className="text-sm break-all">{value}</p>
+                <div key={label} className="flex items-center justify-between p-4 bg-orange-50/50 border border-orange-100 rounded-xl">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-mono text-orange-600 font-medium">{label}</span>
+                    <p className="text-sm break-all text-gray-700 font-medium mt-1">{value}</p>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => copyToClipboard(value, label)}
-                    className="shrink-0"
+                    className="shrink-0 h-7 w-7 p-0 hover:bg-orange-100/60 text-orange-600 hover:text-orange-700"
                   >
                     <Copy className="h-3 w-3" />
                   </Button>
@@ -95,8 +92,8 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
               )
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
@@ -109,14 +106,12 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
     const cardType = twitterCard.card || 'summary'
 
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TwitterLogo className="h-5 w-5 text-blue-400" weight="fill" />
-            Twitter Preview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-white/50 backdrop-blur-sm border border-orange-200/60 rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <TwitterLogo className="h-5 w-5 text-blue-400" weight="fill" />
+          <h3 className="text-lg font-semibold text-gray-800">Twitter Preview</h3>
+        </div>
+        <div>
           <div className="border rounded-lg overflow-hidden bg-white max-w-lg">
             {image && cardType === 'summary_large_image' && (
               <div className="relative w-full h-48 bg-gray-100">
@@ -160,8 +155,8 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
           </div>
 
           {/* Twitter Card metadata */}
-          <div className="mt-4 space-y-3">
-            <h4 className="font-medium">Twitter Card Data</h4>
+          <div className="mt-6 space-y-4">
+            <h4 className="font-semibold text-gray-800 text-base">Twitter Card Data</h4>
             {[
               { label: 'twitter:card', value: twitterCard.card },
               { label: 'twitter:title', value: twitterCard.title },
@@ -171,16 +166,16 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
               { label: 'twitter:creator', value: twitterCard.creator }
             ].map(({ label, value }) => (
               value && (
-                <div key={label} className="flex items-center justify-between p-2 bg-muted rounded">
-                  <div>
-                    <span className="text-xs font-mono text-muted-foreground">{label}</span>
-                    <p className="text-sm break-all">{value}</p>
+                <div key={label} className="flex items-center justify-between p-4 bg-orange-50/50 border border-orange-100 rounded-xl">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-mono text-orange-600 font-medium">{label}</span>
+                    <p className="text-sm break-all text-gray-700 font-medium mt-1">{value}</p>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => copyToClipboard(value, label)}
-                    className="shrink-0"
+                    className="shrink-0 h-7 w-7 p-0 hover:bg-orange-100/60 text-orange-600 hover:text-orange-700"
                   >
                     <Copy className="h-3 w-3" />
                   </Button>
@@ -188,8 +183,8 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
               )
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
@@ -201,14 +196,12 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
     const domain = new URL(metadata.url).hostname
 
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <LinkedinLogo className="h-5 w-5 text-blue-700" weight="fill" />
-            LinkedIn Preview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-white/50 backdrop-blur-sm border border-orange-200/60 rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <LinkedinLogo className="h-5 w-5 text-blue-700" weight="fill" />
+          <h3 className="text-lg font-semibold text-gray-800">LinkedIn Preview</h3>
+        </div>
+        <div>
           <div className="border rounded-lg overflow-hidden bg-white max-w-lg">
             {image && (
               <div className="relative w-full h-48 bg-gray-100">
@@ -234,13 +227,13 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
             </div>
           </div>
 
-          <div className="mt-4">
-            <p className="text-sm text-muted-foreground">
+          <div className="mt-6">
+            <p className="text-sm text-gray-600 font-medium bg-orange-50/50 border border-orange-100 p-4 rounded-xl">
               LinkedIn uses Open Graph data for link previews.
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
