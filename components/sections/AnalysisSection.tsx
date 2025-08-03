@@ -42,30 +42,97 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
     fetchMetadata
   } = useWebsiteViewer()
 
+  const safeStringify = (obj: any): string => {
+    const seen = new Set()
+    
+    const replacer = (key: string, value: any): any => {
+      // Handle null and primitive values
+      if (value === null || typeof value !== 'object') {
+        return value
+      }
+      
+      // Handle circular references
+      if (seen.has(value)) {
+        return '[Circular Reference]'
+      }
+      
+      // Skip DOM elements
+      if (value instanceof Element || value instanceof Node || value instanceof HTMLElement || value.nodeType) {
+        return '[DOM Element]'
+      }
+      
+      // Skip functions
+      if (typeof value === 'function') {
+        return '[Function]'
+      }
+      
+      // Skip React components and fiber nodes
+      if (value.$$typeof || value._owner || value.props || value.type || value.stateNode || value.return || value.child) {
+        return '[React Element/Fiber]'
+      }
+      
+      // Skip known problematic constructors
+      const constructor = value.constructor
+      if (constructor && (
+        constructor.name === 'HTMLButtonElement' ||
+        constructor.name === 'HTMLDivElement' ||
+        constructor.name === 'HTMLElement' ||
+        constructor.name === 'FiberNode' ||
+        constructor.name.startsWith('HTML') ||
+        constructor.name.includes('Element')
+      )) {
+        return '[HTML/DOM Element]'
+      }
+      
+      // Add to seen set
+      seen.add(value)
+      
+      // For arrays and objects, let JSON.stringify handle them normally
+      return value
+    }
+    
+    try {
+      return JSON.stringify(obj, replacer, 2)
+    } catch (error) {
+      console.error('Serialization error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return JSON.stringify({ error: 'Failed to serialize data', message: errorMessage }, null, 2)
+    }
+  }
+
   const copyMetadata = async () => {
     if (!metadata) return
     
     try {
-      await navigator.clipboard.writeText(JSON.stringify(metadata, null, 2))
+      const dataStr = safeStringify(metadata)
+      await navigator.clipboard.writeText(dataStr)
       toast.success('Metadata copied to clipboard')
     } catch (err) {
-      toast.error('Failed to copy metadata')
+      console.error('Copy error:', err)
+      toast.error('Failed to copy metadata: Unexpected error occurred')
     }
   }
 
   const exportMetadata = () => {
     if (!metadata) return
     
-    const dataStr = JSON.stringify(metadata, null, 2)
-    const dataBlob = new Blob([dataStr], { type: 'application/json' })
-    const url = URL.createObjectURL(dataBlob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `metadata-${new Date().toISOString().split('T')[0]}.json`
-    link.click()
-    URL.revokeObjectURL(url)
-    toast.success('Metadata exported successfully')
+    try {
+      const dataStr = safeStringify(metadata)
+      
+      const dataBlob = new Blob([dataStr], { type: 'application/json' })
+      const url = URL.createObjectURL(dataBlob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `metadata-${new Date().toISOString().split('T')[0]}.json`
+      link.click()
+      URL.revokeObjectURL(url)
+      toast.success('Metadata exported successfully')
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error('Failed to export metadata: Unexpected error occurred')
+    }
   }
+
 
   const getStatus = () => {
     if (metadataLoading) return { icon: <Loader2 className="h-5 w-5 animate-spin" />, text: 'Extracting...', color: 'bg-blue-500' }
@@ -232,19 +299,19 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
 
                   <div className="mt-6">
                     <TabsContent value="metadata" className="mt-0">
-                      <SEOSection metadata={metadata} />
+                      {metadata ? <SEOSection metadata={metadata} /> : <div className="text-center text-gray-500 py-8">No metadata available</div>}
                     </TabsContent>
 
                     <TabsContent value="social" className="mt-0">
-                      <SocialPreview metadata={metadata} />
+                      {metadata ? <SocialPreview metadata={metadata} /> : <div className="text-center text-gray-500 py-8">No metadata available</div>}
                     </TabsContent>
 
                     <TabsContent value="technical" className="mt-0">
-                      <TechnicalSection metadata={metadata} />
+                      {metadata ? <TechnicalSection metadata={metadata} /> : <div className="text-center text-gray-500 py-8">No metadata available</div>}
                     </TabsContent>
 
                     <TabsContent value="performance" className="mt-0">
-                      <PerformanceSection metadata={metadata} />
+                      {metadata ? <PerformanceSection metadata={metadata} /> : <div className="text-center text-gray-500 py-8">No metadata available</div>}
                     </TabsContent>
                   </div>
                 </Tabs>

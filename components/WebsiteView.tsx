@@ -281,8 +281,7 @@ export default function WebsiteView ({
   const scaledHeight = displayDimensions[view.type].height * scale
 
   // Calculate the scale factor to fit actual dimensions into display dimensions
-  // Account for the 4px margin (2px on each side) in the iframe container
-  const availableWidth = displayDimensions[view.type].width - 4
+  const availableWidth = displayDimensions[view.type].width
   const contentScale = availableWidth / actualDimensions[view.type].width
   const finalContentScale = contentScale * scale
 
@@ -445,9 +444,9 @@ export default function WebsiteView ({
       <div
         className='relative overflow-hidden bg-white shadow-inner'
         style={{
-          width: `${scaledWidth - 4}px`,
+          width: `${scaledWidth}px`,
           height: `${scaledHeight}px`,
-          margin: '0 2px 2px 2px'
+          margin: '0'
         }}
       >
         <iframe

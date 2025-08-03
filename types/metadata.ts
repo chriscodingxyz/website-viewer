@@ -57,12 +57,97 @@ export const TechnicalMetadataSchema = z.object({
   msapplicationConfig: z.string().optional(),
 })
 
-// Performance metrics
+// Core Web Vitals metrics
+export const CoreWebVitalsSchema = z.object({
+  lcp: z.number().optional(), // Largest Contentful Paint (ms)
+  cls: z.number().optional(), // Cumulative Layout Shift (score)
+  inp: z.number().optional(), // Interaction to Next Paint (ms) - new 2024
+  fcp: z.number().optional(), // First Contentful Paint (ms)
+  ttfb: z.number().optional(), // Time to First Byte (ms)
+  tbt: z.number().optional(), // Total Blocking Time (ms)
+  si: z.number().optional(), // Speed Index
+})
+
+// Lighthouse audit scores
+export const LighthouseScoresSchema = z.object({
+  performance: z.number().min(0).max(100).optional(),
+  accessibility: z.number().min(0).max(100).optional(),
+  bestPractices: z.number().min(0).max(100).optional(),
+  seo: z.number().min(0).max(100).optional(),
+  pwa: z.number().min(0).max(100).optional(),
+})
+
+// Lighthouse audit details
+export const LighthouseAuditSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  score: z.number().nullable(),
+  scoreDisplayMode: z.string(),
+  numericValue: z.number().optional(),
+  numericUnit: z.string().optional(),
+  displayValue: z.string().optional(),
+})
+
+// Performance opportunities
+export const PerformanceOpportunitySchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  score: z.number().nullable(),
+  numericValue: z.number().optional(),
+  numericUnit: z.string().optional(),
+  displayValue: z.string().optional(),
+  details: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
+})
+
+// Performance diagnostics
+export const PerformanceDiagnosticSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  score: z.number().nullable(),
+  scoreDisplayMode: z.string(),
+  displayValue: z.string().optional(),
+  details: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
+})
+
+// Comprehensive Lighthouse report
+export const LighthouseReportSchema = z.object({
+  requestedUrl: z.string(),
+  finalUrl: z.string(),
+  fetchTime: z.string(),
+  gatherMode: z.string(),
+  lighthouseVersion: z.string(),
+  userAgent: z.string(),
+  environment: z.object({
+    networkUserAgent: z.string(),
+    hostUserAgent: z.string(),
+    benchmarkIndex: z.number(),
+  }),
+  configSettings: z.object({
+    emulatedFormFactor: z.string(),
+    locale: z.string(),
+    onlyCategories: z.array(z.string()).optional(),
+  }),
+  scores: LighthouseScoresSchema,
+  coreWebVitals: CoreWebVitalsSchema,
+  audits: z.array(LighthouseAuditSchema),
+  opportunities: z.array(PerformanceOpportunitySchema),
+  diagnostics: z.array(PerformanceDiagnosticSchema),
+  timing: z.object({
+    total: z.number(),
+  }),
+})
+
+// Performance metrics (extended from original)
 export const PerformanceMetricsSchema = z.object({
   loadTime: z.number().optional(),
   responseTime: z.number().optional(),
   contentLength: z.number().optional(),
   statusCode: z.number().optional(),
+  // Lighthouse integration
+  lighthouse: LighthouseReportSchema.optional(),
 })
 
 // Response headers
@@ -109,6 +194,14 @@ export type PerformanceMetrics = z.infer<typeof PerformanceMetricsSchema>
 export type ResponseHeaders = z.infer<typeof ResponseHeadersSchema>
 export type StructuredData = z.infer<typeof StructuredDataSchema>
 export type WebsiteMetadata = z.infer<typeof WebsiteMetadataSchema>
+
+// Lighthouse and performance types
+export type CoreWebVitals = z.infer<typeof CoreWebVitalsSchema>
+export type LighthouseScores = z.infer<typeof LighthouseScoresSchema>
+export type LighthouseAudit = z.infer<typeof LighthouseAuditSchema>
+export type PerformanceOpportunity = z.infer<typeof PerformanceOpportunitySchema>
+export type PerformanceDiagnostic = z.infer<typeof PerformanceDiagnosticSchema>
+export type LighthouseReport = z.infer<typeof LighthouseReportSchema>
 
 // API response types
 export const MetadataAPIResponseSchema = z.object({

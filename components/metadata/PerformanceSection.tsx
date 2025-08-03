@@ -60,7 +60,7 @@ export default function PerformanceSection({ metadata }: PerformanceSectionProps
     icon: React.ReactNode
     title: string
     value: string
-    subtitle?: string
+    subtitle?: React.ReactNode
     color?: string 
   }) => (
     <div className="flex items-center gap-3 p-4 bg-orange-50/50 border border-orange-100 rounded-xl">
@@ -68,7 +68,7 @@ export default function PerformanceSection({ metadata }: PerformanceSectionProps
       <div>
         <p className="text-sm font-semibold text-gray-800">{title}</p>
         <p className={`text-lg font-bold ${color}`}>{value}</p>
-        {subtitle && <p className="text-xs text-orange-600 font-medium">{subtitle}</p>}
+        {subtitle && <div className="text-xs text-orange-600 font-medium">{subtitle}</div>}
       </div>
     </div>
   )
