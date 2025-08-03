@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Globe, ZoomIn, ZoomOut } from 'lucide-react'
 import WebsiteView from './WebsiteView'
+import MetadataPanel from './metadata/MetadataPanel'
 import { toast } from 'sonner'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
@@ -21,7 +22,11 @@ export default function WebsiteViewer () {
     globalZoomStepIndex,
     setGlobalZoomStepIndex,
     zoomSteps,
-    setUrlWithHighlight
+    setUrlWithHighlight,
+    metadata,
+    metadataLoading,
+    metadataError,
+    fetchMetadata
   } = useWebsiteViewer()
   
   const { favorites } = useFavorites()
@@ -120,6 +125,17 @@ export default function WebsiteViewer () {
                   index={index}
                 />
               ))}
+            </div>
+
+            {/* Metadata Panel */}
+            <div className='mt-8 max-w-4xl mx-auto'>
+              <MetadataPanel
+                metadata={metadata}
+                loading={metadataLoading}
+                error={metadataError}
+                onRefresh={() => fetchMetadata()}
+                url={currentSite || ''}
+              />
             </div>
           </div>
         )}

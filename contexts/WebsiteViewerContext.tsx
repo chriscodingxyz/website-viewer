@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { toast } from 'sonner'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
+import { WebsiteMetadata } from '@/types/metadata'
 
 export type ViewType = 'desktop' | 'tablet' | 'mobileLarge' | 'mobile'
 
@@ -92,6 +93,12 @@ interface WebsiteViewerContextType {
   setGlobalZoomStepIndex: (index: number) => void
   globalZoomStepIndex: number
   zoomSteps: number[]
+  // Metadata functionality
+  metadata: WebsiteMetadata | null
+  metadataLoading: boolean
+  metadataError: string | null
+  fetchMetadata: (url?: string) => Promise<void>
+  clearMetadata: () => void
 }
 
 const WebsiteViewerContext = createContext<
@@ -106,6 +113,11 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   const [isInputHighlighted, setIsInputHighlighted] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
+  
+  // Metadata state
+  const [metadata, setMetadata] = useState<WebsiteMetadata | null>(null)
+  const [metadataLoading, setMetadataLoading] = useState(false)
+  const [metadataError, setMetadataError] = useState<string | null>(null)
 
   const { favorites } = useFavorites()
   const { history, addToHistory } = useHistory()
@@ -264,6 +276,42 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setShowSuggestions(false)
   }
 
+  // Metadata functions
+  const fetchMetadata = async (urlOverride?: string) => {
+    const targetUrl = urlOverride || currentSite
+    if (!targetUrl) return
+
+    setMetadataLoading(true)
+    setMetadataError(null)
+    
+    try {
+      const response = await fetch(`/api/metadata?url=${encodeURIComponent(targetUrl)}`)
+      const data = await response.json()
+      
+      if (data.success && data.data) {
+        setMetadata(data.data)
+        toast.success('Metadata extracted successfully')
+      } else {
+        setMetadataError(data.error || 'Failed to extract metadata')
+        setMetadata(null)
+        toast.error('Failed to extract metadata')
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      setMetadataError(errorMessage)
+      setMetadata(null)
+      toast.error('Failed to extract metadata')
+    } finally {
+      setMetadataLoading(false)
+    }
+  }
+
+  const clearMetadata = () => {
+    setMetadata(null)
+    setMetadataError(null)
+    setMetadataLoading(false)
+  }
+
   const value: WebsiteViewerContextType = {
     url,
     setUrl,
@@ -285,7 +333,12 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     globalZoom,
     setGlobalZoomStepIndex: updateGlobalZoom,
     globalZoomStepIndex,
-    zoomSteps
+    zoomSteps,
+    metadata,
+    metadataLoading,
+    metadataError,
+    fetchMetadata,
+    clearMetadata
   }
 
   return (
