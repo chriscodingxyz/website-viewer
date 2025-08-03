@@ -99,6 +99,8 @@ interface WebsiteViewerContextType {
   metadataError: string | null
   fetchMetadata: (url?: string) => Promise<void>
   clearMetadata: () => void
+  // Navigation
+  clearSite: () => void
 }
 
 const WebsiteViewerContext = createContext<
@@ -241,6 +243,11 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   const clearSite = () => {
     setViews([])
     setCurrentSite(null)
+    setUrl('')
+    clearMetadata()
+    // Clear URL params
+    window.history.pushState({}, '', window.location.pathname)
+    toast.success('Returned to homepage')
   }
 
   const handleUrlChange = (value: string) => {
@@ -338,7 +345,8 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     metadataLoading,
     metadataError,
     fetchMetadata,
-    clearMetadata
+    clearMetadata,
+    clearSite
   }
 
   return (

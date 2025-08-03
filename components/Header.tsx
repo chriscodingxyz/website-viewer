@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Globe, Check, ChevronDown, Star, Clock, Zap, ZoomIn, ZoomOut } from 'lucide-react'
+import { Globe, Check, ChevronDown, Star, Clock, Zap, ZoomIn, ZoomOut, Home } from 'lucide-react'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
@@ -40,7 +40,8 @@ export function Header () {
     globalZoom,
     globalZoomStepIndex,
     setGlobalZoomStepIndex,
-    zoomSteps
+    zoomSteps,
+    clearSite
   } = useWebsiteViewer()
 
   const { favorites } = useFavorites()
@@ -93,6 +94,18 @@ export function Header () {
     <header className='fixed top-0 left-0 right-0 z-50 py-4 px-3 bg-background/80 backdrop-blur-xl'>
       <div className='max-w-7xl mx-auto'>
         <div className='flex gap-4 flex-row items-center'>
+          {/* Home Button - Only show when site is loaded */}
+          {currentSite && (
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={clearSite}
+              className='h-12 w-12 p-0 border-2 border-border/50 hover:border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-card/90 hover:bg-card rounded-2xl'
+              title='Return to homepage'
+            >
+              <Home className='w-5 h-5' />
+            </Button>
+          )}
           <div className='flex-grow relative'>
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>

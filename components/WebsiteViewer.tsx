@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Globe, ZoomIn, ZoomOut } from 'lucide-react'
 import WebsiteView from './WebsiteView'
-import MetadataPanel from './metadata/MetadataPanel'
+import AnalysisSheet from './AnalysisSheet'
 import { toast } from 'sonner'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
@@ -81,7 +81,7 @@ export default function WebsiteViewer () {
       `}</style>
 
       {/* Main Content Area */}
-      <div className='pt-24 p-4 min-h-screen'>
+      <div className='pt-24 p-4 pb-20 min-h-screen'>
         {!currentSite && (
           <div className='flex items-center justify-center min-h-[calc(100vh-6rem)]'>
             <div className='text-center'>
@@ -127,19 +127,18 @@ export default function WebsiteViewer () {
               ))}
             </div>
 
-            {/* Metadata Panel */}
-            <div className='mt-8 max-w-4xl mx-auto'>
-              <MetadataPanel
-                metadata={metadata}
-                loading={metadataLoading}
-                error={metadataError}
-                onRefresh={() => fetchMetadata()}
-                url={currentSite || ''}
-              />
-            </div>
           </div>
         )}
       </div>
+
+      {/* Analysis Sheet - Always present but only shows when there's a site or when triggered */}
+      <AnalysisSheet
+        url={currentSite || ''}
+        metadata={metadata}
+        metadataLoading={metadataLoading}
+        metadataError={metadataError}
+        onExtractMetadata={() => fetchMetadata()}
+      />
     </div>
   )
 }

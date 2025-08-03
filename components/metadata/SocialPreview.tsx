@@ -5,6 +5,7 @@ import { WebsiteMetadata } from '@/types/metadata'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Copy, ExternalLink } from 'lucide-react'
+import { FacebookLogo, TwitterLogo, LinkedinLogo } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import Image from 'next/image'
 
@@ -35,7 +36,7 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <div className="w-5 h-5 bg-blue-600 rounded" />
+            <FacebookLogo className="h-5 w-5 text-blue-600" weight="fill" />
             Facebook Preview
           </CardTitle>
         </CardHeader>
@@ -111,7 +112,7 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <div className="w-5 h-5 bg-blue-400 rounded" />
+            <TwitterLogo className="h-5 w-5 text-blue-400" weight="fill" />
             Twitter Preview
           </CardTitle>
         </CardHeader>
@@ -203,7 +204,7 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <div className="w-5 h-5 bg-blue-700 rounded" />
+            <LinkedinLogo className="h-5 w-5 text-blue-700" weight="fill" />
             LinkedIn Preview
           </CardTitle>
         </CardHeader>
