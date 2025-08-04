@@ -4,6 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { BarChart3, ChevronDown, ChevronUp, Search, Share2, Globe, Zap, Loader2, AlertCircle, CheckCircle, Copy, Download, XCircle, AlertTriangle } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import SEOSection from '../metadata/SEOSection'
 import SocialPreview from '../metadata/SocialPreview'
@@ -67,25 +68,41 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
     return `${(ms / 1000).toFixed(2)}s`
   }
 
-  const MetricCard = ({ icon: Icon, title, value, subtitle, color, bgColor }: {
+  const MetricCard = ({ icon: Icon, title, value, subtitle, color, bgColor, issues }: {
     icon: React.ElementType
     title: string
     value: string | number
     subtitle?: string
     color: string
     bgColor: string
+    issues?: string[]
   }) => (
-    <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center gap-3">
-      <div className={`p-2 rounded-lg ${bgColor === 'bg-green-100' ? 'bg-green-100 dark:bg-green-900/30' : bgColor === 'bg-yellow-100' ? 'bg-yellow-100 dark:bg-yellow-900/30' : bgColor === 'bg-red-100' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-gray-100 dark:bg-gray-700'}`}>
-        <Icon className={`h-5 w-5 ${color}`} />
-      </div>
-      <div className="flex-1">
-        <div className="flex items-center gap-2">
-          <span className={`text-lg font-bold ${color}`}>{value}</span>
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</span>
+    <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`p-2 rounded-lg ${bgColor === 'bg-green-100' ? 'bg-green-100 dark:bg-green-900/30' : bgColor === 'bg-yellow-100' ? 'bg-yellow-100 dark:bg-yellow-900/30' : bgColor === 'bg-red-100' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-gray-100 dark:bg-gray-700'}`}>
+          <Icon className={`h-5 w-5 ${color}`} />
         </div>
-        {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{subtitle}</p>}
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className={`text-lg font-bold ${color}`}>{value}</span>
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</span>
+          </div>
+          {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{subtitle}</p>}
+        </div>
       </div>
+      {issues && issues.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {issues.map((issue, index) => (
+            <Badge
+              key={index}
+              variant="outline"
+              className="text-xs bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/50"
+            >
+              {issue}
+            </Badge>
+          ))}
+        </div>
+      )}
     </div>
   )
 
@@ -227,6 +244,7 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
                   subtitle={getCriticalIssues(metadata).length === 0 ? 'All good!' : 'Need attention'}
                   color={getCriticalIssues(metadata).length === 0 ? 'text-green-700' : getCriticalIssues(metadata).length <= 2 ? 'text-yellow-700' : 'text-red-700'}
                   bgColor={getCriticalIssues(metadata).length === 0 ? 'bg-green-100' : getCriticalIssues(metadata).length <= 2 ? 'bg-yellow-100' : 'bg-red-100'}
+                  issues={getCriticalIssues(metadata)}
                 />
               </div>
 
