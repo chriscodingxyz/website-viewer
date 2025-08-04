@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import ViewportsSection from './sections/ViewportsSection'
 import AnalysisSection from './sections/AnalysisSection'
@@ -13,21 +13,40 @@ interface SectionState {
 }
 
 export default function SectionContainer() {
-  const { currentSite } = useWebsiteViewer()
-  
+  const { currentSite, metadataLoading, lighthouseLoading } = useWebsiteViewer()
+
   const [sectionState, setSectionState] = useState<SectionState>({
-    viewports: { expanded: true }, // Start with viewports expanded
+    viewports: { expanded: true },
     analysis: { expanded: false },
-    performance: { expanded: false }
+    performance: { expanded: false },
   })
+
+  const prevMetadataLoading = useRef(metadataLoading)
+  const prevLighthouseLoading = useRef(lighthouseLoading)
+
+  useEffect(() => {
+    // When metadata analysis finishes, open the analysis section
+    if (prevMetadataLoading.current && !metadataLoading) {
+      setSectionState(prev => ({ ...prev, analysis: { ...prev.analysis, expanded: true } }))
+    }
+    prevMetadataLoading.current = metadataLoading
+  }, [metadataLoading])
+
+  useEffect(() => {
+    // When lighthouse analysis finishes, open the performance section
+    if (prevLighthouseLoading.current && !lighthouseLoading) {
+      setSectionState(prev => ({ ...prev, performance: { ...prev.performance, expanded: true } }))
+    }
+    prevLighthouseLoading.current = lighthouseLoading
+  }, [lighthouseLoading])
 
   const toggleSection = (sectionKey: keyof SectionState) => {
     setSectionState(prev => ({
       ...prev,
       [sectionKey]: {
         ...prev[sectionKey],
-        expanded: !prev[sectionKey].expanded
-      }
+        expanded: !prev[sectionKey].expanded,
+      },
     }))
   }
 
@@ -37,19 +56,14 @@ export default function SectionContainer() {
 
   return (
     <div className="w-full">
-      {/* Viewports Section - Full Width */}
       <ViewportsSection 
         expanded={sectionState.viewports.expanded}
         onToggle={() => toggleSection('viewports')}
       />
-      
-      {/* Analysis Section - Full Width */}
       <AnalysisSection 
         expanded={sectionState.analysis.expanded}
         onToggle={() => toggleSection('analysis')}
       />
-      
-      {/* Performance Analysis Section - Full Width */}
       <PerformanceAnalysisSection 
         expanded={sectionState.performance.expanded}
         onToggle={() => toggleSection('performance')}

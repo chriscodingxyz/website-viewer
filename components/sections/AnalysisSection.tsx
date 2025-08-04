@@ -1,23 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  BarChart3, 
-  ChevronDown, 
-  ChevronUp, 
-  Search, 
-  Share2, 
-  Globe, 
-  Zap,
-  Loader2,
-  AlertCircle,
-  CheckCircle,
-  Copy,
-  Download
-} from 'lucide-react'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { BarChart3, ChevronDown, ChevronUp, Search, Share2, Globe, Zap, Loader2, AlertCircle, CheckCircle, Copy, Download } from 'lucide-react'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import SEOSection from '../metadata/SEOSection'
 import SocialPreview from '../metadata/SocialPreview'
@@ -32,132 +18,41 @@ interface AnalysisSectionProps {
 }
 
 export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionProps) {
-  const [activeAnalysisTab, setActiveAnalysisTab] = useState('metadata')
-  
-  const {
-    currentSite,
-    metadata,
-    metadataLoading,
-    metadataError,
-    fetchMetadata
-  } = useWebsiteViewer()
+  const { metadata, metadataLoading, metadataError, fetchMetadata, currentSite } = useWebsiteViewer()
 
-  const safeStringify = (obj: any): string => {
-    const seen = new Set()
-    
-    const replacer = (key: string, value: any): any => {
-      // Handle null and primitive values
-      if (value === null || typeof value !== 'object') {
-        return value
-      }
-      
-      // Handle circular references
-      if (seen.has(value)) {
-        return '[Circular Reference]'
-      }
-      
-      // Skip DOM elements
-      if (value instanceof Element || value instanceof Node || value instanceof HTMLElement || value.nodeType) {
-        return '[DOM Element]'
-      }
-      
-      // Skip functions
-      if (typeof value === 'function') {
-        return '[Function]'
-      }
-      
-      // Skip React components and fiber nodes
-      if (value.$$typeof || value._owner || value.props || value.type || value.stateNode || value.return || value.child) {
-        return '[React Element/Fiber]'
-      }
-      
-      // Skip known problematic constructors
-      const constructor = value.constructor
-      if (constructor && (
-        constructor.name === 'HTMLButtonElement' ||
-        constructor.name === 'HTMLDivElement' ||
-        constructor.name === 'HTMLElement' ||
-        constructor.name === 'FiberNode' ||
-        constructor.name.startsWith('HTML') ||
-        constructor.name.includes('Element')
-      )) {
-        return '[HTML/DOM Element]'
-      }
-      
-      // Add to seen set
-      seen.add(value)
-      
-      // For arrays and objects, let JSON.stringify handle them normally
-      return value
-    }
-    
-    try {
-      return JSON.stringify(obj, replacer, 2)
-    } catch (error) {
-      console.error('Serialization error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      return JSON.stringify({ error: 'Failed to serialize data', message: errorMessage }, null, 2)
-    }
-  }
-
-  const copyMetadata = async () => {
+  const copyMetadata = () => {
     if (!metadata) return
-    
     try {
-      const dataStr = safeStringify(metadata)
-      await navigator.clipboard.writeText(dataStr)
+      const dataStr = JSON.stringify(metadata, null, 2)
+      navigator.clipboard.writeText(dataStr)
       toast.success('Metadata copied to clipboard')
     } catch (err) {
-      console.error('Copy error:', err)
-      toast.error('Failed to copy metadata: Unexpected error occurred')
+      toast.error('Failed to copy metadata')
     }
   }
 
   const exportMetadata = () => {
     if (!metadata) return
-    
     try {
-      const dataStr = safeStringify(metadata)
-      
+      const dataStr = JSON.stringify(metadata, null, 2)
       const dataBlob = new Blob([dataStr], { type: 'application/json' })
       const url = URL.createObjectURL(dataBlob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `metadata-${new Date().toISOString().split('T')[0]}.json`
+      link.download = `metadata-${new URL(metadata.url).hostname}.json`
+      document.body.appendChild(link)
       link.click()
+      document.body.removeChild(link)
       URL.revokeObjectURL(url)
       toast.success('Metadata exported successfully')
     } catch (error) {
-      console.error('Export error:', error)
-      toast.error('Failed to export metadata: Unexpected error occurred')
+      toast.error('Failed to export metadata')
     }
   }
 
-
-  const getStatus = () => {
-    if (metadataLoading) return { icon: <Loader2 className="h-5 w-5 animate-spin" />, text: 'Extracting...', color: 'bg-blue-500' }
-    if (metadataError) return { icon: <AlertCircle className="h-5 w-5" />, text: 'Error', color: 'bg-red-500' }
-    if (metadata) return { icon: <CheckCircle className="h-5 w-5" />, text: 'Ready', color: 'bg-green-500' }
-    return { icon: <Search className="h-5 w-5" />, text: 'Extract', color: 'bg-gray-500' }
-  }
-
-  const status = getStatus()
-
   return (
-    <section className={cn(
-      "w-full border-b border-border",
-      expanded ? "bg-gradient-to-b from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30" : "bg-background"
-    )}>
-      {/* Section Header - Full Width */}
-      <div 
-        className={cn(
-          "w-full border-b border-border/50 cursor-pointer",
-          expanded 
-            ? "bg-transparent" 
-            : "bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20"
-        )}
-        onClick={onToggle}
-      >
+    <section className={cn("w-full border-b border-border", expanded ? "bg-gradient-to-b from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30" : "bg-background")}>
+      <div className={cn("w-full border-b border-border/50 cursor-pointer", !expanded && "bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20")} onClick={onToggle}>
         <div className="w-full px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -165,159 +60,95 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
                 <BarChart3 className="h-6 w-6" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-1">
-                  Website Analysis
-                </h2>
-                <p className="text-muted-foreground">
-                  SEO metadata, social previews, technical details, and performance insights
-                </p>
+                <h2 className="text-2xl font-bold text-foreground mb-1">Website Analysis</h2>
+                <p className="text-muted-foreground">SEO, social media, technical details, and performance insights</p>
               </div>
             </div>
-            
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${status.color}`} />
-                <Badge variant="outline" className="bg-background/80">
-                  {status.text}
-                </Badge>
-              </div>
-              
-              {!expanded && !metadata && !metadataLoading && (
-                <Button
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    fetchMetadata()
-                  }}
-                  className="bg-orange-600 hover:bg-orange-700 text-white"
-                >
+              {!metadata && !metadataLoading && (
+                <Button size="sm" onClick={(e) => { e.stopPropagation(); fetchMetadata(); }} className="bg-orange-600 hover:bg-orange-700 text-white">
                   <Search className="h-4 w-4 mr-2" />
                   Extract Data
                 </Button>
               )}
-              
-              {expanded ? (
-                <ChevronUp className="h-6 w-6 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="h-6 w-6 text-muted-foreground" />
+              {metadataLoading && (
+                <div className="flex items-center gap-2 text-sm font-semibold text-orange-600"><Loader2 className="h-5 w-5 animate-spin" />Extracting...</div>
               )}
+              {metadata && !metadataLoading && (
+                 <div className="flex items-center gap-2 text-sm font-semibold text-green-600"><CheckCircle className="h-5 w-5" />Analysis Ready</div>
+              )}
+               {metadataError && (
+                 <div className="flex items-center gap-2 text-sm font-semibold text-red-600"><AlertCircle className="h-5 w-5" />Error</div>
+              )}
+              <div onClick={(e) => e.stopPropagation()}>{expanded ? <ChevronUp className="h-6 w-6 text-muted-foreground" /> : <ChevronDown className="h-6 w-6 text-muted-foreground" />}</div>
             </div>
           </div>
         </div>
       </div>
 
-
-      {/* Section Content - Full Width */}
       {expanded && (
-        <div className="w-full py-8">
-          <div className="w-full px-6">
-            {!metadata && !metadataLoading && !metadataError && (
-              <div className="flex items-center justify-center h-64 bg-muted/10 rounded-xl">
-                <div className="text-center">
-                  <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Extract Website Data</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md">
-                    Analyze SEO metadata, social media previews, technical details, and performance metrics
-                  </p>
-                  <Button onClick={() => fetchMetadata()} size="lg" className="bg-orange-600 hover:bg-orange-700">
-                    <Search className="h-5 w-5 mr-2" />
-                    Extract Metadata
-                  </Button>
+        <div className="w-full py-8 px-6">
+          {!metadata && !metadataLoading && !metadataError && (
+            <div className="flex items-center justify-center h-64 bg-muted/10 rounded-xl">
+              <div className="text-center">
+                <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Extract Website Data</h3>
+                <p className="text-muted-foreground mb-6 max-w-md">Click the "Extract Data" button in the header to get started.</p>
+              </div>
+            </div>
+          )}
+
+          {metadataLoading && (
+            <div className="flex items-center justify-center h-64 bg-orange-50/80 dark:bg-orange-950/40 border border-orange-200/60 dark:border-orange-800/40 rounded-xl">
+              <div className="text-center">
+                <Loader2 className="h-12 w-12 mx-auto text-orange-600 dark:text-orange-400 animate-spin mb-4" />
+                <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-200">Analyzing Website</h3>
+                <p className="text-orange-700 dark:text-orange-300 font-medium">Extracting metadata for {currentSite}...</p>
+              </div>
+            </div>
+          )}
+
+          {metadataError && (
+            <div className="flex items-center justify-center h-64 bg-red-50 dark:bg-red-950/10 rounded-xl">
+              <div className="text-center">
+                <AlertCircle className="h-12 w-12 mx-auto text-red-500 mb-4" />
+                <h3 className="text-xl font-semibold mb-2 text-red-800 dark:text-red-200">Analysis Failed</h3>
+                <p className="text-red-600 dark:text-red-400 mb-6">{metadataError}</p>
+                <Button onClick={() => fetchMetadata()} variant="outline" size="lg"><Search className="h-5 w-5 mr-2" />Try Again</Button>
+              </div>
+            </div>
+          )}
+
+          {metadata && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold">Analysis Results</h3>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={copyMetadata}><Copy className="h-4 w-4 mr-2" />Copy Data</Button>
+                  <Button variant="outline" onClick={exportMetadata}><Download className="h-4 w-4 mr-2" />Export JSON</Button>
                 </div>
               </div>
-            )}
 
-            {metadataLoading && (
-              <div className="flex items-center justify-center h-64 bg-orange-50/80 border border-orange-200/60 rounded-xl">
-                <div className="text-center">
-                  <Loader2 className="h-12 w-12 mx-auto text-orange-600 animate-spin mb-4" />
-                  <h3 className="text-xl font-semibold mb-2 text-gray-800">Analyzing Website</h3>
-                  <p className="text-orange-700 font-medium">
-                    Extracting metadata and generating insights for {currentSite}...
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {metadataError && (
-              <div className="flex items-center justify-center h-64 bg-red-50 dark:bg-red-950/10 rounded-xl">
-                <div className="text-center">
-                  <AlertCircle className="h-12 w-12 mx-auto text-red-500 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2 text-red-800 dark:text-red-200">Analysis Failed</h3>
-                  <p className="text-red-600 dark:text-red-400 mb-6">{metadataError}</p>
-                  <Button onClick={() => fetchMetadata()} variant="outline" size="lg">
-                    <Search className="h-5 w-5 mr-2" />
-                    Try Again
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {metadata && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold">Analysis Results</h3>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={copyMetadata}
-                      title="Copy metadata to clipboard"
-                    >
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copy Data
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={exportMetadata}
-                      title="Export metadata as JSON"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Export JSON
-                    </Button>
-                  </div>
-                </div>
-
-                <Tabs value={activeAnalysisTab} onValueChange={setActiveAnalysisTab} className="w-full">
-                  <TabsList className="grid w-full grid-cols-4 h-12 bg-orange-100/60 border border-orange-200/60 rounded-xl">
-                    <TabsTrigger value="metadata" className="flex items-center gap-2 data-[state=active]:bg-white/80 data-[state=active]:text-orange-700 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-orange-200/60 text-gray-700 font-medium rounded-lg">
-                      <Search className="h-4 w-4" />
-                      <span>SEO Metadata</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="social" className="flex items-center gap-2 data-[state=active]:bg-white/80 data-[state=active]:text-orange-700 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-orange-200/60 text-gray-700 font-medium rounded-lg">
-                      <Share2 className="h-4 w-4" />
-                      <span>Social Media</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="technical" className="flex items-center gap-2 data-[state=active]:bg-white/80 data-[state=active]:text-orange-700 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-orange-200/60 text-gray-700 font-medium rounded-lg">
-                      <Globe className="h-4 w-4" />
-                      <span>Technical</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="performance" className="flex items-center gap-2 data-[state=active]:bg-white/80 data-[state=active]:text-orange-700 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-orange-200/60 text-gray-700 font-medium rounded-lg">
-                      <Zap className="h-4 w-4" />
-                      <span>Performance</span>
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <div className="mt-6">
-                    <TabsContent value="metadata" className="mt-0">
-                      {metadata ? <SEOSection metadata={metadata} /> : <div className="text-center text-gray-500 py-8">No metadata available</div>}
-                    </TabsContent>
-
-                    <TabsContent value="social" className="mt-0">
-                      {metadata ? <SocialPreview metadata={metadata} /> : <div className="text-center text-gray-500 py-8">No metadata available</div>}
-                    </TabsContent>
-
-                    <TabsContent value="technical" className="mt-0">
-                      {metadata ? <TechnicalSection metadata={metadata} /> : <div className="text-center text-gray-500 py-8">No metadata available</div>}
-                    </TabsContent>
-
-                    <TabsContent value="performance" className="mt-0">
-                      {metadata ? <PerformanceSection metadata={metadata} /> : <div className="text-center text-gray-500 py-8">No metadata available</div>}
-                    </TabsContent>
-                  </div>
-                </Tabs>
-              </div>
-            )}
-          </div>
+              <Accordion type="single" collapsible defaultValue="seo" className="w-full">
+                <AccordionItem value="seo">
+                  <AccordionTrigger className="text-base font-semibold"><Search className="h-5 w-5 mr-3 text-orange-500"/>SEO Metadata</AccordionTrigger>
+                  <AccordionContent className="pt-4"><SEOSection metadata={metadata} /></AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="social">
+                  <AccordionTrigger className="text-base font-semibold"><Share2 className="h-5 w-5 mr-3 text-orange-500"/>Social Media Preview</AccordionTrigger>
+                  <AccordionContent className="pt-4"><SocialPreview metadata={metadata} /></AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="technical">
+                  <AccordionTrigger className="text-base font-semibold"><Globe className="h-5 w-5 mr-3 text-orange-500"/>Technical Details</AccordionTrigger>
+                  <AccordionContent className="pt-4"><TechnicalSection metadata={metadata} /></AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="performance">
+                  <AccordionTrigger className="text-base font-semibold"><Zap className="h-5 w-5 mr-3 text-orange-500"/>Performance Overview</AccordionTrigger>
+                  <AccordionContent className="pt-4"><PerformanceSection metadata={metadata} /></AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          )}
         </div>
       )}
     </section>
