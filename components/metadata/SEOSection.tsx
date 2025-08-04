@@ -114,7 +114,7 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
           <span className="text-base mt-0.5">{icon}</span>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
-              <span className="font-medium text-gray-900 dark:text-gray-100">{label}</span>
+              <span className="font-bold text-gray-900 dark:text-gray-100">{label}</span>
               <Badge variant="outline" className={`text-xs shrink-0 ${badgeClass}`}>
                 {statusText}
               </Badge>
@@ -177,7 +177,7 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">SEO Elements</h3>
+        <h3 className="text-lg font-bold">SEO Elements</h3>
         <div className="flex items-center gap-2">
           {getScoreIcon(seoScore.percentage)}
           <span className={`text-sm font-bold ${getScoreColor(seoScore.percentage)}`}>
@@ -187,7 +187,7 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
       </div>
       
       {/* SEO Elements */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden mb-4">
+      <div className="space-y-0 mb-6">
         <SimpleListItem 
             label="Title" 
             value={seo.title} 
@@ -240,11 +240,11 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
       
       {/* SEO Recommendations */}
       {recommendations.length > 0 && (
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 px-3 py-2 border-b border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">SEO Recommendations</h4>
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div className="mb-3">
+            <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">SEO Recommendations</h4>
           </div>
-          <div className="p-3 space-y-2">
+          <div className="space-y-2">
             {recommendations.slice(0, 8).map((rec, index) => (
               <div key={index} className={`flex items-start gap-2 p-2 rounded text-xs ${
                 rec.type === 'critical' 

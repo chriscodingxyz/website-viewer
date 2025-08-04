@@ -32,7 +32,7 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
           <span className="text-base mt-0.5">{iconEmoji}</span>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
-              <span className="font-medium text-gray-900 dark:text-gray-100">{label}</span>
+              <span className="font-bold text-gray-900 dark:text-gray-100">{label}</span>
               <Badge variant="outline" className={`text-xs shrink-0 ${badgeClass}`}>
                 {statusText}
               </Badge>
@@ -114,7 +114,7 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Social Media ({socialScore.percentage}%)</h3>
+        <h3 className="text-lg font-bold">Social Media ({socialScore.percentage}%)</h3>
         <div className="flex items-center gap-2">
           <span className={`text-sm font-bold ${
             socialScore.percentage >= 75 ? 'text-green-600' : 
@@ -132,7 +132,7 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
       </div>
       
       {/* Detailed Meta Data */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-0">
         <SimpleListItem
           icon="📖"
           label="OpenGraph Title"

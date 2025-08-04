@@ -49,7 +49,7 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
           <span className="text-base mt-0.5">{iconEmoji}</span>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
-              <span className="font-medium text-gray-900 dark:text-gray-100">{label}</span>
+              <span className="font-bold text-gray-900 dark:text-gray-100">{label}</span>
               <Badge variant="outline" className={`text-xs shrink-0 ${badgeClass}`}>
                 {statusText}
               </Badge>
@@ -87,7 +87,7 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Performance & Technical</h3>
+        <h3 className="text-lg font-bold">Performance & Technical</h3>
         <div className="flex items-center gap-2">
           <span className={`text-sm font-bold ${
             getIssueCount() === 0 ? 'text-green-600' : 
@@ -98,7 +98,7 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
         </div>
       </div>
       
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+      <div className="space-y-0">
         {/* Performance Metrics */}
         {performance?.loadTime && (
           <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800">
@@ -106,7 +106,7 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
               <span className="text-base mt-0.5">⚡</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">Load Time</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">Load Time</span>
                   <Badge variant="outline" className={`text-xs shrink-0 ${
                     performance.loadTime < 1000 ? 'bg-green-50 text-green-700 border-green-300' : 
                     performance.loadTime < 3000 ? 'bg-yellow-50 text-yellow-700 border-yellow-300' : 
@@ -129,7 +129,7 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
               <span className="text-base mt-0.5">📦</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">Page Size</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">Page Size</span>
                   <Badge variant="outline" className={`text-xs shrink-0 ${
                     performance.size < 1000000 ? 'bg-green-50 text-green-700 border-green-300' : 
                     performance.size < 5000000 ? 'bg-yellow-50 text-yellow-700 border-yellow-300' : 
@@ -152,7 +152,7 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
               <span className="text-base mt-0.5">🔗</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">HTTP Requests</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">HTTP Requests</span>
                   <Badge variant="outline" className={`text-xs shrink-0 ${
                     performance.requests < 50 ? 'bg-green-50 text-green-700 border-green-300' : 
                     performance.requests < 100 ? 'bg-yellow-50 text-yellow-700 border-yellow-300' : 
@@ -176,7 +176,7 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
               <span className="text-base mt-0.5">🖥️</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">Server</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">Server</span>
                   <Badge variant="outline" className="text-xs shrink-0 bg-green-50 text-green-700 border-green-300">
                     Good
                   </Badge>
@@ -195,7 +195,7 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
               <span className="text-base mt-0.5">🗜️</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">Compression</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">Compression</span>
                   <Badge variant="outline" className="text-xs shrink-0 bg-green-50 text-green-700 border-green-300">
                     Enabled
                   </Badge>
@@ -214,7 +214,7 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
               <span className="text-base mt-0.5">💾</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">Cache Control</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">Cache Control</span>
                   <Badge variant="outline" className="text-xs shrink-0 bg-green-50 text-green-700 border-green-300">
                     Configured
                   </Badge>
@@ -273,7 +273,7 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
               <span className="text-base mt-0.5">✅</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">Favicons</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">Favicons</span>
                   <Badge variant="outline" className="text-xs shrink-0 bg-green-50 text-green-700 border-green-300">
                     {icons.length} icons
                   </Badge>
@@ -342,7 +342,7 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
             <span className="text-base mt-0.5">{structuredData && structuredData.length > 0 ? '✅' : '❌'}</span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1">
-                <span className="font-medium text-gray-900 dark:text-gray-100">JSON-LD / Structured Data</span>
+                <span className="font-bold text-gray-900 dark:text-gray-100">JSON-LD / Structured Data</span>
                 <Badge variant="outline" className={`text-xs shrink-0 ${
                   structuredData && structuredData.length > 0 
                     ? 'bg-green-50 text-green-700 border-green-300' 
@@ -456,7 +456,7 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
               <span className="text-base mt-0.5">📡</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">HTTP Headers</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">HTTP Headers</span>
                   <Badge variant="outline" className="text-xs shrink-0 bg-blue-50 text-blue-700 border-blue-300">
                     {Object.keys(headers || {}).length} headers
                   </Badge>
