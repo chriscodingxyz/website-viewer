@@ -8,7 +8,6 @@ import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import SEOSection from '../metadata/SEOSection'
 import SocialPreview from '../metadata/SocialPreview'
 import TechnicalSection from '../metadata/TechnicalSection'
-import PerformanceSection from '../metadata/PerformanceSection'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -181,12 +180,15 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
                 <SEOSection metadata={metadata} />
               </div>
               
-              {/* Right column - Performance and other sections */}
-              <div className="xl:col-span-2 space-y-6">
-                <PerformanceSection metadata={metadata} />
+              {/* Right columns - 2 columns for other sections */}
+              <div className="xl:col-span-2">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <SocialPreview metadata={metadata} />
-                  <TechnicalSection metadata={metadata} />
+                  <div className="lg:col-span-1">
+                    <SocialPreview metadata={metadata} />
+                  </div>
+                  <div className="lg:col-span-1">
+                    <TechnicalSection metadata={metadata} />
+                  </div>
                 </div>
               </div>
             </div>

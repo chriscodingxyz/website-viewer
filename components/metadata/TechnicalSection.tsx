@@ -9,7 +9,15 @@ interface TechnicalSectionProps {
 }
 
 export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
-  const { technical, headers, icons, structuredData } = metadata
+  const { technical, headers, icons, structuredData, performance } = metadata
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
 
   const SimpleListItem = ({ icon, label, value, status }: {
     icon: string
@@ -79,7 +87,7 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Technical Details</h3>
+        <h3 className="text-lg font-semibold">Performance & Technical</h3>
         <div className="flex items-center gap-2">
           <span className={`text-sm font-bold ${
             getIssueCount() === 0 ? 'text-green-600' : 
@@ -91,6 +99,135 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
       </div>
       
       <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        {/* Performance Metrics */}
+        {performance?.loadTime && (
+          <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-start gap-3">
+              <span className="text-base mt-0.5">⚡</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Load Time</span>
+                  <Badge variant="outline" className={`text-xs shrink-0 ${
+                    performance.loadTime < 1000 ? 'bg-green-50 text-green-700 border-green-300' : 
+                    performance.loadTime < 3000 ? 'bg-yellow-50 text-yellow-700 border-yellow-300' : 
+                    'bg-red-50 text-red-700 border-red-300'
+                  }`}>
+                    {performance.loadTime < 1000 ? 'Good' : performance.loadTime < 3000 ? 'Fair' : 'Poor'}
+                  </Badge>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  "{performance.loadTime < 1000 ? `${performance.loadTime}ms` : `${(performance.loadTime / 1000).toFixed(2)}s`}"
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {performance?.size && (
+          <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-start gap-3">
+              <span className="text-base mt-0.5">📦</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Page Size</span>
+                  <Badge variant="outline" className={`text-xs shrink-0 ${
+                    performance.size < 1000000 ? 'bg-green-50 text-green-700 border-green-300' : 
+                    performance.size < 5000000 ? 'bg-yellow-50 text-yellow-700 border-yellow-300' : 
+                    'bg-red-50 text-red-700 border-red-300'
+                  }`}>
+                    {performance.size < 1000000 ? 'Good' : performance.size < 5000000 ? 'Fair' : 'Large'}
+                  </Badge>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  "{formatBytes(performance.size)}"
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {performance?.requests && (
+          <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-start gap-3">
+              <span className="text-base mt-0.5">🔗</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">HTTP Requests</span>
+                  <Badge variant="outline" className={`text-xs shrink-0 ${
+                    performance.requests < 50 ? 'bg-green-50 text-green-700 border-green-300' : 
+                    performance.requests < 100 ? 'bg-yellow-50 text-yellow-700 border-yellow-300' : 
+                    'bg-red-50 text-red-700 border-red-300'
+                  }`}>
+                    {performance.requests < 50 ? 'Good' : performance.requests < 100 ? 'Fair' : 'Many'}
+                  </Badge>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  "{performance.requests}"
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Server and Compression */}
+        {headers?.server && (
+          <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-start gap-3">
+              <span className="text-base mt-0.5">🖥️</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Server</span>
+                  <Badge variant="outline" className="text-xs shrink-0 bg-green-50 text-green-700 border-green-300">
+                    Good
+                  </Badge>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  "{headers.server}"
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {headers?.['content-encoding'] && (
+          <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-start gap-3">
+              <span className="text-base mt-0.5">🗜️</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Compression</span>
+                  <Badge variant="outline" className="text-xs shrink-0 bg-green-50 text-green-700 border-green-300">
+                    Enabled
+                  </Badge>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  "{headers['content-encoding']}"
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {headers?.['cache-control'] && (
+          <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-start gap-3">
+              <span className="text-base mt-0.5">💾</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Cache Control</span>
+                  <Badge variant="outline" className="text-xs shrink-0 bg-green-50 text-green-700 border-green-300">
+                    Configured
+                  </Badge>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  "{headers['cache-control']}"
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Technical Details */}
         <SimpleListItem
           icon="🔒"
           label="HTTPS"
@@ -110,15 +247,6 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
             icon="🎨"
             label="Theme Color"
             value={technical.themeColor}
-            status="good"
-          />
-        )}
-        
-        {headers?.server && (
-          <SimpleListItem
-            icon="🖥️"
-            label="Server"
-            value={headers.server}
             status="good"
           />
         )}
