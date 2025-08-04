@@ -61,12 +61,12 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
       {data.map(({ label, value }) => (
         value && (
-          <div key={label} className="flex items-center justify-between p-3 bg-orange-50/50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/50 rounded-lg">
+          <div key={label} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg">
             <div className="flex-1 min-w-0">
-              <span className="text-xs font-mono text-orange-600 dark:text-orange-400 font-medium">{label}</span>
+              <span className="text-xs font-mono text-blue-600 dark:text-blue-400 font-medium">{label}</span>
               <p className="text-sm break-all text-gray-700 dark:text-gray-300 font-medium mt-1">{value}</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => copyToClipboard(value, label)} className="shrink-0 h-6 w-6 p-0 hover:bg-orange-100/60 text-orange-600 hover:text-orange-700">
+            <Button variant="ghost" size="icon" onClick={() => copyToClipboard(value, label)} className="shrink-0 h-6 w-6 p-0 hover:bg-blue-100/60 text-blue-600 hover:text-blue-700">
               <Copy className="h-3 w-3" />
             </Button>
           </div>
@@ -78,13 +78,13 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Facebook / Open Graph */}
-      <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm border border-orange-200/60 dark:border-orange-800/40 rounded-2xl p-6 shadow-sm">
+      <div className="bg-white dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
           <FacebookLogo className="h-5 w-5 text-blue-600" weight="fill" />
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Facebook Preview</h3>
         </div>
         <SocialCard platform="facebook" />
-        <div className="mt-3 text-xs text-gray-600 dark:text-gray-400 flex items-center gap-2 p-3 bg-orange-50/50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/50 rounded-lg">
+        <div className="mt-3 text-xs text-gray-600 dark:text-gray-400 flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg">
             <LinkedinLogo className="h-4 w-4 text-blue-700" weight="fill" />
             <span>LinkedIn previews also use this Open Graph data.</span>
         </div>
@@ -99,7 +99,7 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
       </div>
 
       {/* Twitter */}
-      <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm border border-orange-200/60 dark:border-orange-800/40 rounded-2xl p-6 shadow-sm">
+      <div className="bg-white dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
           <TwitterLogo className="h-5 w-5 text-sky-500" weight="fill" />
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Twitter Preview</h3>

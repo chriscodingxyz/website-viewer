@@ -116,7 +116,7 @@ export default function LighthouseSection({ reports, onRunAnalysis, loading, err
         <div className="text-center">
           <Zap className="h-12 w-12 mx-auto text-green-500 mb-4" />
           <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-200">Ready to Analyze</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md">Click the "Run Analysis" button above to get started.</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md">Click the &quot;Run Analysis&quot; button above to get started.</p>
         </div>
       </div>
     )

@@ -41,13 +41,24 @@ export default function SectionContainer() {
   }, [lighthouseLoading])
 
   const toggleSection = (sectionKey: keyof SectionState) => {
-    setSectionState(prev => ({
-      ...prev,
-      [sectionKey]: {
-        ...prev[sectionKey],
-        expanded: !prev[sectionKey].expanded,
-      },
-    }))
+    setSectionState(prev => {
+      const isCurrentlyExpanded = prev[sectionKey].expanded
+      
+      // If clicking on an already expanded section, collapse it
+      if (isCurrentlyExpanded) {
+        return {
+          ...prev,
+          [sectionKey]: { expanded: false }
+        }
+      }
+      
+      // Otherwise, collapse all sections and expand only the clicked one
+      return {
+        viewports: { expanded: sectionKey === 'viewports' },
+        analysis: { expanded: sectionKey === 'analysis' },
+        performance: { expanded: sectionKey === 'performance' }
+      }
+    })
   }
 
   if (!currentSite) {

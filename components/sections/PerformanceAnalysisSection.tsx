@@ -45,7 +45,7 @@ export default function PerformanceAnalysisSection({ expanded, onToggle }: Perfo
 
   return (
     <section className={cn("w-full border-b border-border", expanded ? "bg-gradient-to-b from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30" : "bg-background")}>
-      <div className={cn("w-full border-b border-border/50 cursor-pointer", !expanded && "bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20")} onClick={onToggle}>
+      <div className="w-full border-b border-border/50 cursor-pointer bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 sticky top-16 z-40" onClick={onToggle}>
         <div className="w-full px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">

@@ -66,9 +66,9 @@ export default function ViewportsSection({ expanded, onToggle }: ViewportsSectio
       {/* Section Header - Full Width */}
       <div 
         className={cn(
-          "w-full border-b border-border/50 cursor-pointer",
+          "w-full border-b border-border/50 cursor-pointer sticky top-16 z-40",
           expanded 
-            ? "bg-transparent" 
+            ? "bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20" 
             : "bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20"
         )}
         onClick={onToggle}
