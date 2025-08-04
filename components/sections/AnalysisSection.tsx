@@ -129,7 +129,7 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
                 </div>
               </div>
 
-              <Accordion type="single" collapsible defaultValue="seo" className="w-full">
+              <Accordion type="multiple" defaultValue={["seo", "social", "technical", "performance"]} className="w-full">
                 <AccordionItem value="seo">
                   <AccordionTrigger className="text-base font-semibold"><Search className="h-5 w-5 mr-3 text-orange-500"/>SEO Metadata</AccordionTrigger>
                   <AccordionContent className="pt-4"><SEOSection metadata={metadata} /></AccordionContent>
