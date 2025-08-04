@@ -4,8 +4,7 @@
 import React from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
 import { Badge } from '@/components/ui/badge'
-import { Copy, CheckCircle, AlertTriangle, XCircle, Languages, Smartphone, Bot, FileText, User } from 'lucide-react'
-import { toast } from 'sonner'
+import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react'
 
 interface SEOSectionProps {
   metadata: WebsiteMetadata
@@ -14,14 +13,6 @@ interface SEOSectionProps {
 export default function SEOSection({ metadata }: SEOSectionProps) {
   const { seo } = metadata
 
-  const copyToClipboard = async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      toast.success(`${label} copied to clipboard`)
-    } catch (err) {
-      toast.error(`Failed to copy ${label}`)
-    }
-  }
 
   const getSEOScore = () => {
     let score = 0
@@ -69,60 +60,95 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
 
   const seoScore = getSEOScore()
 
-  // Define CompactMetadataItem component first
-  function CompactMetadataItem({ label, value, isGood, icon: Icon, optimalRange }: {
+  const SimpleListItem = ({ label, value, isGood, optimalRange }: {
     label: string
     value?: string
     isGood: boolean
-    icon: React.ElementType
     optimalRange?: string
-  }) {
-    const status = getElementStatus(label, value)
+  }) => {
+    let icon = '❌'
+    let statusText = ''
+    let showDetails = false
+    let badgeClass = 'bg-red-50 text-red-700 border-red-300'
+    
+    if (label === 'Title' && value) {
+      if (value.length >= 30 && value.length <= 60) {
+        icon = '✅'
+        statusText = 'Good Length'
+        badgeClass = 'bg-green-50 text-green-700 border-green-300'
+      } else if ((value.length >= 25 && value.length < 30) || (value.length > 60 && value.length <= 70)) {
+        icon = '⚠️'
+        statusText = value.length < 30 ? 'Close to Optimal' : 'Slightly Long'
+        badgeClass = 'bg-yellow-50 text-yellow-700 border-yellow-300'
+      } else {
+        icon = '❌'
+        statusText = value.length < 25 ? 'Too Short' : 'Too Long'
+        badgeClass = 'bg-red-50 text-red-700 border-red-300'
+      }
+      showDetails = true
+    } else if (label === 'Description' && value) {
+      if (value.length >= 120 && value.length <= 160) {
+        icon = '✅'
+        statusText = 'Good Length'
+        badgeClass = 'bg-green-50 text-green-700 border-green-300'
+      } else if ((value.length >= 100 && value.length < 120) || (value.length > 160 && value.length <= 180)) {
+        icon = '⚠️'
+        statusText = value.length < 120 ? 'Close to Optimal' : 'Slightly Long'
+        badgeClass = 'bg-yellow-50 text-yellow-700 border-yellow-300'
+      } else {
+        icon = '❌'
+        statusText = value.length < 100 ? 'Too Short' : 'Too Long'
+        badgeClass = 'bg-red-50 text-red-700 border-red-300'
+      }
+      showDetails = true
+    } else {
+      icon = isGood ? '✅' : '❌'
+      statusText = isGood ? 'Present' : 'Missing'
+      badgeClass = isGood ? 'bg-green-50 text-green-700 border-green-300' : 'bg-red-50 text-red-700 border-red-300'
+      showDetails = label === 'Keywords' // Show full keywords
+    }
+    
     return (
-      <div className="p-4 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Icon className={`h-4 w-4 shrink-0 ${isGood ? 'text-green-600' : 'text-red-500'}`} />
-            <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{label}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className={`text-xs ${status.badgeClass}`}>
-              {status.badge}
-            </Badge>
-            {value && (
-              <button
-                onClick={() => copyToClipboard(value, label)}
-                className="p-1 text-orange-600 hover:text-orange-700 hover:bg-orange-100/60 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <Copy className="h-3 w-3" />
-              </button>
-            )}
-          </div>
-        </div>
-        
-        <div className="mb-3">
-          {value ? (
-            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium break-all">{value}</p>
-          ) : (
-            <p className="text-sm text-red-600 dark:text-red-400 font-semibold">Not set - {optimalRange ? `Add ${optimalRange}` : 'Recommended to add'}</p>
-          )}
-        </div>
-
-        {/* Character count and optimal range for Title and Description */}
-        {(label === 'Title' || label === 'Description') && (
-          <div className="text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-700">
-            {value && (
-              <div className="flex items-center justify-between mb-1">
-                <span>Current length: <span className={`font-bold ${
-                  label === 'Title' 
-                    ? (value.length >= 30 && value.length <= 60 ? 'text-green-600' : 'text-amber-600')
-                    : (value.length >= 120 && value.length <= 160 ? 'text-green-600' : 'text-amber-600')
-                }`}>{value.length} chars</span></span>
+      <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+        <div className="flex items-start gap-3">
+          <span className="text-base mt-0.5">{icon}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-medium text-gray-900 dark:text-gray-100">{label}</span>
+              <Badge variant="outline" className={`text-xs shrink-0 ${badgeClass}`}>
+                {statusText}
+              </Badge>
+            </div>
+            
+            {value ? (
+              <div className="space-y-1">
+                <p className="text-gray-700 dark:text-gray-300 break-words">
+                  "{value}"
+                </p>
+                {showDetails && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
+                    {(label === 'Title' || label === 'Description') && (
+                      <>
+                        <div>Current length: <span className={`font-medium ${
+                          isGood ? 'text-green-600' : 'text-amber-600'
+                        }`}>{value.length} chars</span></div>
+                        <div>Optimal range: <span className="font-medium">{optimalRange}</span></div>
+                      </>
+                    )}
+                    {label === 'Keywords' && (
+                      <div>Keywords help search engines understand your content</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <p className="text-red-600 dark:text-red-400">Not set</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{optimalRange || 'Recommended to add'}</p>
               </div>
             )}
-            {optimalRange && <p className="font-medium">Optimal range: {optimalRange}</p>}
           </div>
-        )}
+        </div>
       </div>
     )
   }
@@ -149,99 +175,94 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
   const hasGoodDescription = seo.description && seo.description.length >= 120 && seo.description.length <= 160
 
   return (
-    <div className="space-y-8">
-      {/* SEO Elements */}
-      <div>
-        <div className="flex items-center justify-end mb-6">
-          <div className="flex items-center gap-2">
-            {getScoreIcon(seoScore.percentage)}
-            <span className={`text-sm font-bold ${getScoreColor(seoScore.percentage)}`}>
-              {seoScore.percentage}% ({seoScore.score}/{seoScore.maxScore})
-            </span>
-          </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">SEO Elements</h3>
+        <div className="flex items-center gap-2">
+          {getScoreIcon(seoScore.percentage)}
+          <span className={`text-sm font-bold ${getScoreColor(seoScore.percentage)}`}>
+            {seoScore.percentage}% ({seoScore.score}/{seoScore.maxScore})
+          </span>
         </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 group">
-          <CompactMetadataItem 
+      </div>
+      
+      {/* SEO Elements */}
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden mb-4">
+        <SimpleListItem 
             label="Title" 
             value={seo.title} 
             isGood={hasGoodTitle} 
-            icon={FileText} 
             optimalRange="30-60 chars"
           />
-          <CompactMetadataItem 
+          <SimpleListItem 
             label="Description" 
             value={seo.description} 
             isGood={hasGoodDescription} 
-            icon={FileText} 
             optimalRange="120-160 chars"
           />
-          <CompactMetadataItem 
+          <SimpleListItem 
             label="Canonical URL" 
             value={seo.canonical} 
             isGood={!!seo.canonical} 
-            icon={FileText} 
             optimalRange="canonical URL to prevent duplicate content"
           />
-          <CompactMetadataItem 
+          <SimpleListItem 
             label="Keywords" 
             value={seo.keywords} 
             isGood={!!seo.keywords} 
-            icon={FileText} 
             optimalRange="relevant keywords for content"
           />
-          <CompactMetadataItem 
+          <SimpleListItem 
             label="Language" 
             value={seo.language} 
             isGood={!!seo.language} 
-            icon={Languages} 
             optimalRange="language attribute for accessibility"
           />
-          <CompactMetadataItem 
+          <SimpleListItem 
             label="Viewport" 
             value={seo.viewport} 
             isGood={!!seo.viewport} 
-            icon={Smartphone} 
-            optimalRange="viewport meta tag for mobile"
+            optimalRange="viewport meta tag for mobile support"
           />
-          <CompactMetadataItem 
+          <SimpleListItem 
             label="Robots" 
             value={seo.robots} 
             isGood={!!seo.robots} 
-            icon={Bot} 
             optimalRange="crawling instructions for search engines"
           />
-          <CompactMetadataItem 
+          <SimpleListItem 
             label="Author" 
             value={seo.author} 
             isGood={!!seo.author} 
-            icon={User} 
             optimalRange="author information for content"
-          />
-        </div>
+        />
       </div>
-
-      {/* Recommendations */}
+      
+      {/* SEO Recommendations */}
       {recommendations.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">SEO Recommendations</h3>
-          <div className="space-y-3">
-            {recommendations.map((rec, index) => (
-              <div key={index} className={`flex items-start gap-3 p-3 rounded-lg ${
+        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">SEO Recommendations</h4>
+          </div>
+          <div className="p-3 space-y-2">
+            {recommendations.slice(0, 8).map((rec, index) => (
+              <div key={index} className={`flex items-start gap-2 p-2 rounded text-xs ${
                 rec.type === 'critical' 
                   ? 'bg-red-50/80 border border-red-200/60 dark:bg-red-950/20 dark:border-red-800/40'
                   : 'bg-yellow-50/80 border border-yellow-200/60 dark:bg-yellow-950/20 dark:border-yellow-800/40'
               }`}>
                 {rec.type === 'critical' ? (
-                  <XCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+                  <XCircle className="h-3 w-3 text-red-500 mt-0.5 shrink-0" />
                 ) : (
-                  <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
+                  <AlertTriangle className="h-3 w-3 text-yellow-500 mt-0.5 shrink-0" />
                 )}
-                <p className={`text-sm font-medium ${
+                <p className={`font-medium ${
                   rec.type === 'critical' 
                     ? 'text-red-700 dark:text-red-300'
                     : 'text-yellow-700 dark:text-yellow-300'
-                }`}>{rec.text}</p>
+                }`}>
+                  {rec.text}
+                </p>
               </div>
             ))}
           </div>

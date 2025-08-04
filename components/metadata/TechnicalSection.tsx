@@ -2,11 +2,7 @@
 
 import React from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Copy, Shield, Smartphone, Palette, FileText, Server, Fingerprint, Lock, Globe } from 'lucide-react'
-import { toast } from 'sonner'
-import Image from 'next/image'
 
 interface TechnicalSectionProps {
   metadata: WebsiteMetadata
@@ -15,156 +11,349 @@ interface TechnicalSectionProps {
 export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
   const { technical, headers, icons, structuredData } = metadata
 
-  const copyToClipboard = async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      toast.success(`${label} copied to clipboard`)
-    } catch (err) {
-      toast.error(`Failed to copy ${label}`)
+  const SimpleListItem = ({ icon, label, value, status }: {
+    icon: string
+    label: string
+    value?: string | boolean
+    status: 'good' | 'warning' | 'missing'
+  }) => {
+    const iconEmoji = status === 'good' ? '✅' : status === 'warning' ? '⚠️' : '❌'
+    const badgeClass = status === 'good' 
+      ? 'bg-green-50 text-green-700 border-green-300' 
+      : status === 'warning'
+      ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
+      : 'bg-red-50 text-red-700 border-red-300'
+    
+    const statusText = status === 'good' ? 'Good' : status === 'warning' ? 'Warning' : 'Missing'
+    
+    let displayValue = ''
+    if (typeof value === 'boolean') {
+      displayValue = value ? 'Yes' : 'No'
+    } else if (value) {
+      displayValue = value.toString()
+    } else {
+      displayValue = 'Not set'
     }
-  }
-
-  const GridItem = ({ label, value, icon: Icon }: { label: string; value?: string; icon: React.ElementType }) => (
-    <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg">
-      <Icon className="h-4 w-4 text-gray-600 dark:text-gray-400 mt-1 shrink-0" />
-      <div className="flex-1">
-        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{label}</p>
-        {value ? (
-          <p className="text-sm text-gray-800 dark:text-gray-200 font-semibold break-all">{value}</p>
-        ) : (
-          <p className="text-sm text-red-600 dark:text-red-400 font-semibold">Not set</p>
-        )}
-      </div>
-      {value && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => copyToClipboard(value, label)}
-          className="shrink-0 ml-2 h-6 w-6 p-0 hover:bg-gray-100/60 text-gray-600 hover:text-gray-700"
-        >
-          <Copy className="h-3 w-3" />
-        </Button>
-      )}
-    </div>
-  );
-
-  const IconsSection = () => (
-    <div className="bg-white dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
-      <div className="flex items-center gap-3 mb-4">
-        <Palette className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Icons & Favicons</h3>
-      </div>
-      <div>
-        {icons.length > 0 ? (
-          <div className="space-y-3">
-            {icons.map((icon, index) => (
-              <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl">
-                <div className="relative w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded shrink-0">
-                  <Image
-                    src={icon.href}
-                    alt={`Icon ${icon.rel}`}
-                    fill
-                    className="object-contain rounded"
-                    onError={(e) => { e.currentTarget.style.display = 'none' }}
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/70 dark:text-blue-300 dark:border-blue-800/60">{icon.rel}</Badge>
-                    {icon.sizes && <Badge variant="secondary" className="bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200">{icon.sizes}</Badge>}
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium break-all">{icon.href}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => copyToClipboard(icon.href, `${icon.rel} icon URL`)}
-                  className="h-7 w-7 p-0 hover:bg-gray-100/60 text-gray-600 hover:text-gray-700"
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-600 dark:text-gray-400 font-medium text-center py-4">No icons found</p>
-        )}
-      </div>
-    </div>
-  )
-
-  const StructuredDataSection = () => (
-    <div className="bg-white dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
-      <div className="flex items-center gap-3 mb-4">
-        <FileText className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Structured Data (JSON-LD)</h3>
-      </div>
-      <div>
-        {structuredData.length > 0 ? (
-          <div className="space-y-3">
-            {structuredData.map((data, index) => (
-              <div key={index} className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/70 dark:text-blue-300 dark:border-blue-800/60">{data.type}</Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyToClipboard(JSON.stringify(data.data, null, 2), `${data.type} schema`)}
-                    className="h-7 w-7 p-0 hover:bg-gray-100/60 text-gray-600 hover:text-gray-700"
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                </div>
-                <pre className="text-xs bg-white/70 dark:bg-gray-800/30 border border-gray-200 dark:border-gray-700 p-3 rounded-lg overflow-x-auto font-mono">
-                  {JSON.stringify(data.data, null, 2)}
-                </pre>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-600 dark:text-gray-400 font-medium text-center py-4">No structured data found</p>
-        )}
-      </div>
-    </div>
-  )
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="space-y-6">
-        <div className="bg-white dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <Smartphone className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Technical Details</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <GridItem label="Character Set" value={technical.charset} icon={Globe} />
-            <GridItem label="Theme Color" value={technical.themeColor} icon={Palette} />
-            <GridItem label="Generator" value={technical.generator} icon={Fingerprint} />
-            <GridItem label="Referrer Policy" value={technical.referrer} icon={Lock} />
-            <GridItem label="Web App Manifest" value={technical.manifestUrl} icon={FileText} />
-            <GridItem label="Apple Touch Icon" value={technical.appleTouchIcon} icon={Smartphone} />
+    
+    return (
+      <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+        <div className="flex items-start gap-3">
+          <span className="text-base mt-0.5">{iconEmoji}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-medium text-gray-900 dark:text-gray-100">{label}</span>
+              <Badge variant="outline" className={`text-xs shrink-0 ${badgeClass}`}>
+                {statusText}
+              </Badge>
+            </div>
+            
+            <div className="space-y-1">
+              <p className="text-gray-700 dark:text-gray-300 break-words">
+                {value ? `"${displayValue}"` : 'Not configured'}
+              </p>
+              {!value && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Consider adding for better user experience
+                </p>
+              )}
+            </div>
           </div>
         </div>
+      </div>
+    )
+  }
 
-        <div className="bg-white dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <Server className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">HTTP Headers</h3>
+  const getSecurityStatus = () => {
+    const isHTTPS = technical?.url?.startsWith('https://') || false
+    return isHTTPS ? 'good' : 'warning'
+  }
+
+  const getIssueCount = () => {
+    let issues = 0
+    if (!technical?.url?.startsWith('https://')) issues++
+    if (!technical?.responsive) issues++
+    if (!headers?.['content-security-policy']) issues++
+    return issues
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Technical Details</h3>
+        <div className="flex items-center gap-2">
+          <span className={`text-sm font-bold ${
+            getIssueCount() === 0 ? 'text-green-600' : 
+            getIssueCount() <= 2 ? 'text-yellow-600' : 'text-red-600'
+          }`}>
+            {getIssueCount()} issues
+          </span>
+        </div>
+      </div>
+      
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        <SimpleListItem
+          icon="🔒"
+          label="HTTPS"
+          value={technical?.url?.startsWith('https://') ? 'Secure' : 'Insecure'}
+          status={getSecurityStatus()}
+        />
+        
+        <SimpleListItem
+          icon="📱"
+          label="Mobile Responsive"
+          value={technical?.responsive}
+          status={technical?.responsive ? 'good' : 'warning'}
+        />
+        
+        {technical?.themeColor && (
+          <SimpleListItem
+            icon="🎨"
+            label="Theme Color"
+            value={technical.themeColor}
+            status="good"
+          />
+        )}
+        
+        {headers?.server && (
+          <SimpleListItem
+            icon="🖥️"
+            label="Server"
+            value={headers.server}
+            status="good"
+          />
+        )}
+        
+        {headers?.['content-security-policy'] ? (
+          <SimpleListItem
+            icon="🛡️"
+            label="Content Security Policy"
+            value="Configured"
+            status="good"
+          />
+        ) : (
+          <SimpleListItem
+            icon="🛡️"
+            label="Content Security Policy"
+            value={undefined}
+            status="warning"
+          />
+        )}
+        
+        {icons && icons.length > 0 ? (
+          <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-start gap-3">
+              <span className="text-base mt-0.5">✅</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Favicons</span>
+                  <Badge variant="outline" className="text-xs shrink-0 bg-green-50 text-green-700 border-green-300">
+                    {icons.length} icons
+                  </Badge>
+                </div>
+                
+                <div className="space-y-2">
+                  {/* Group icons by type */}
+                  {icons.map((icon, index) => (
+                    <div key={index} className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded border">
+                      <div className="flex items-center gap-2">
+                        {icon.href && (
+                          <img 
+                            src={icon.href} 
+                            alt={`${icon.sizes || 'favicon'}`}
+                            className="w-6 h-6 rounded border bg-white"
+                            onError={(e) => {
+                              e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik04IDhIMTZWMTZIOFY4WiIgc3Ryb2tlPSIjOUNBM0FGIiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+Cg=='
+                            }}
+                          />
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-gray-900 dark:text-gray-100">
+                              {icon.rel || 'icon'}
+                            </span>
+                            {icon.sizes && (
+                              <span className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded">
+                                {icon.sizes}
+                              </span>
+                            )}
+                            {icon.type && (
+                              <span className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded">
+                                {icon.type}
+                              </span>
+                            )}
+                          </div>
+                          {icon.href && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1 truncate">
+                              {icon.href}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Favicons help browsers display your site icon in tabs, bookmarks, and shortcuts
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <GridItem label="Server" value={headers?.server} icon={Server} />
-            <GridItem label="Content-Type" value={headers?.contentType} icon={FileText} />
-            <GridItem label="Cache-Control" value={headers?.cacheControl} icon={FileText} />
-            <GridItem label="X-Frame-Options" value={headers?.xFrameOptions} icon={Shield} />
-            <GridItem label="Strict-Transport-Security" value={headers?.strictTransportSecurity} icon={Lock} />
+        ) : (
+          <SimpleListItem
+            icon="🖼️"
+            label="Favicons"
+            value={undefined}
+            status="warning"
+          />
+        )}
+        
+        {/* Always show Structured Data / JSON-LD section */}
+        <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+          <div className="flex items-start gap-3">
+            <span className="text-base mt-0.5">{structuredData && structuredData.length > 0 ? '✅' : '❌'}</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-medium text-gray-900 dark:text-gray-100">JSON-LD / Structured Data</span>
+                <Badge variant="outline" className={`text-xs shrink-0 ${
+                  structuredData && structuredData.length > 0 
+                    ? 'bg-green-50 text-green-700 border-green-300' 
+                    : 'bg-red-50 text-red-700 border-red-300'
+                }`}>
+                  {structuredData && structuredData.length > 0 
+                    ? `${structuredData.length} schemas` 
+                    : 'Missing'}
+                </Badge>
+              </div>
+              
+              {structuredData && structuredData.length > 0 ? (
+                <>
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {structuredData.slice(0, 6).map((schema, index) => (
+                      <div key={index} className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded border border-blue-200 dark:border-blue-800">
+                        {schema['@type'] || schema.type || 'Schema'}
+                      </div>
+                    ))}
+                    {structuredData.length > 6 && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1">
+                        +{structuredData.length - 6} more
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* JSON-LD Details */}
+                  <details className="mt-2">
+                    <summary className="text-xs text-blue-600 dark:text-blue-400 cursor-pointer hover:text-blue-700 dark:hover:text-blue-300">
+                      🔍 View JSON-LD Configuration
+                    </summary>
+                    <div className="mt-2 space-y-2">
+                      {structuredData.map((schema, index) => (
+                        <div key={index} className="bg-gray-50 dark:bg-gray-800 rounded p-2">
+                          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            {schema['@type'] || schema.type || `Schema ${index + 1}`}
+                          </div>
+                          <pre className="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto whitespace-pre-wrap max-h-40 overflow-y-auto">
+                            {JSON.stringify(schema, null, 2)}
+                          </pre>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                  
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Structured data helps search engines understand your content
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-red-600 dark:text-red-400 text-sm">No structured data found</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Add JSON-LD schemas for better SEO and rich snippets
+                  </p>
+                </>
+              )}
+            </div>
           </div>
         </div>
         
-        <StructuredDataSection />
-      </div>
-
-      <div className="space-y-6">
-        <IconsSection />
+        {headers?.['x-frame-options'] && (
+          <SimpleListItem
+            icon="🔐"
+            label="X-Frame-Options"
+            value={headers['x-frame-options']}
+            status="good"
+          />
+        )}
+        
+        {headers?.['x-content-type-options'] && (
+          <SimpleListItem
+            icon="🛡️"
+            label="X-Content-Type-Options"
+            value={headers['x-content-type-options']}
+            status="good"
+          />
+        )}
+        
+        {headers?.['strict-transport-security'] && (
+          <SimpleListItem
+            icon="🔒"
+            label="HSTS"
+            value="Enabled"
+            status="good"
+          />
+        )}
+        
+        {technical?.charset && (
+          <SimpleListItem
+            icon="📝"
+            label="Character Encoding"
+            value={technical.charset}
+            status="good"
+          />
+        )}
+        
+        {technical?.doctype && (
+          <SimpleListItem
+            icon="📄"
+            label="Document Type"
+            value={technical.doctype}
+            status="good"
+          />
+        )}
+        
+        {/* HTTP Headers Details */}
+        {Object.keys(headers || {}).length > 0 && (
+          <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+            <div className="flex items-start gap-3">
+              <span className="text-base mt-0.5">📡</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">HTTP Headers</span>
+                  <Badge variant="outline" className="text-xs shrink-0 bg-blue-50 text-blue-700 border-blue-300">
+                    {Object.keys(headers || {}).length} headers
+                  </Badge>
+                </div>
+                
+                <details className="mt-2">
+                  <summary className="text-xs text-blue-600 dark:text-blue-400 cursor-pointer hover:text-blue-700 dark:hover:text-blue-300">
+                    View All HTTP Headers
+                  </summary>
+                  <div className="mt-2 bg-gray-50 dark:bg-gray-800 rounded p-2">
+                    <pre className="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto whitespace-pre-wrap">
+                      {Object.entries(headers || {}).map(([key, value]) => 
+                        `${key}: ${value}`
+                      ).join('\n')}
+                    </pre>
+                  </div>
+                </details>
+                
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Server response headers for debugging and optimization
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -2,11 +2,7 @@
 
 import React from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
-import { Button } from '@/components/ui/button'
-import { Copy } from 'lucide-react'
-import { FacebookLogo, TwitterLogo, LinkedinLogo } from '@phosphor-icons/react'
-import { toast } from 'sonner'
-import Image from 'next/image'
+import { Badge } from '@/components/ui/badge'
 
 interface SocialPreviewProps {
   metadata: WebsiteMetadata
@@ -15,104 +11,173 @@ interface SocialPreviewProps {
 export default function SocialPreview({ metadata }: SocialPreviewProps) {
   const { openGraph, twitterCard, seo } = metadata
 
-  const copyToClipboard = async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      toast.success(`${label} copied to clipboard`)
-    } catch (err) {
-      toast.error(`Failed to copy ${label}`)
-    }
-  }
-
-  const SocialCard = ({ platform }: { platform: 'facebook' | 'twitter' }) => {
-    const isTwitter = platform === 'twitter'
-    const title = (isTwitter ? twitterCard.title : openGraph.title) || seo.title || 'No Title Provided'
-    const description = (isTwitter ? twitterCard.description : openGraph.description) || seo.description || 'No Description Provided'
-    const image = isTwitter ? twitterCard.image : openGraph.image
-    const domain = new URL(metadata.url).hostname
-    const cardType = twitterCard.card || 'summary'
-
+  const SimpleListItem = ({ icon, label, value, status }: {
+    icon: string
+    label: string
+    value?: string
+    status: 'present' | 'missing' | 'inherited'
+  }) => {
+    const iconEmoji = status === 'present' ? '✅' : status === 'inherited' ? '⚠️' : '❌'
+    const badgeClass = status === 'present' 
+      ? 'bg-green-50 text-green-700 border-green-300' 
+      : status === 'inherited'
+      ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
+      : 'bg-red-50 text-red-700 border-red-300'
+    
+    const statusText = status === 'present' ? 'Set' : status === 'inherited' ? 'From SEO' : 'Missing'
+    
     return (
-      <div className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800 max-w-md mx-auto`}>
-        {image && (cardType === 'summary_large_image' || !isTwitter) && (
-          <div className="relative w-full h-48 bg-gray-100 dark:bg-gray-700">
-            <Image src={image} alt={title} fill className="object-cover" onError={(e) => e.currentTarget.style.display = 'none'} />
-          </div>
-        )}
-        <div className="p-3">
-          <div className="flex gap-3">
-            {image && cardType === 'summary' && isTwitter && (
-              <div className="relative w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-md shrink-0">
-                <Image src={image} alt={title} fill className="object-cover rounded-md" onError={(e) => e.currentTarget.style.display = 'none'} />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">{domain}</p>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 mb-1">{title}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">{description}</p>
+      <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+        <div className="flex items-start gap-3">
+          <span className="text-base mt-0.5">{iconEmoji}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-medium text-gray-900 dark:text-gray-100">{label}</span>
+              <Badge variant="outline" className={`text-xs shrink-0 ${badgeClass}`}>
+                {statusText}
+              </Badge>
             </div>
+            
+            {value ? (
+              <div className="space-y-1">
+                <p className="text-gray-700 dark:text-gray-300 break-words">
+                  "{value}"
+                </p>
+                {status === 'inherited' && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Using SEO {label.toLowerCase()} as fallback
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Add {label.toLowerCase()} for better social media sharing
+              </p>
+            )}
           </div>
         </div>
       </div>
     )
   }
 
-  const MetadataGrid = ({ data }: { data: { label: string; value?: string }[] }) => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-      {data.map(({ label, value }) => (
-        value && (
-          <div key={label} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <div className="flex-1 min-w-0">
-              <span className="text-xs font-mono text-blue-600 dark:text-blue-400 font-medium">{label}</span>
-              <p className="text-sm break-all text-gray-700 dark:text-gray-300 font-medium mt-1">{value}</p>
+  const getSocialScore = () => {
+    let score = 0
+    const maxScore = 4
+    if (openGraph.title) score += 1
+    if (openGraph.description) score += 1
+    if (openGraph.image) score += 1
+    if (twitterCard.card) score += 1
+    return { score, maxScore, percentage: Math.round((score / maxScore) * 100) }
+  }
+
+  const socialScore = getSocialScore()
+
+  const SocialPreviewCard = ({ platform }: { platform: 'facebook' | 'twitter' }) => {
+    const isTwitter = platform === 'twitter'
+    const title = (isTwitter ? twitterCard.title : openGraph.title) || seo.title || 'No Title'
+    const description = (isTwitter ? twitterCard.description : openGraph.description) || seo.description || 'No Description'
+    const image = (isTwitter ? twitterCard.image : openGraph.image) || '/placeholder-social.jpg'
+    
+    return (
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900">
+        <div className="aspect-[1.91/1] bg-gray-100 dark:bg-gray-800 relative overflow-hidden">
+          {(openGraph.image || twitterCard.image) ? (
+            <img 
+              src={image} 
+              alt="Social preview" 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDQwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNzUgNzVIMjI1VjEyNUgxNzVWNzVaIiBzdHJva2U9IiM5Q0EzQUYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8cGF0aCBkPSJtMTg3IDk3IDEwIDEwIDEwLTEwIiBzdHJva2U9IiM5Q0EzQUYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K'
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              <span className="text-6xl">🖼️</span>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => copyToClipboard(value, label)} className="shrink-0 h-6 w-6 p-0 hover:bg-blue-100/60 text-blue-600 hover:text-blue-700">
-              <Copy className="h-3 w-3" />
-            </Button>
+          )}
+        </div>
+        <div className="p-3">
+          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">
+            {isTwitter ? 'Twitter Card' : 'Facebook/LinkedIn'}
           </div>
-        )
-      ))}
-    </div>
-  )
+          <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1 line-clamp-2">
+            {title}
+          </h4>
+          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+            {description}
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Facebook / Open Graph */}
-      <div className="bg-white dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-4">
-          <FacebookLogo className="h-5 w-5 text-blue-600" weight="fill" />
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Facebook Preview</h3>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Social Media ({socialScore.percentage}%)</h3>
+        <div className="flex items-center gap-2">
+          <span className={`text-sm font-bold ${
+            socialScore.percentage >= 75 ? 'text-green-600' : 
+            socialScore.percentage >= 50 ? 'text-yellow-600' : 'text-red-600'
+          }`}>
+            {socialScore.score}/{socialScore.maxScore}
+          </span>
         </div>
-        <SocialCard platform="facebook" />
-        <div className="mt-3 text-xs text-gray-600 dark:text-gray-400 flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <LinkedinLogo className="h-4 w-4 text-blue-700" weight="fill" />
-            <span>LinkedIn previews also use this Open Graph data.</span>
-        </div>
-        <MetadataGrid data={[
-          { label: 'og:title', value: openGraph.title },
-          { label: 'og:description', value: openGraph.description },
-          { label: 'og:image', value: openGraph.image },
-          { label: 'og:url', value: openGraph.url },
-          { label: 'og:type', value: openGraph.type },
-          { label: 'og:site_name', value: openGraph.siteName },
-        ]} />
       </div>
-
-      {/* Twitter */}
-      <div className="bg-white dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-4">
-          <TwitterLogo className="h-5 w-5 text-sky-500" weight="fill" />
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Twitter Preview</h3>
-        </div>
-        <SocialCard platform="twitter" />
-        <MetadataGrid data={[
-          { label: 'twitter:card', value: twitterCard.card },
-          { label: 'twitter:title', value: twitterCard.title },
-          { label: 'twitter:description', value: twitterCard.description },
-          { label: 'twitter:image', value: twitterCard.image },
-          { label: 'twitter:site', value: twitterCard.site },
-          { label: 'twitter:creator', value: twitterCard.creator },
-        ]} />
+      
+      {/* Social Preview Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <SocialPreviewCard platform="facebook" />
+        <SocialPreviewCard platform="twitter" />
+      </div>
+      
+      {/* Detailed Meta Data */}
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        <SimpleListItem
+          icon="📖"
+          label="OpenGraph Title"
+          value={openGraph.title}
+          status={openGraph.title ? 'present' : seo.title ? 'inherited' : 'missing'}
+        />
+        
+        <SimpleListItem
+          icon="📝"
+          label="OpenGraph Description"
+          value={openGraph.description}
+          status={openGraph.description ? 'present' : seo.description ? 'inherited' : 'missing'}
+        />
+        
+        <SimpleListItem
+          icon="🖼️"
+          label="OpenGraph Image"
+          value={openGraph.image}
+          status={openGraph.image ? 'present' : 'missing'}
+        />
+        
+        <SimpleListItem
+          icon="🐦"
+          label="Twitter Card"
+          value={twitterCard.card ? `${twitterCard.card} card` : undefined}
+          status={twitterCard.card ? 'present' : 'missing'}
+        />
+        
+        {twitterCard.title && (
+          <SimpleListItem
+            icon="🐦"
+            label="Twitter Title"
+            value={twitterCard.title}
+            status="present"
+          />
+        )}
+        
+        {twitterCard.description && (
+          <SimpleListItem
+            icon="🐦"
+            label="Twitter Description"
+            value={twitterCard.description}
+            status="present"
+          />
+        )}
       </div>
     </div>
   )
