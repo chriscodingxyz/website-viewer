@@ -4,14 +4,14 @@
 import React from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle, AlertTriangle, XCircle, Info } from 'lucide-react'
+import { CheckCircle, AlertTriangle, XCircle, Info, Globe, ExternalLink } from 'lucide-react'
 
 interface SEOSectionProps {
   metadata: WebsiteMetadata
 }
 
 export default function SEOSection({ metadata }: SEOSectionProps) {
-  const { seo } = metadata
+  const { seo, sitemap } = metadata
 
 
   const getSEOScore = () => {
@@ -238,6 +238,146 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
             optimalRange="author information for content"
         />
       </div>
+
+      {/* Sitemap Section */}
+      {sitemap && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-blue-600" />
+            <h4 className="analysis-text-sm font-semibold text-foreground">Sitemap</h4>
+          </div>
+          
+          <div className="space-y-3 bg-card/30 rounded-lg border border-border/50 p-4">
+            {/* robots.txt Status */}
+            {sitemap.robotsTxt && (
+              <div className="analysis-list-item">
+                <div className="flex items-start gap-4">
+                  <div className={`mt-0.5 ${
+                    sitemap.robotsTxt.accessible || sitemap.robotsTxt.hasMetaRobots ? 'text-emerald-600' : 'text-red-600'
+                  }`}>
+                    {sitemap.robotsTxt.accessible || sitemap.robotsTxt.hasMetaRobots ? 
+                      <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold text-foreground analysis-text-sm">
+                        {sitemap.robotsTxt.accessible ? 
+                          (sitemap.robotsTxt.url.endsWith('.js') ? 'robots.js' : 'robots.txt') :
+                          sitemap.robotsTxt.hasMetaRobots ? 'Robots Configuration' : 'robots.txt'
+                        }
+                      </span>
+                      <div className={
+                        sitemap.robotsTxt.accessible ? 'analysis-badge-success' : 
+                        sitemap.robotsTxt.hasMetaRobots ? 'analysis-badge-success' : 
+                        'analysis-badge-error'
+                      }>
+                        {sitemap.robotsTxt.accessible ? 'Found' : 
+                         sitemap.robotsTxt.hasMetaRobots ? 'Via Meta Tags' : 
+                         'Missing'}
+                      </div>
+                    </div>
+                    <div className="analysis-text-xs text-muted-foreground">
+                      {sitemap.robotsTxt.accessible ? 
+                        `${sitemap.robotsTxt.url.endsWith('.js') ? 'robots.js' : 'robots.txt'} found - helps search engines understand crawling rules` :
+                        sitemap.robotsTxt.hasMetaRobots ? 
+                          `robots.txt not needed - using Next.js meta robots config: "${sitemap.robotsTxt.metaContent}"` :
+                          'robots file not found - consider adding robots.txt or robots.js for better SEO'
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Sitemap Summary */}
+            <div className="analysis-list-item">
+              <div className="flex items-start gap-4">
+                <div className={`mt-0.5 ${sitemap.sitemaps.some(s => s.accessible) ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {sitemap.sitemaps.some(s => s.accessible) ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-foreground analysis-text-sm">Sitemaps</span>
+                    {(() => {
+                      const accessibleCount = sitemap.sitemaps.filter(s => s.accessible).length;
+                      const totalCount = sitemap.sitemaps.length;
+                      
+                      if (accessibleCount > 0) {
+                        return (
+                          <div className="analysis-badge-success">
+                            {accessibleCount} found
+                          </div>
+                        );
+                      } else if (totalCount > 0) {
+                        return (
+                          <div className="analysis-badge-warning">
+                            Found but not accessible
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div className="analysis-badge-error">
+                            None found
+                          </div>
+                        );
+                      }
+                    })()}
+                  </div>
+                  
+                  {(() => {
+                    const accessibleSitemaps = sitemap.sitemaps.filter(s => s.accessible);
+                    const inaccessibleSitemaps = sitemap.sitemaps.filter(s => !s.accessible);
+                    
+                    if (accessibleSitemaps.length > 0) {
+                      return (
+                        <div className="space-y-2">
+                          {accessibleSitemaps.slice(0, 3).map((sitemapItem, index) => (
+                            <div key={index} className="flex items-center gap-2 analysis-text-xs text-muted-foreground">
+                              <CheckCircle className="h-3 w-3 text-green-500" />
+                              <a 
+                                href={sitemapItem.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="hover:text-blue-600 underline truncate flex-1"
+                                title={sitemapItem.url}
+                              >
+                                {sitemapItem.url.replace(/^https?:\/\/[^\/]+/, '')}
+                              </a>
+                              <ExternalLink className="h-3 w-3" />
+                              <Badge variant="outline" className="text-xs">
+                                {sitemapItem.source === 'link_tag' ? 'HTML' : 
+                                 sitemapItem.source === 'robots_txt' ? 'robots.txt' : 'standard'}
+                              </Badge>
+                            </div>
+                          ))}
+                          
+                          {accessibleSitemaps.length > 3 && (
+                            <div className="analysis-text-xs text-muted-foreground">
+                              +{accessibleSitemaps.length - 3} more accessible sitemaps
+                            </div>
+                          )}
+                        </div>
+                      );
+                    } else if (inaccessibleSitemaps.length > 0) {
+                      return (
+                        <div className="analysis-text-xs text-amber-600">
+                          Found {inaccessibleSitemaps.length} sitemap location(s) but they're not accessible
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <div className="analysis-text-xs text-red-600">
+                          No sitemaps found - consider adding sitemap.xml for better SEO
+                        </div>
+                      );
+                    }
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {recommendations.length > 0 && (
         <div className="space-y-4">

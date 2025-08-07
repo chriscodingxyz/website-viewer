@@ -3,14 +3,14 @@
 import React from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle, AlertTriangle, XCircle, Settings, Zap, Shield, Info } from 'lucide-react'
+import { CheckCircle, AlertTriangle, XCircle, Settings, Zap, Shield, Info, BarChart3 } from 'lucide-react'
 
 interface TechnicalSectionProps {
   metadata: WebsiteMetadata
 }
 
 export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
-  const { technical, headers, icons, structuredData, performance } = metadata
+  const { technical, headers, icons, structuredData, performance, analytics } = metadata
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 Bytes'
@@ -493,6 +493,119 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Server response headers for debugging and optimization
                 </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Analytics Section */}
+        {analytics && (
+          <div className="analysis-list-item">
+            <div className="flex items-start gap-4">
+              <div className={`mt-0.5 ${analytics.googleAnalytics.present || analytics.googleTagManager.present || analytics.otherAnalytics.some(a => a.detected) ? 'text-emerald-600' : 'text-red-600'}`}>
+                {analytics.googleAnalytics.present || analytics.googleTagManager.present || analytics.otherAnalytics.some(a => a.detected) ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-foreground analysis-text-sm">Analytics</span>
+                  <div className={`analysis-badge ${
+                    analytics.googleAnalytics.present || analytics.googleTagManager.present || analytics.otherAnalytics.some(a => a.detected)
+                      ? 'analysis-badge-success' 
+                      : 'analysis-badge-error'
+                  }`}>
+                    {(() => {
+                      const totalTools = [
+                        analytics.googleAnalytics.present,
+                        analytics.googleTagManager.present,
+                        ...analytics.otherAnalytics.map(tool => tool.detected)
+                      ].filter(Boolean).length;
+                      return totalTools > 0 ? `${totalTools} ${totalTools === 1 ? 'tool' : 'tools'}` : 'None';
+                    })()}
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  {/* Google Analytics */}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${analytics.googleAnalytics.present ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <span className="analysis-text-sm font-medium text-foreground">Google Analytics</span>
+                    {analytics.googleAnalytics.present && analytics.googleAnalytics.trackingIds.length > 0 && (
+                      <div className="flex gap-1">
+                        {analytics.googleAnalytics.trackingIds.slice(0, 2).map((id, index) => (
+                          <Badge key={index} variant="outline" className="text-xs font-mono">
+                            {id}
+                          </Badge>
+                        ))}
+                        {analytics.googleAnalytics.trackingIds.length > 2 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{analytics.googleAnalytics.trackingIds.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Google Tag Manager */}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${analytics.googleTagManager.present ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <span className="analysis-text-sm font-medium text-foreground">Google Tag Manager</span>
+                    {analytics.googleTagManager.present && analytics.googleTagManager.containerIds.length > 0 && (
+                      <div className="flex gap-1">
+                        {analytics.googleTagManager.containerIds.slice(0, 2).map((id, index) => (
+                          <Badge key={index} variant="outline" className="text-xs font-mono">
+                            {id}
+                          </Badge>
+                        ))}
+                        {analytics.googleTagManager.containerIds.length > 2 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{analytics.googleTagManager.containerIds.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Other Analytics Tools */}
+                  {analytics.otherAnalytics.filter(tool => tool.detected).length > 0 && (
+                    <div className="space-y-2">
+                      <div className="analysis-text-xs text-muted-foreground font-medium">Other Tools:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {analytics.otherAnalytics.filter(tool => tool.detected).slice(0, 4).map((tool, index) => (
+                          <div key={index} className="flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-800/30">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                            <span className="analysis-text-xs font-medium">{tool.name}</span>
+                          </div>
+                        ))}
+                        {analytics.otherAnalytics.filter(tool => tool.detected).length > 4 && (
+                          <div className="px-2 py-1 text-xs text-muted-foreground">
+                            +{analytics.otherAnalytics.filter(tool => tool.detected).length - 4} more
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Implementation Details */}
+                  {analytics.googleAnalytics.present && (
+                    <div className="analysis-text-xs text-muted-foreground pl-3 border-l-2 border-border/40">
+                      <div className="space-y-1">
+                        {analytics.googleAnalytics.ga4 && <div>• GA4 implementation detected</div>}
+                        {analytics.googleAnalytics.universalAnalytics && <div>• Universal Analytics detected</div>}
+                        {analytics.googleAnalytics.gtag && <div>• Global Site Tag (gtag) implementation</div>}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No Analytics Found */}
+                  {!analytics.googleAnalytics.present && !analytics.googleTagManager.present && analytics.otherAnalytics.filter(tool => tool.detected).length === 0 && (
+                    <div className="space-y-2">
+                      <p className="text-red-600 dark:text-red-400 analysis-text-sm font-medium">No analytics tools detected</p>
+                      <p className="analysis-text-xs text-muted-foreground pl-3 border-l-2 border-border/40">
+                        Consider implementing Google Analytics 4 or other analytics tools to track website performance
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

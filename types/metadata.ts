@@ -57,6 +57,44 @@ export const TechnicalMetadataSchema = z.object({
   msapplicationConfig: z.string().optional(),
 })
 
+// Sitemap information
+export const SitemapInfoSchema = z.object({
+  sitemaps: z.array(z.object({
+    url: z.string(),
+    accessible: z.boolean(),
+    size: z.number().optional(),
+    lastModified: z.string().optional(),
+    source: z.enum(['link_tag', 'robots_txt', 'standard_location']),
+  })),
+  robotsTxt: z.object({
+    accessible: z.boolean(),
+    url: z.string(),
+    content: z.string().optional(),
+    hasMetaRobots: z.boolean().optional(),
+    metaContent: z.string().optional(),
+  }).optional(),
+})
+
+// Analytics information
+export const AnalyticsInfoSchema = z.object({
+  googleAnalytics: z.object({
+    present: z.boolean(),
+    trackingIds: z.array(z.string()),
+    gtag: z.boolean(),
+    universalAnalytics: z.boolean(),
+    ga4: z.boolean(),
+  }),
+  googleTagManager: z.object({
+    present: z.boolean(),
+    containerIds: z.array(z.string()),
+  }),
+  otherAnalytics: z.array(z.object({
+    name: z.string(),
+    detected: z.boolean(),
+    details: z.string().optional(),
+  })),
+})
+
 // Core Web Vitals metrics
 export const CoreWebVitalsSchema = z.object({
   lcp: z.number().optional(), // Largest Contentful Paint (ms)
@@ -180,6 +218,8 @@ export const WebsiteMetadataSchema = z.object({
   performance: PerformanceMetricsSchema.optional(),
   headers: ResponseHeadersSchema.optional(),
   structuredData: z.array(StructuredDataSchema),
+  sitemap: SitemapInfoSchema.optional(),
+  analytics: AnalyticsInfoSchema.optional(),
   extractedAt: z.string(),
   error: z.string().optional(),
 })
@@ -190,6 +230,8 @@ export type OpenGraph = z.infer<typeof OpenGraphSchema>
 export type TwitterCard = z.infer<typeof TwitterCardSchema>
 export type Icon = z.infer<typeof IconSchema>
 export type TechnicalMetadata = z.infer<typeof TechnicalMetadataSchema>
+export type SitemapInfo = z.infer<typeof SitemapInfoSchema>
+export type AnalyticsInfo = z.infer<typeof AnalyticsInfoSchema>
 export type PerformanceMetrics = z.infer<typeof PerformanceMetricsSchema>
 export type ResponseHeaders = z.infer<typeof ResponseHeadersSchema>
 export type StructuredData = z.infer<typeof StructuredDataSchema>

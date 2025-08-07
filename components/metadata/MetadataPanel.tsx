@@ -16,13 +16,17 @@ import {
   Globe,
   Loader2,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  BarChart3,
+  MapPin
 } from 'lucide-react'
 import { toast } from 'sonner'
 import SEOSection from './SEOSection'
 import SocialPreview from './SocialPreview'
 import TechnicalSection from './TechnicalSection'
 import PerformanceSection from './PerformanceSection'
+import SitemapSection from './SitemapSection'
+import AnalyticsSection from './AnalyticsSection'
 
 interface MetadataPanelProps {
   metadata: WebsiteMetadata | null
@@ -195,22 +199,30 @@ export default function MetadataPanel({
 
           {metadata && !loading && (
             <Tabs defaultValue="seo" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="seo" className="flex items-center gap-2">
-                  <Search className="h-4 w-4" />
+              <TabsList className="grid w-full grid-cols-6">
+                <TabsTrigger value="seo" className="flex items-center gap-1 text-xs">
+                  <Search className="h-3 w-3" />
                   SEO
                 </TabsTrigger>
-                <TabsTrigger value="social" className="flex items-center gap-2">
-                  <Share2 className="h-4 w-4" />
+                <TabsTrigger value="social" className="flex items-center gap-1 text-xs">
+                  <Share2 className="h-3 w-3" />
                   Social
                 </TabsTrigger>
-                <TabsTrigger value="technical" className="flex items-center gap-2">
-                  <Globe className="h-4 w-4" />
+                <TabsTrigger value="technical" className="flex items-center gap-1 text-xs">
+                  <Globe className="h-3 w-3" />
                   Technical
                 </TabsTrigger>
-                <TabsTrigger value="performance" className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
+                <TabsTrigger value="performance" className="flex items-center gap-1 text-xs">
+                  <CheckCircle className="h-3 w-3" />
                   Performance
+                </TabsTrigger>
+                <TabsTrigger value="sitemap" className="flex items-center gap-1 text-xs">
+                  <MapPin className="h-3 w-3" />
+                  Sitemap
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="flex items-center gap-1 text-xs">
+                  <BarChart3 className="h-3 w-3" />
+                  Analytics
                 </TabsTrigger>
               </TabsList>
 
@@ -228,6 +240,14 @@ export default function MetadataPanel({
 
               <TabsContent value="performance">
                 <PerformanceSection metadata={metadata} />
+              </TabsContent>
+
+              <TabsContent value="sitemap">
+                <SitemapSection metadata={metadata} />
+              </TabsContent>
+
+              <TabsContent value="analytics">
+                <AnalyticsSection metadata={metadata} />
               </TabsContent>
             </Tabs>
           )}

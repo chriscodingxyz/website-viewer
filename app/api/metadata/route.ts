@@ -1,7 +1,312 @@
 import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
-import { WebsiteMetadata, MetadataAPIResponse } from '@/types/metadata'
+import { WebsiteMetadata, MetadataAPIResponse, SitemapInfo, AnalyticsInfo } from '@/types/metadata'
+
+// Helper function to check if a URL is accessible
+async function checkUrlAccessible(url: string, timeout: number = 5000): Promise<{ accessible: boolean; size?: number; lastModified?: string }> {
+  try {
+    const response = await axios.head(url, { 
+      timeout,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; WebsiteViewer/1.0; +https://example.com/bot)'
+      }
+    })
+    
+    return {
+      accessible: response.status === 200,
+      size: response.headers['content-length'] ? parseInt(response.headers['content-length']) : undefined,
+      lastModified: response.headers['last-modified'] || undefined
+    }
+  } catch (error) {
+    return { accessible: false }
+  }
+}
+
+// Helper function to extract sitemap information
+async function extractSitemapInfo(targetUrl: URL, $: cheerio.CheerioAPI): Promise<SitemapInfo> {
+  const sitemapInfo: SitemapInfo = {
+    sitemaps: []
+  }
+
+  // Check if robots directives are handled via HTML meta tags (Next.js style)
+  const robotsMeta = $('meta[name="robots"]').attr('content')
+  const hasMetaRobots = !!robotsMeta
+
+  // Check for sitemap link tags in HTML
+  $('link[rel="sitemap"]').each((_, element) => {
+    const href = $(element).attr('href')
+    if (href) {
+      const sitemapUrl = new URL(href, targetUrl).toString()
+      sitemapInfo.sitemaps.push({
+        url: sitemapUrl,
+        accessible: false, // Will be checked later
+        source: 'link_tag'
+      })
+    }
+  })
+
+  // Check standard sitemap locations
+  const standardLocations = [
+    '/sitemap.xml',
+    '/sitemap_index.xml',
+    '/sitemaps.xml',
+    '/sitemap1.xml'
+  ]
+
+  for (const location of standardLocations) {
+    const sitemapUrl = new URL(location, targetUrl).toString()
+    sitemapInfo.sitemaps.push({
+      url: sitemapUrl,
+      accessible: false, // Will be checked later
+      source: 'standard_location'
+    })
+  }
+
+  // Check for robots file (both .txt and .js formats)
+  const robotsFiles = ['/robots.txt', '/robots.js']
+  let robotsFound = false
+  
+  for (const robotsPath of robotsFiles) {
+    const robotsUrl = new URL(robotsPath, targetUrl).toString()
+    try {
+      const robotsResponse = await axios.get(robotsUrl, {
+        timeout: 5000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; WebsiteViewer/1.0; +https://example.com/bot)'
+        }
+      })
+
+      if (robotsResponse.status === 200) {
+        const robotsContent = String(robotsResponse.data).trim()
+        
+        // Check if this is actually a robots file (not just a 200 response)
+        // Robots files should contain specific directives or be plain text
+        const isValidRobotsFile = 
+          robotsContent.toLowerCase().includes('user-agent') ||
+          robotsContent.toLowerCase().includes('disallow') ||
+          robotsContent.toLowerCase().includes('allow') ||
+          robotsContent.toLowerCase().includes('sitemap') ||
+          robotsContent.toLowerCase().includes('crawl-delay') ||
+          (robotsContent.length > 0 && robotsContent.length < 10000 && !robotsContent.includes('<!DOCTYPE html>'))
+        
+        if (isValidRobotsFile) {
+          robotsFound = true
+          sitemapInfo.robotsTxt = {
+            accessible: true,
+            url: robotsUrl,
+            content: robotsContent
+          }
+
+          // Parse robots content for sitemap URLs (works for both .txt and .js)
+          const sitemapMatches = robotsContent.match(/^Sitemap:\s*(.+)$/gmi)
+          
+          if (sitemapMatches) {
+            sitemapMatches.forEach((match: string) => {
+              const sitemapUrl = match.replace(/^Sitemap:\s*/i, '').trim()
+              if (sitemapUrl) {
+                sitemapInfo.sitemaps.push({
+                  url: sitemapUrl,
+                  accessible: false, // Will be checked later
+                  source: 'robots_txt'
+                })
+              }
+            })
+          }
+          break // Found robots file, no need to check others
+        }
+      }
+    } catch (error) {
+      // Continue to next robots file format
+      continue
+    }
+  }
+  
+  // If no robots file was found, set as not accessible but include meta robots info
+  if (!robotsFound) {
+    sitemapInfo.robotsTxt = {
+      accessible: false,
+      url: new URL('/robots.txt', targetUrl).toString(),
+      hasMetaRobots: hasMetaRobots,
+      metaContent: robotsMeta
+    }
+  } else if (sitemapInfo.robotsTxt) {
+    // Add meta robots info to existing robots file info
+    sitemapInfo.robotsTxt.hasMetaRobots = hasMetaRobots
+    sitemapInfo.robotsTxt.metaContent = robotsMeta
+  }
+
+  // Remove duplicate sitemap URLs
+  const uniqueSitemaps = sitemapInfo.sitemaps.filter((sitemap, index, self) => 
+    index === self.findIndex(s => s.url === sitemap.url)
+  )
+
+  // Check accessibility of each sitemap
+  const accessibilityPromises = uniqueSitemaps.map(async (sitemap) => {
+    const accessResult = await checkUrlAccessible(sitemap.url)
+    return {
+      ...sitemap,
+      accessible: accessResult.accessible,
+      size: accessResult.size,
+      lastModified: accessResult.lastModified
+    }
+  })
+
+  sitemapInfo.sitemaps = await Promise.all(accessibilityPromises)
+
+  return sitemapInfo
+}
+
+// Helper function to extract analytics information
+function extractAnalyticsInfo($: cheerio.CheerioAPI, html: string): AnalyticsInfo {
+  const analyticsInfo: AnalyticsInfo = {
+    googleAnalytics: {
+      present: false,
+      trackingIds: [],
+      gtag: false,
+      universalAnalytics: false,
+      ga4: false,
+    },
+    googleTagManager: {
+      present: false,
+      containerIds: [],
+    },
+    otherAnalytics: []
+  }
+
+  // Google Analytics Detection
+  // Check for gtag (Global Site Tag) - GA4 and Universal Analytics
+  const gtagMatches = html.match(/gtag\(['"]config['"],\s*['"]([^'"]+)['"]/g)
+  if (gtagMatches) {
+    analyticsInfo.googleAnalytics.gtag = true
+    analyticsInfo.googleAnalytics.present = true
+    
+    gtagMatches.forEach(match => {
+      const trackingId = match.match(/gtag\(['"]config['"],\s*['"]([^'"]+)['"]/)?.[1]
+      if (trackingId) {
+        analyticsInfo.googleAnalytics.trackingIds.push(trackingId)
+        
+        // Determine GA type based on tracking ID format
+        if (trackingId.startsWith('GA-') || trackingId.startsWith('G-')) {
+          analyticsInfo.googleAnalytics.ga4 = true
+        } else if (trackingId.startsWith('UA-')) {
+          analyticsInfo.googleAnalytics.universalAnalytics = true
+        }
+      }
+    })
+  }
+
+  // Check for Universal Analytics (ga function)
+  const gaMatches = html.match(/ga\(['"]create['"],\s*['"]([^'"]+)['"]/g)
+  if (gaMatches) {
+    analyticsInfo.googleAnalytics.universalAnalytics = true
+    analyticsInfo.googleAnalytics.present = true
+    
+    gaMatches.forEach(match => {
+      const trackingId = match.match(/ga\(['"]create['"],\s*['"]([^'"]+)['"]/)?.[1]
+      if (trackingId && !analyticsInfo.googleAnalytics.trackingIds.includes(trackingId)) {
+        analyticsInfo.googleAnalytics.trackingIds.push(trackingId)
+      }
+    })
+  }
+
+  // Check for Google Analytics script tags
+  $('script[src*="googletagmanager.com/gtag"], script[src*="google-analytics.com/ga.js"], script[src*="google-analytics.com/analytics.js"]').each((_, element) => {
+    analyticsInfo.googleAnalytics.present = true
+  })
+
+  // Google Tag Manager Detection
+  const gtmMatches = html.match(/GTM-[A-Z0-9]+/g)
+  if (gtmMatches) {
+    analyticsInfo.googleTagManager.present = true
+    analyticsInfo.googleTagManager.containerIds = [...new Set(gtmMatches)] // Remove duplicates
+  }
+
+  // Check for GTM script tags and noscript tags
+  $('script[src*="googletagmanager.com/gtm.js"]').each((_, element) => {
+    analyticsInfo.googleTagManager.present = true
+  })
+
+  // Other Analytics Tools Detection
+  const otherAnalyticsTools = [
+    {
+      name: 'Facebook Pixel',
+      patterns: [/fbevents\.js/, /fbq\(/],
+      scriptSrc: ['connect.facebook.net/en_US/fbevents.js']
+    },
+    {
+      name: 'Adobe Analytics',
+      patterns: [/s_code\.js/, /omniture/, /Adobe\.Analytics/],
+      scriptSrc: ['metrics.adobe.com', 'omtrdc.net']
+    },
+    {
+      name: 'Hotjar',
+      patterns: [/hotjar/, /hj\(/],
+      scriptSrc: ['static.hotjar.com']
+    },
+    {
+      name: 'Mixpanel',
+      patterns: [/mixpanel/, /mp_lib/],
+      scriptSrc: ['cdn.mxpnl.com']
+    },
+    {
+      name: 'Segment',
+      patterns: [/analytics\.js/, /analytics\.track/],
+      scriptSrc: ['cdn.segment.com']
+    },
+    {
+      name: 'Heap Analytics',
+      patterns: [/heap\.load/, /heapanalytics/],
+      scriptSrc: ['heapanalytics.com']
+    },
+    {
+      name: 'Amplitude',
+      patterns: [/amplitude/, /amplitude\.init/],
+      scriptSrc: ['amplitude.com']
+    },
+    {
+      name: 'Plausible',
+      patterns: [/plausible/],
+      scriptSrc: ['plausible.io']
+    },
+    {
+      name: 'Fathom Analytics',
+      patterns: [/fathom/],
+      scriptSrc: ['cdn.usefathom.com']
+    }
+  ]
+
+  otherAnalyticsTools.forEach(tool => {
+    let detected = false
+    let details = ''
+
+    // Check for patterns in HTML content
+    tool.patterns.forEach(pattern => {
+      if (pattern.test(html)) {
+        detected = true
+      }
+    })
+
+    // Check for script sources
+    tool.scriptSrc.forEach(src => {
+      $(`script[src*="${src}"]`).each((_, element) => {
+        detected = true
+        const scriptSrc = $(element).attr('src')
+        if (scriptSrc) {
+          details = `Found script: ${scriptSrc}`
+        }
+      })
+    })
+
+    analyticsInfo.otherAnalytics.push({
+      name: tool.name,
+      detected,
+      details: details || undefined
+    })
+  })
+
+  return analyticsInfo
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -138,6 +443,12 @@ export async function GET(request: NextRequest) {
       strictTransportSecurity: response.headers['strict-transport-security'] || undefined,
     }
 
+    // Extract sitemap information (run in parallel with analytics)
+    const [sitemapInfo, analyticsInfo] = await Promise.all([
+      extractSitemapInfo(targetUrl, $),
+      Promise.resolve(extractAnalyticsInfo($, html))
+    ])
+
     const metadata: WebsiteMetadata = {
       url: targetUrl.toString(),
       seo,
@@ -148,6 +459,8 @@ export async function GET(request: NextRequest) {
       performance,
       headers,
       structuredData,
+      sitemap: sitemapInfo,
+      analytics: analyticsInfo,
       extractedAt: new Date().toISOString(),
     }
 
