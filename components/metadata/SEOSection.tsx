@@ -361,7 +361,7 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
                     } else if (inaccessibleSitemaps.length > 0) {
                       return (
                         <div className="analysis-text-xs text-amber-600">
-                          Found {inaccessibleSitemaps.length} sitemap location(s) but they're not accessible
+                          Found {inaccessibleSitemaps.length} sitemap location(s) but they&apos;re not accessible
                         </div>
                       );
                     } else {
