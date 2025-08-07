@@ -310,7 +310,15 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       )
     }
-    
+
+    try {
+      new URL(url)
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Invalid URL format' },
+        { status: 400 }
+      )
+    }
     console.log(`Mock Lighthouse analysis for ${url} on ${viewport} viewport...`)
     
     // Return mock data for testing
