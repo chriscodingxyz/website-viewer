@@ -3,6 +3,7 @@
 import React from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
 import { Badge } from '@/components/ui/badge'
+import { CheckCircle, AlertTriangle, XCircle, Settings, Zap, Shield, Info } from 'lucide-react'
 
 interface TechnicalSectionProps {
   metadata: WebsiteMetadata
@@ -25,43 +26,50 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
     value?: string | boolean
     status: 'good' | 'warning' | 'missing'
   }) => {
-    const iconEmoji = status === 'good' ? '✅' : status === 'warning' ? '⚠️' : '❌'
-    const badgeClass = status === 'good' 
-      ? 'bg-green-50 text-green-700 border-green-300' 
+    const statusIcon = status === 'good' 
+      ? <CheckCircle className="h-4 w-4" />
       : status === 'warning'
-      ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
-      : 'bg-red-50 text-red-700 border-red-300'
+      ? <AlertTriangle className="h-4 w-4" />
+      : <XCircle className="h-4 w-4" />
+    
+    const badgeClass = status === 'good' 
+      ? 'analysis-badge-success'
+      : status === 'warning'
+      ? 'analysis-badge-warning'
+      : 'analysis-badge-error'
     
     const statusText = status === 'good' ? 'Good' : status === 'warning' ? 'Warning' : 'Missing'
     
     let displayValue = ''
     if (typeof value === 'boolean') {
-      displayValue = value ? 'Yes' : 'No'
+      displayValue = value ? 'Enabled' : 'Disabled'
     } else if (value) {
       displayValue = value.toString()
     } else {
-      displayValue = 'Not set'
+      displayValue = 'Not configured'
     }
     
     return (
-      <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-        <div className="flex items-start gap-3">
-          <span className="text-base mt-0.5">{iconEmoji}</span>
+      <div className="analysis-list-item">
+        <div className="flex items-start gap-4">
+          <div className={`mt-0.5 ${status === 'good' ? 'text-emerald-600' : status === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
+            {statusIcon}
+          </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-bold text-gray-900 dark:text-gray-100">{label}</span>
-              <Badge variant="outline" className={`text-xs shrink-0 ${badgeClass}`}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-semibold text-foreground analysis-text-sm">{label}</span>
+              <div className={badgeClass}>
                 {statusText}
-              </Badge>
+              </div>
             </div>
             
-            <div className="space-y-1">
-              <p className="text-gray-700 dark:text-gray-300 break-words">
-                {value ? `"${displayValue}"` : 'Not configured'}
+            <div className="space-y-2">
+              <p className="text-muted-foreground analysis-text-sm leading-relaxed break-words">
+                {displayValue}
               </p>
               {!value && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Consider adding for better user experience
+                <p className="analysis-text-xs text-muted-foreground pl-3 border-l-2 border-border/40">
+                  Consider configuring for better performance and security
                 </p>
               )}
             </div>
@@ -85,38 +93,42 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="analysis-section space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold">Performance & Technical</h3>
         <div className="flex items-center gap-2">
-          <span className={`text-sm font-bold ${
-            getIssueCount() === 0 ? 'text-green-600' : 
-            getIssueCount() <= 2 ? 'text-yellow-600' : 'text-red-600'
+          <Settings className="h-4 w-4 text-blue-600" />
+          <h3 className="text-lg font-semibold text-foreground">Performance & Technical</h3>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`analysis-text-sm font-semibold ${
+            getIssueCount() === 0 ? 'text-emerald-600' : 
+            getIssueCount() <= 2 ? 'text-amber-600' : 'text-red-600'
           }`}>
-            {getIssueCount()} issues
+            {getIssueCount()} {getIssueCount() === 1 ? 'issue' : 'issues'}
           </span>
         </div>
       </div>
       
-      <div className="space-y-0">
-        {/* Performance Metrics */}
+      <div className="space-y-0 bg-card/30 rounded-lg border border-border/50 p-4">
         {performance?.loadTime && (
-          <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800">
-            <div className="flex items-start gap-3">
-              <span className="text-base mt-0.5">⚡</span>
+          <div className="analysis-list-item">
+            <div className="flex items-start gap-4">
+              <div className={`mt-0.5 ${performance.loadTime < 1000 ? 'text-emerald-600' : performance.loadTime < 3000 ? 'text-amber-600' : 'text-red-600'}`}>
+                <Zap className="h-4 w-4" />
+              </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-gray-900 dark:text-gray-100">Load Time</span>
-                  <Badge variant="outline" className={`text-xs shrink-0 ${
-                    performance.loadTime < 1000 ? 'bg-green-50 text-green-700 border-green-300' : 
-                    performance.loadTime < 3000 ? 'bg-yellow-50 text-yellow-700 border-yellow-300' : 
-                    'bg-red-50 text-red-700 border-red-300'
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-foreground analysis-text-sm">Load Time</span>
+                  <div className={`analysis-badge ${
+                    performance.loadTime < 1000 ? 'analysis-badge-success' : 
+                    performance.loadTime < 3000 ? 'analysis-badge-warning' : 
+                    'analysis-badge-error'
                   }`}>
-                    {performance.loadTime < 1000 ? 'Good' : performance.loadTime < 3000 ? 'Fair' : 'Poor'}
-                  </Badge>
+                    {performance.loadTime < 1000 ? 'Excellent' : performance.loadTime < 3000 ? 'Good' : 'Slow'}
+                  </div>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300">
-                  "{performance.loadTime < 1000 ? `${performance.loadTime}ms` : `${(performance.loadTime / 1000).toFixed(2)}s`}"
+                <p className="text-muted-foreground analysis-text-sm leading-relaxed">
+                  {performance.loadTime < 1000 ? `${performance.loadTime}ms` : `${(performance.loadTime / 1000).toFixed(2)}s`}
                 </p>
               </div>
             </div>
@@ -124,22 +136,24 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
         )}
         
         {performance?.size && (
-          <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800">
-            <div className="flex items-start gap-3">
-              <span className="text-base mt-0.5">📦</span>
+          <div className="analysis-list-item">
+            <div className="flex items-start gap-4">
+              <div className={`mt-0.5 ${performance.size < 1000000 ? 'text-emerald-600' : performance.size < 5000000 ? 'text-amber-600' : 'text-red-600'}`}>
+                <Settings className="h-4 w-4" />
+              </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-gray-900 dark:text-gray-100">Page Size</span>
-                  <Badge variant="outline" className={`text-xs shrink-0 ${
-                    performance.size < 1000000 ? 'bg-green-50 text-green-700 border-green-300' : 
-                    performance.size < 5000000 ? 'bg-yellow-50 text-yellow-700 border-yellow-300' : 
-                    'bg-red-50 text-red-700 border-red-300'
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-foreground analysis-text-sm">Page Size</span>
+                  <div className={`analysis-badge ${
+                    performance.size < 1000000 ? 'analysis-badge-success' : 
+                    performance.size < 5000000 ? 'analysis-badge-warning' : 
+                    'analysis-badge-error'
                   }`}>
-                    {performance.size < 1000000 ? 'Good' : performance.size < 5000000 ? 'Fair' : 'Large'}
-                  </Badge>
+                    {performance.size < 1000000 ? 'Optimized' : performance.size < 5000000 ? 'Acceptable' : 'Large'}
+                  </div>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300">
-                  "{formatBytes(performance.size)}"
+                <p className="text-muted-foreground analysis-text-sm leading-relaxed">
+                  {formatBytes(performance.size)}
                 </p>
               </div>
             </div>
@@ -268,119 +282,120 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
         )}
         
         {icons && icons.length > 0 ? (
-          <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800">
-            <div className="flex items-start gap-3">
-              <span className="text-base mt-0.5">✅</span>
+          <div className="analysis-list-item">
+            <div className="flex items-start gap-4">
+              <div className="mt-0.5 text-emerald-600">
+                <CheckCircle className="h-4 w-4" />
+              </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-gray-900 dark:text-gray-100">Favicons</span>
-                  <Badge variant="outline" className="text-xs shrink-0 bg-green-50 text-green-700 border-green-300">
-                    {icons.length} icons
-                  </Badge>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-foreground analysis-text-sm">Favicons</span>
+                  <div className="analysis-badge-success">
+                    {icons.length} {icons.length === 1 ? 'icon' : 'icons'}
+                  </div>
                 </div>
                 
-                <div className="space-y-2">
-                  {/* Group icons by type */}
-                  {icons.map((icon, index) => (
-                    <div key={index} className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded border">
-                      <div className="flex items-center gap-2">
+                <div className="space-y-3">
+                  {icons.slice(0, 4).map((icon, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border/30">
+                      <div className="flex items-center gap-3">
                         {icon.href && (
                           <img 
                             src={icon.href} 
                             alt={`${icon.sizes || 'favicon'}`}
-                            className="w-6 h-6 rounded border bg-white"
+                            className="w-8 h-8 rounded border bg-background shadow-sm"
                             onError={(e) => {
                               e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik04IDhIMTZWMTZIOFY4WiIgc3Ryb2tlPSIjOUNBM0FGIiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+Cg=='
                             }}
                           />
                         )}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-gray-900 dark:text-gray-100">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="analysis-text-sm font-medium text-foreground">
                               {icon.rel || 'icon'}
                             </span>
                             {icon.sizes && (
-                              <span className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded">
+                              <span className="analysis-text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-800/30">
                                 {icon.sizes}
                               </span>
                             )}
-                            {icon.type && (
-                              <span className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded">
-                                {icon.type}
-                              </span>
-                            )}
                           </div>
-                          {icon.href && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1 truncate">
-                              {icon.href}
-                            </div>
+                          {icon.type && (
+                            <span className="analysis-text-xs text-muted-foreground">
+                              {icon.type}
+                            </span>
                           )}
                         </div>
                       </div>
                     </div>
                   ))}
+                  {icons.length > 4 && (
+                    <p className="analysis-text-xs text-muted-foreground text-center py-2">
+                      +{icons.length - 4} more {icons.length - 4 === 1 ? 'icon' : 'icons'}
+                    </p>
+                  )}
                 </div>
                 
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Favicons help browsers display your site icon in tabs, bookmarks, and shortcuts
+                <p className="analysis-text-xs text-muted-foreground mt-3 pl-3 border-l-2 border-border/40">
+                  Icons help browsers display your site in tabs, bookmarks, and shortcuts
                 </p>
               </div>
             </div>
           </div>
         ) : (
           <SimpleListItem
-            icon="🖼️"
+            icon="favicon"
             label="Favicons"
             value={undefined}
             status="warning"
           />
         )}
         
-        {/* Always show Structured Data / JSON-LD section */}
-        <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-          <div className="flex items-start gap-3">
-            <span className="text-base mt-0.5">{structuredData && structuredData.length > 0 ? '✅' : '❌'}</span>
+        <div className="analysis-list-item">
+          <div className="flex items-start gap-4">
+            <div className={`mt-0.5 ${structuredData && structuredData.length > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              {structuredData && structuredData.length > 0 ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+            </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-gray-900 dark:text-gray-100">JSON-LD / Structured Data</span>
-                <Badge variant="outline" className={`text-xs shrink-0 ${
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-semibold text-foreground analysis-text-sm">JSON-LD / Structured Data</span>
+                <div className={`analysis-badge ${
                   structuredData && structuredData.length > 0 
-                    ? 'bg-green-50 text-green-700 border-green-300' 
-                    : 'bg-red-50 text-red-700 border-red-300'
+                    ? 'analysis-badge-success' 
+                    : 'analysis-badge-error'
                 }`}>
                   {structuredData && structuredData.length > 0 
-                    ? `${structuredData.length} schemas` 
+                    ? `${structuredData.length} ${structuredData.length === 1 ? 'schema' : 'schemas'}` 
                     : 'Missing'}
-                </Badge>
+                </div>
               </div>
               
               {structuredData && structuredData.length > 0 ? (
-                <>
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {structuredData.slice(0, 6).map((schema, index) => (
-                      <div key={index} className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded border border-blue-200 dark:border-blue-800">
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {structuredData.slice(0, 4).map((schema, index) => (
+                      <div key={index} className="analysis-text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-md border border-blue-200 dark:border-blue-800/30 font-medium">
                         {schema['@type'] || schema.type || 'Schema'}
                       </div>
                     ))}
-                    {structuredData.length > 6 && (
-                      <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1">
-                        +{structuredData.length - 6} more
+                    {structuredData.length > 4 && (
+                      <span className="analysis-text-xs text-muted-foreground px-3 py-1.5">
+                        +{structuredData.length - 4} more
                       </span>
                     )}
                   </div>
                   
-                  {/* JSON-LD Details */}
-                  <details className="mt-2">
-                    <summary className="text-xs text-blue-600 dark:text-blue-400 cursor-pointer hover:text-blue-700 dark:hover:text-blue-300">
-                      🔍 View JSON-LD Configuration
+                  <details className="mt-3">
+                    <summary className="analysis-text-xs text-blue-600 dark:text-blue-400 cursor-pointer hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center gap-2">
+                      <Info className="h-3 w-3" /> View JSON-LD Configuration
                     </summary>
-                    <div className="mt-2 space-y-2">
-                      {structuredData.map((schema, index) => (
-                        <div key={index} className="bg-gray-50 dark:bg-gray-800 rounded p-2">
-                          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <div className="mt-3 space-y-3">
+                      {structuredData.slice(0, 2).map((schema, index) => (
+                        <div key={index} className="bg-muted/30 rounded-lg p-3 border border-border/30">
+                          <div className="analysis-text-xs font-semibold text-foreground mb-2">
                             {schema['@type'] || schema.type || `Schema ${index + 1}`}
                           </div>
-                          <pre className="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto whitespace-pre-wrap max-h-40 overflow-y-auto">
+                          <pre className="analysis-text-xs text-muted-foreground overflow-x-auto whitespace-pre-wrap max-h-32 overflow-y-auto font-mono">
                             {JSON.stringify(schema, null, 2)}
                           </pre>
                         </div>
@@ -388,17 +403,17 @@ export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
                     </div>
                   </details>
                   
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Structured data helps search engines understand your content
+                  <p className="analysis-text-xs text-muted-foreground mt-3 pl-3 border-l-2 border-border/40">
+                    Structured data helps search engines understand your content for rich snippets
                   </p>
-                </>
+                </div>
               ) : (
-                <>
-                  <p className="text-red-600 dark:text-red-400 text-sm">No structured data found</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Add JSON-LD schemas for better SEO and rich snippets
+                <div className="space-y-2">
+                  <p className="text-red-600 dark:text-red-400 analysis-text-sm font-medium">No structured data found</p>
+                  <p className="analysis-text-xs text-muted-foreground pl-3 border-l-2 border-border/40">
+                    Add JSON-LD schemas for better SEO and rich snippets in search results
                   </p>
-                </>
+                </div>
               )}
             </div>
           </div>

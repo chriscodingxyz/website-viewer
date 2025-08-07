@@ -1,8 +1,17 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
 import { Badge } from '@/components/ui/badge'
+import { CheckCircle, AlertTriangle, XCircle, Share2, ExternalLink, Eye } from 'lucide-react'
+import { FacebookLogo, XLogo } from '@phosphor-icons/react'
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from '@/components/ui/dialog'
 
 interface SocialPreviewProps {
   metadata: WebsiteMetadata
@@ -17,40 +26,47 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
     value?: string
     status: 'present' | 'missing' | 'inherited'
   }) => {
-    const iconEmoji = status === 'present' ? '✅' : status === 'inherited' ? '⚠️' : '❌'
-    const badgeClass = status === 'present' 
-      ? 'bg-green-50 text-green-700 border-green-300' 
+    const statusIcon = status === 'present' 
+      ? <CheckCircle className="h-4 w-4" /> 
       : status === 'inherited'
-      ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
-      : 'bg-red-50 text-red-700 border-red-300'
+      ? <AlertTriangle className="h-4 w-4" />
+      : <XCircle className="h-4 w-4" />
     
-    const statusText = status === 'present' ? 'Set' : status === 'inherited' ? 'From SEO' : 'Missing'
+    const badgeClass = status === 'present' 
+      ? 'analysis-badge-success'
+      : status === 'inherited'
+      ? 'analysis-badge-warning'
+      : 'analysis-badge-error'
+    
+    const statusText = status === 'present' ? 'Set' : status === 'inherited' ? 'Inherited' : 'Missing'
     
     return (
-      <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-        <div className="flex items-start gap-3">
-          <span className="text-base mt-0.5">{iconEmoji}</span>
+      <div className="analysis-list-item">
+        <div className="flex items-start gap-4">
+          <div className={`mt-0.5 ${status === 'present' ? 'text-emerald-600' : status === 'inherited' ? 'text-amber-600' : 'text-red-600'}`}>
+            {statusIcon}
+          </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-bold text-gray-900 dark:text-gray-100">{label}</span>
-              <Badge variant="outline" className={`text-xs shrink-0 ${badgeClass}`}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-semibold text-foreground analysis-text-sm">{label}</span>
+              <div className={badgeClass}>
                 {statusText}
-              </Badge>
+              </div>
             </div>
             
             {value ? (
-              <div className="space-y-1">
-                <p className="text-gray-700 dark:text-gray-300 break-words">
-                  "{value}"
+              <div className="space-y-2">
+                <p className="text-muted-foreground analysis-text-sm leading-relaxed break-words">
+                  {value}
                 </p>
                 {status === 'inherited' && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="analysis-text-xs text-muted-foreground pl-3 border-l-2 border-border/40">
                     Using SEO {label.toLowerCase()} as fallback
                   </p>
                 )}
               </div>
             ) : (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="analysis-text-xs text-muted-foreground pl-3 border-l-2 border-border/40">
                 Add {label.toLowerCase()} for better social media sharing
               </p>
             )}
@@ -78,9 +94,11 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
     const description = (isTwitter ? twitterCard.description : openGraph.description) || seo.description || 'No Description'
     const image = (isTwitter ? twitterCard.image : openGraph.image) || '/placeholder-social.jpg'
     
-    return (
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900">
-        <div className="aspect-[1.91/1] bg-gray-100 dark:bg-gray-800 relative overflow-hidden">
+    const SocialCard = ({ isDialog = false }: { isDialog?: boolean }) => (
+      <div className={`border border-border rounded-lg overflow-hidden bg-card ${
+        isDialog ? 'shadow-none' : 'shadow-sm hover:shadow-md transition-shadow'
+      } ${!isDialog ? 'cursor-pointer hover:border-border/80' : ''}`}>
+        <div className={`${isDialog ? 'aspect-[2/1]' : 'aspect-[1.91/1]'} bg-muted/30 relative overflow-hidden`}>
           {(openGraph.image || twitterCard.image) ? (
             <img 
               src={image} 
@@ -91,48 +109,156 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
               }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
-              <span className="text-6xl">🖼️</span>
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+              <Share2 className={`${isDialog ? 'h-12 w-12' : 'h-8 w-8'}`} />
+            </div>
+          )}
+          {!isDialog && (
+            <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+              <Eye className="h-6 w-6 text-white" />
             </div>
           )}
         </div>
-        <div className="p-3">
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">
+        <div className={`${isDialog ? 'p-6' : 'p-4'} analysis-font`}>
+          <div className="analysis-text-xs text-muted-foreground mb-2 uppercase tracking-wider font-medium">
             {isTwitter ? 'Twitter Card' : 'Facebook/LinkedIn'}
           </div>
-          <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1 line-clamp-2">
+          <h4 className={`font-semibold text-foreground ${isDialog ? 'text-base' : 'analysis-text-sm'} mb-2 ${isDialog ? '' : 'line-clamp-2'} leading-snug`}>
             {title}
           </h4>
-          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+          <p className={`${isDialog ? 'text-sm' : 'analysis-text-xs'} text-muted-foreground ${isDialog ? '' : 'line-clamp-2'} leading-relaxed`}>
             {description}
           </p>
+          {isDialog && (
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground">Title</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs px-2 py-1 rounded-md font-medium ${
+                          title.length <= 60 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 
+                          'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                        }`}>
+                          {title.length} chars
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground pl-3 border-l-2 border-border/40">
+                      <div className="flex justify-between">
+                        <span>Current length:</span>
+                        <span className="font-medium">{title.length} characters</span>
+                      </div>
+                      <div className="flex justify-between mt-1">
+                        <span>Recommended:</span>
+                        <span className="font-medium">{isTwitter ? '70 characters max' : '60 characters max'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground">Description</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs px-2 py-1 rounded-md font-medium ${
+                          description.length <= (isTwitter ? 200 : 155) ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 
+                          'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                        }`}>
+                          {description.length} chars
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground pl-3 border-l-2 border-border/40">
+                      <div className="flex justify-between">
+                        <span>Current length:</span>
+                        <span className="font-medium">{description.length} characters</span>
+                      </div>
+                      <div className="flex justify-between mt-1">
+                        <span>Recommended:</span>
+                        <span className="font-medium">{isTwitter ? '200 characters max' : '155 characters max'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {image && image !== '/placeholder-social.jpg' && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-foreground">Image</span>
+                        <div className="analysis-badge-success">
+                          Set
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground pl-3 border-l-2 border-border/40">
+                        <div className="flex justify-between">
+                          <span>URL:</span>
+                          <span className="font-medium truncate ml-2 max-w-48">{image}</span>
+                        </div>
+                        <div className="flex justify-between mt-1">
+                          <span>Recommended size:</span>
+                          <span className="font-medium">{isTwitter ? '1200×628px' : '1200×630px'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+    )
+    
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <div>
+            <SocialCard />
+          </div>
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {isTwitter ? (
+                <XLogo className="h-5 w-5 text-gray-900 dark:text-gray-100" weight="fill" />
+              ) : (
+                <FacebookLogo className="h-5 w-5 text-blue-600" weight="fill" />
+              )}
+              {isTwitter ? 'Twitter Card' : 'Facebook/LinkedIn'} Preview
+            </DialogTitle>
+          </DialogHeader>
+          <SocialCard isDialog />
+        </DialogContent>
+      </Dialog>
     )
   }
 
   return (
-    <div className="space-y-4">
+    <div className="analysis-section space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold">Social Media ({socialScore.percentage}%)</h3>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <FacebookLogo className="h-4 w-4 text-blue-600" weight="fill" />
+            <XLogo className="h-4 w-4 text-gray-900 dark:text-gray-100" weight="fill" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">Social Media</h3>
+        </div>
         <div className="flex items-center gap-2">
-          <span className={`text-sm font-bold ${
-            socialScore.percentage >= 75 ? 'text-green-600' : 
-            socialScore.percentage >= 50 ? 'text-yellow-600' : 'text-red-600'
+          <span className={`analysis-text-sm font-semibold ${
+            socialScore.percentage >= 75 ? 'text-emerald-600' : 
+            socialScore.percentage >= 50 ? 'text-amber-600' : 'text-red-600'
           }`}>
-            {socialScore.score}/{socialScore.maxScore}
+            {socialScore.percentage}% ({socialScore.score}/{socialScore.maxScore})
           </span>
         </div>
       </div>
       
-      {/* Social Preview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <SocialPreviewCard platform="facebook" />
         <SocialPreviewCard platform="twitter" />
       </div>
       
-      {/* Detailed Meta Data */}
-      <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-0">
+      <div className="space-y-0 bg-card/30 rounded-lg border border-border/50 p-4">
         <SimpleListItem
           icon="📖"
           label="OpenGraph Title"

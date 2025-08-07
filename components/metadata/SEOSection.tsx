@@ -4,7 +4,7 @@
 import React from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react'
+import { CheckCircle, AlertTriangle, XCircle, Info } from 'lucide-react'
 
 interface SEOSectionProps {
   metadata: WebsiteMetadata
@@ -66,85 +66,87 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
     isGood: boolean
     optimalRange?: string
   }) => {
-    let icon = '❌'
+    let statusIcon: React.ReactNode = <XCircle className="h-4 w-4" />
     let statusText = ''
     let showDetails = false
-    let badgeClass = 'bg-red-50 text-red-700 border-red-300'
+    let badgeClass = 'analysis-badge-error'
     
     if (label === 'Title' && value) {
       if (value.length >= 30 && value.length <= 60) {
-        icon = '✅'
-        statusText = 'Good Length'
-        badgeClass = 'bg-green-50 text-green-700 border-green-300'
+        statusIcon = <CheckCircle className="h-4 w-4" />
+        statusText = 'Optimal'
+        badgeClass = 'analysis-badge-success'
       } else if ((value.length >= 25 && value.length < 30) || (value.length > 60 && value.length <= 70)) {
-        icon = '⚠️'
-        statusText = value.length < 30 ? 'Close to Optimal' : 'Slightly Long'
-        badgeClass = 'bg-yellow-50 text-yellow-700 border-yellow-300'
+        statusIcon = <AlertTriangle className="h-4 w-4" />
+        statusText = value.length < 30 ? 'Too Short' : 'Too Long'
+        badgeClass = 'analysis-badge-warning'
       } else {
-        icon = '❌'
+        statusIcon = <XCircle className="h-4 w-4" />
         statusText = value.length < 25 ? 'Too Short' : 'Too Long'
-        badgeClass = 'bg-red-50 text-red-700 border-red-300'
+        badgeClass = 'analysis-badge-error'
       }
       showDetails = true
     } else if (label === 'Description' && value) {
       if (value.length >= 120 && value.length <= 160) {
-        icon = '✅'
-        statusText = 'Good Length'
-        badgeClass = 'bg-green-50 text-green-700 border-green-300'
+        statusIcon = <CheckCircle className="h-4 w-4" />
+        statusText = 'Optimal'
+        badgeClass = 'analysis-badge-success'
       } else if ((value.length >= 100 && value.length < 120) || (value.length > 160 && value.length <= 180)) {
-        icon = '⚠️'
-        statusText = value.length < 120 ? 'Close to Optimal' : 'Slightly Long'
-        badgeClass = 'bg-yellow-50 text-yellow-700 border-yellow-300'
+        statusIcon = <AlertTriangle className="h-4 w-4" />
+        statusText = value.length < 120 ? 'Too Short' : 'Too Long'
+        badgeClass = 'analysis-badge-warning'
       } else {
-        icon = '❌'
+        statusIcon = <XCircle className="h-4 w-4" />
         statusText = value.length < 100 ? 'Too Short' : 'Too Long'
-        badgeClass = 'bg-red-50 text-red-700 border-red-300'
+        badgeClass = 'analysis-badge-error'
       }
       showDetails = true
     } else {
-      icon = isGood ? '✅' : '❌'
+      statusIcon = isGood ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />
       statusText = isGood ? 'Present' : 'Missing'
-      badgeClass = isGood ? 'bg-green-50 text-green-700 border-green-300' : 'bg-red-50 text-red-700 border-red-300'
-      showDetails = label === 'Keywords' // Show full keywords
+      badgeClass = isGood ? 'analysis-badge-success' : 'analysis-badge-error'
+      showDetails = label === 'Keywords'
     }
     
     return (
-      <div className="py-2 text-sm border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-        <div className="flex items-start gap-3">
-          <span className="text-base mt-0.5">{icon}</span>
+      <div className="analysis-list-item">
+        <div className="flex items-start gap-4">
+          <div className={`mt-0.5 ${badgeClass.includes('success') ? 'text-emerald-600' : badgeClass.includes('warning') ? 'text-amber-600' : 'text-red-600'}`}>
+            {statusIcon}
+          </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-bold text-gray-900 dark:text-gray-100">{label}</span>
-              <Badge variant="outline" className={`text-xs shrink-0 ${badgeClass}`}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-semibold text-foreground analysis-text-sm">{label}</span>
+              <div className={badgeClass}>
                 {statusText}
-              </Badge>
+              </div>
             </div>
             
             {value ? (
-              <div className="space-y-1">
-                <p className="text-gray-700 dark:text-gray-300 break-words">
-                  "{value}"
+              <div className="space-y-2">
+                <p className="text-muted-foreground analysis-text-sm leading-relaxed break-words">
+                  {value}
                 </p>
                 {showDetails && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
+                  <div className="analysis-text-xs text-muted-foreground space-y-1 pl-3 border-l-2 border-border/40">
                     {(label === 'Title' || label === 'Description') && (
                       <>
-                        <div>Current length: <span className={`font-medium ${
-                          isGood ? 'text-green-600' : 'text-amber-600'
-                        }`}>{value.length} chars</span></div>
-                        <div>Optimal range: <span className="font-medium">{optimalRange}</span></div>
+                        <div>Length: <span className={`font-medium ${
+                          isGood ? 'text-emerald-600' : 'text-amber-600'
+                        }`}>{value.length} characters</span></div>
+                        <div>Recommended: <span className="font-medium text-foreground">{optimalRange}</span></div>
                       </>
                     )}
                     {label === 'Keywords' && (
-                      <div>Keywords help search engines understand your content</div>
+                      <div>Help search engines understand your content</div>
                     )}
                   </div>
                 )}
               </div>
             ) : (
-              <div className="space-y-1">
-                <p className="text-red-600 dark:text-red-400">Not set</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{optimalRange || 'Recommended to add'}</p>
+              <div className="space-y-2">
+                <p className="text-red-600 dark:text-red-400 analysis-text-sm font-medium">Not configured</p>
+                <p className="analysis-text-xs text-muted-foreground pl-3 border-l-2 border-border/40">{optimalRange || 'Recommended for better SEO'}</p>
               </div>
             )}
           </div>
@@ -175,19 +177,18 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
   const hasGoodDescription = seo.description && seo.description.length >= 120 && seo.description.length <= 160
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold">SEO Elements</h3>
+    <div className="analysis-section space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-foreground">SEO Elements</h3>
         <div className="flex items-center gap-2">
           {getScoreIcon(seoScore.percentage)}
-          <span className={`text-sm font-bold ${getScoreColor(seoScore.percentage)}`}>
+          <span className={`analysis-text-sm font-semibold ${getScoreColor(seoScore.percentage)}`}>
             {seoScore.percentage}% ({seoScore.score}/{seoScore.maxScore})
           </span>
         </div>
       </div>
       
-      {/* SEO Elements */}
-      <div className="space-y-0 mb-6">
+      <div className="space-y-0 bg-card/30 rounded-lg border border-border/50 p-4">
         <SimpleListItem 
             label="Title" 
             value={seo.title} 
@@ -238,28 +239,28 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
         />
       </div>
       
-      {/* SEO Recommendations */}
       {recommendations.length > 0 && (
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-          <div className="mb-3">
-            <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">SEO Recommendations</h4>
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-blue-600" />
+            <h4 className="analysis-text-sm font-semibold text-foreground">Recommendations</h4>
           </div>
-          <div className="space-y-2">
-            {recommendations.slice(0, 8).map((rec, index) => (
-              <div key={index} className={`flex items-start gap-2 p-2 rounded text-xs ${
+          <div className="space-y-3">
+            {recommendations.slice(0, 6).map((rec, index) => (
+              <div key={index} className={`flex items-start gap-3 p-3 rounded-lg border ${
                 rec.type === 'critical' 
-                  ? 'bg-red-50/80 border border-red-200/60 dark:bg-red-950/20 dark:border-red-800/40'
-                  : 'bg-yellow-50/80 border border-yellow-200/60 dark:bg-yellow-950/20 dark:border-yellow-800/40'
+                  ? 'bg-red-50/50 border-red-200/50 dark:bg-red-950/10 dark:border-red-800/20'
+                  : 'bg-amber-50/50 border-amber-200/50 dark:bg-amber-950/10 dark:border-amber-800/20'
               }`}>
                 {rec.type === 'critical' ? (
-                  <XCircle className="h-3 w-3 text-red-500 mt-0.5 shrink-0" />
+                  <XCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
                 ) : (
-                  <AlertTriangle className="h-3 w-3 text-yellow-500 mt-0.5 shrink-0" />
+                  <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
                 )}
-                <p className={`font-medium ${
+                <p className={`analysis-text-sm ${
                   rec.type === 'critical' 
                     ? 'text-red-700 dark:text-red-300'
-                    : 'text-yellow-700 dark:text-yellow-300'
+                    : 'text-amber-700 dark:text-amber-300'
                 }`}>
                   {rec.text}
                 </p>

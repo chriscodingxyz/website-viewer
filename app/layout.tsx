@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
 
-import { IBM_Plex_Mono } from 'next/font/google'
+import { IBM_Plex_Mono, Inter } from 'next/font/google'
 import Footer from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { Toaster } from 'sonner'
@@ -13,6 +13,12 @@ import { WebsiteViewerProvider } from '@/contexts/WebsiteViewerContext'
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
   weight: ['400']
+})
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-inter'
 })
 
 export const metadata: Metadata = {
@@ -27,7 +33,7 @@ export default function RootLayout ({
 }>) {
   return (
     <html lang='en' suppressHydrationWarning>
-      <body className={`${ibmPlexMono.className} min-h-screen flex flex-col`}>
+      <body className={`${ibmPlexMono.className} ${inter.variable} min-h-screen flex flex-col`}>
         <Toaster richColors />
         <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
           <FavoritesProvider>
