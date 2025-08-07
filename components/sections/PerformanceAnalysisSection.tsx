@@ -44,17 +44,17 @@ export default function PerformanceAnalysisSection({ expanded, onToggle }: Perfo
   const hasReports = Object.values(lighthouseReports).some(report => report !== null)
 
   return (
-    <section className={cn("w-full border-b border-border", expanded ? "bg-gradient-to-b from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30" : "bg-background")}>
+    <section className="w-full border-b border-border bg-background">
       <div className="w-full border-b border-border/50 cursor-pointer bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 sticky top-16 z-40" onClick={onToggle}>
-        <div className="w-full px-6 py-6">
+        <div className="w-full px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center text-white">
-                <Zap className="h-6 w-6" />
+              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center text-white">
+                <Zap className="h-4 w-4" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-1">Performance Analysis</h2>
-                <p className="text-muted-foreground">Core Web Vitals and Lighthouse scores via Google PageSpeed</p>
+                <h2 className="text-xl font-bold text-foreground mb-1">Performance Analysis</h2>
+                <p className="text-sm text-muted-foreground">Core Web Vitals and Lighthouse scores via Google PageSpeed</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -68,7 +68,12 @@ export default function PerformanceAnalysisSection({ expanded, onToggle }: Perfo
                 <div className="flex items-center gap-2 text-sm font-semibold text-green-600"><Loader2 className="h-5 w-5 animate-spin" />Analyzing...</div>
               )}
               {hasReports && !lighthouseLoading && (
-                <div className="flex items-center gap-2 text-sm font-semibold text-green-600"><CheckCircle className="h-5 w-5" />Analysis Ready</div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-green-600"><CheckCircle className="h-5 w-5" />Analysis Ready</div>
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Button variant="outline" size="sm" onClick={exportLighthouseReports}><Download className="h-3 w-3 mr-1" />Export</Button>
+                  </div>
+                </div>
               )}
               {lighthouseError && (
                 <div className="flex items-center gap-2 text-sm font-semibold text-red-600"><AlertCircle className="h-5 w-5" />Error</div>
@@ -80,16 +85,7 @@ export default function PerformanceAnalysisSection({ expanded, onToggle }: Perfo
       </div>
 
       {expanded && (
-        <div className="w-full py-8 px-6">
-          {hasReports && (
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold">Performance Analysis Results</h3>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={exportLighthouseReports}><Download className="h-4 w-4 mr-2" />Export Reports</Button>
-                <Button onClick={() => fetchAllLighthouseReports()} className="bg-green-600 hover:bg-green-700 text-white"><Play className="h-4 w-4 mr-2" />Run Again</Button>
-              </div>
-            </div>
-          )}
+        <div className="w-full py-6 px-6 relative">
           <LighthouseSection reports={lighthouseReports} onRunAnalysis={() => fetchAllLighthouseReports()} loading={lighthouseLoading} error={lighthouseError} />
         </div>
       )}

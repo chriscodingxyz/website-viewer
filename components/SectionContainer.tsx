@@ -16,7 +16,7 @@ export default function SectionContainer() {
   const { currentSite, metadataLoading, lighthouseLoading } = useWebsiteViewer()
 
   const [sectionState, setSectionState] = useState<SectionState>({
-    viewports: { expanded: true },
+    viewports: { expanded: false },
     analysis: { expanded: false },
     performance: { expanded: false },
   })

@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
 import { WebsiteMetadata, LighthouseReport } from '@/types/metadata'
+import { IframeStatus, IframeDetectionResult, iframeDetectionService } from '@/services/IframeDetectionService'
 
 // Function to sanitize Lighthouse data and remove circular references
 function sanitizeLighthouseData(data: any): LighthouseReport {
@@ -143,6 +144,8 @@ export interface View {
   url: string
   type: ViewType
   refreshKey?: number
+  iframeStatus: IframeStatus
+  iframeResult?: IframeDetectionResult
 }
 
 const isValidUrl = (url: string): boolean => {
@@ -236,6 +239,8 @@ interface WebsiteViewerContextType {
   fetchLighthouseReport: (viewport?: ViewType, url?: string) => Promise<void>
   fetchAllLighthouseReports: (url?: string) => Promise<void>
   clearLighthouseReports: () => void
+  // Iframe preview functionality
+  updateViewIframeStatus: (id: number, status: IframeStatus, result?: IframeDetectionResult) => void
   // Navigation
   clearSite: () => void
 }
@@ -323,19 +328,24 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setTimeout(() => setIsInputHighlighted(false), 1000)
   }
 
-  const loadSiteInternal = (formattedUrl: string) => {
-    // Replace all views with new site's 4 viewports
-    setViews([
-      { id: nextId, url: formattedUrl, type: 'desktop' },
-      { id: nextId + 1, url: formattedUrl, type: 'tablet' },
-      { id: nextId + 2, url: formattedUrl, type: 'mobileLarge' },
-      { id: nextId + 3, url: formattedUrl, type: 'mobile' }
-    ])
+  const loadSiteInternal = async (formattedUrl: string) => {
+    // Start with loading status while we check
+    const newViews = [
+      { id: nextId, url: formattedUrl, type: 'desktop' as ViewType, iframeStatus: 'loading' as IframeStatus },
+      { id: nextId + 1, url: formattedUrl, type: 'tablet' as ViewType, iframeStatus: 'loading' as IframeStatus },
+      { id: nextId + 2, url: formattedUrl, type: 'mobileLarge' as ViewType, iframeStatus: 'loading' as IframeStatus },
+      { id: nextId + 3, url: formattedUrl, type: 'mobile' as ViewType, iframeStatus: 'loading' as IframeStatus }
+    ]
+    
+    setViews(newViews)
     setCurrentSite(formattedUrl)
     setNextId(nextId + 4)
     addToHistory(formattedUrl)
     // Keep the URL in the field instead of clearing it
     setUrl(formattedUrl)
+    
+    // Run iframe detection immediately for all views
+    runIframeDetectionForAllViews(formattedUrl, newViews)
   }
 
   const updateUrlParams = () => {
@@ -388,6 +398,52 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
   const updateGlobalZoom = (stepIndex: number) => {
     setGlobalZoomStepIndex(stepIndex)
+  }
+
+  // Iframe preview functionality
+  const updateViewIframeStatus = (id: number, status: IframeStatus, result?: IframeDetectionResult) => {
+    setViews(prevViews => 
+      prevViews.map(view => 
+        view.id === id 
+          ? { ...view, iframeStatus: status, iframeResult: result }
+          : view
+      )
+    )
+  }
+
+  // Run iframe detection for all views immediately when URL is loaded
+  const runIframeDetectionForAllViews = async (url: string, views: View[]) => {
+    // Create a temporary container for detection
+    const tempContainer = document.createElement('div')
+    tempContainer.style.position = 'absolute'
+    tempContainer.style.top = '-9999px'
+    tempContainer.style.left = '-9999px'
+    tempContainer.style.width = '100px'
+    tempContainer.style.height = '100px'
+    document.body.appendChild(tempContainer)
+
+    try {
+      // Run detection just once - all viewports will have the same blocking behavior
+      const result = await iframeDetectionService.detectIframeStatus(url, tempContainer, { timeout: 5000 })
+      
+      // Update all views with the same result
+      views.forEach(view => {
+        updateViewIframeStatus(view.id, result.status, result)
+      })
+      
+      if (result.status === 'blocked') {
+        toast.info('Website blocks iframe embedding - good security practice! For testing, consider disabling X-Frame-Options in dev/staging environments.')
+      }
+    } catch (error) {
+      console.error('Detection failed:', error)
+      // Mark all views as error
+      views.forEach(view => {
+        updateViewIframeStatus(view.id, 'error')
+      })
+    } finally {
+      // Clean up temp container
+      document.body.removeChild(tempContainer)
+    }
   }
 
   const clearSite = () => {
@@ -672,6 +728,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     fetchLighthouseReport,
     fetchAllLighthouseReports,
     clearLighthouseReports,
+    updateViewIframeStatus,
     clearSite
   }
 

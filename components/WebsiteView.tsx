@@ -20,11 +20,20 @@ import {
   Loader2,
   AlertCircle,
   Settings,
-  Expand
+  Expand,
+  Eye,
+  Play
 } from 'lucide-react'
-import { View, ViewType } from '@/contexts/WebsiteViewerContext'
+import { View, ViewType, useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { toast } from 'sonner'
+import { iframeDetectionService } from '@/services/IframeDetectionService'
+import { 
+  IframeLoading, 
+  IframeBlocked, 
+  IframeError, 
+  IframeTimeout 
+} from '@/components/fallbacks/IframeFallbacks'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,6 +86,12 @@ type WebsiteViewProps = {
 
 type LoadingState = 'loading' | 'loaded' | 'error'
 
+// Container element for iframe detection
+interface IframeContainer {
+  element: HTMLDivElement
+  cleanup: () => void
+}
+
 export default function WebsiteView ({
   view,
   refreshKey,
@@ -89,14 +104,14 @@ export default function WebsiteView ({
   const [actualDimensions] = useState(actualViewDimensions)
   const [displayDimensions] = useState(displayViewDimensions)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const iframeContainerRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
   const [isCompactView, setIsCompactView] = useState(false) // For responsive layout
   const containerRef = useRef<HTMLDivElement>(null)
-  const [loadingState, setLoadingState] = useState<LoadingState>('loading')
-  const [loadStartTime, setLoadStartTime] = useState<number>(Date.now())
   const [isEnlargeDialogOpen, setIsEnlargeDialogOpen] = useState(false)
   const [enlargeDialogScale, setEnlargeDialogScale] = useState(1)
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
+  const { updateViewIframeStatus } = useWebsiteViewer()
 
   const isFavorite = favorites.includes(view.url)
 
@@ -130,15 +145,11 @@ export default function WebsiteView ({
     return () => window.removeEventListener('resize', updateScale)
   }, [view.type, displayDimensions, globalZoom])
 
-  useEffect(() => {
-    setLoadingState('loading')
-    setLoadStartTime(Date.now())
-  }, [view.url])
+  // Detection is now handled in WebsiteViewerContext - no need to run here
 
+  // Refresh iframe on refresh key
   useEffect(() => {
     if (refreshKey && refreshKey > 0) {
-      setLoadingState('loading')
-      setLoadStartTime(Date.now())
       if (iframeRef.current) {
         iframeRef.current.src = iframeRef.current.src
       }
@@ -181,20 +192,49 @@ export default function WebsiteView ({
     }
   }
 
-  const handleIframeLoad = () => {
-    setLoadingState('loaded')
+  const startIframeDetection = async () => {
+    console.log(`🎬 Starting iframe detection for ${getDeviceName(view.type)} view:`, view.url)
+    
+    if (!iframeContainerRef.current) {
+      console.log('❌ No container ref available for detection')
+      return
+    }
+    
+    try {
+      const result = await iframeDetectionService.detectIframeStatus(
+        view.url,
+        iframeContainerRef.current,
+        { timeout: 5000 } // Reduced timeout for faster feedback
+      )
+      
+      console.log(`📊 Detection complete for ${getDeviceName(view.type)}:`, result)
+      
+      updateViewIframeStatus(view.id, result.status, result)
+      
+      if (result.status === 'loaded') {
+        toast.success(`${getDeviceName(view.type)} preview loaded successfully`)
+      } else if (result.status === 'blocked') {
+        toast.info(`${getDeviceName(view.type)} preview blocked - website prevents embedding`)
+      }
+    } catch (error) {
+      console.log(`💥 Detection failed for ${getDeviceName(view.type)}:`, error)
+      updateViewIframeStatus(view.id, 'error', {
+        status: 'error',
+        url: view.url,
+        reason: error instanceof Error ? error.message : 'Unknown error',
+        confidence: 'high',
+        detectionTime: 0,
+        methods: {}
+      })
+    }
   }
 
-  const handleIframeError = () => {
-    setLoadingState('error')
+  const handleRetry = () => {
+    updateViewIframeStatus(view.id, 'loading')
   }
 
   const refreshView = () => {
-    setLoadingState('loading')
-    setLoadStartTime(Date.now())
-    if (iframeRef.current) {
-      iframeRef.current.src = iframeRef.current.src
-    }
+    handleRetry()
   }
 
   const openInNewTab = () => {
@@ -212,13 +252,19 @@ export default function WebsiteView ({
   }
 
   const getStatusIcon = () => {
-    switch (loadingState) {
+    switch (view.iframeStatus) {
       case 'loading':
         return <Loader2 className='h-3 w-3 animate-spin text-primary' />
       case 'loaded':
         return null // No icon when loaded
+      case 'blocked':
+        return <AlertCircle className='h-3 w-3 text-orange-600' />
       case 'error':
         return <AlertCircle className='h-3 w-3 text-destructive' />
+      case 'timeout':
+        return <AlertCircle className='h-3 w-3 text-amber-600' />
+      default:
+        return null
     }
   }
 
@@ -442,6 +488,7 @@ export default function WebsiteView ({
         </div>
       </div>
       <div
+        ref={iframeContainerRef}
         className='relative overflow-hidden bg-white shadow-inner'
         style={{
           width: `${scaledWidth}px`,
@@ -452,46 +499,15 @@ export default function WebsiteView ({
         <iframe
           ref={iframeRef}
           src={view.url}
-          onLoad={handleIframeLoad}
-          onError={handleIframeError}
           style={{
             width: `${actualDimensions[view.type].width}px`,
             height: `${actualDimensions[view.type].height}px`,
             transform: `scale(${finalContentScale})`,
-            transformOrigin: 'top left'
+            transformOrigin: 'top left',
+            border: 'none'
           }}
           title={`View ${view.id}`}
         />
-        {loadingState === 'loading' && (
-          <div className='absolute inset-0 flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm'>
-            <div className='flex flex-col items-center gap-3 p-6 rounded-xl bg-white/80 shadow-lg border'>
-              <div 
-                className='w-8 h-8 rounded-full animate-spin'
-                style={{
-                  background: `conic-gradient(from 0deg, transparent, rgb(var(--device-color)))`
-                }}
-              />
-              <span className='text-sm font-medium text-gray-600'>Loading site...</span>
-            </div>
-          </div>
-        )}
-        {loadingState === 'error' && (
-          <div className='absolute inset-0 flex items-center justify-center bg-white/95 backdrop-blur-sm'>
-            <div className='text-center p-6 rounded-xl bg-white/80 shadow-lg border'>
-              <AlertCircle className='h-10 w-10 text-red-500 mx-auto mb-3' />
-              <p className='text-sm font-medium text-red-600 mb-3'>Failed to load site</p>
-              <Button
-                size='sm'
-                variant='outline'
-                onClick={refreshView}
-                className='border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300'
-              >
-                <RefreshCw className='h-4 w-4 mr-1' />
-                Retry
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Enlarge Dialog */}
