@@ -192,42 +192,7 @@ export default function WebsiteView ({
     }
   }
 
-  const startIframeDetection = async () => {
-    console.log(`🎬 Starting iframe detection for ${getDeviceName(view.type)} view:`, view.url)
-    
-    if (!iframeContainerRef.current) {
-      console.log('❌ No container ref available for detection')
-      return
-    }
-    
-    try {
-      const result = await iframeDetectionService.detectIframeStatus(
-        view.url,
-        iframeContainerRef.current,
-        { timeout: 5000 } // Reduced timeout for faster feedback
-      )
-      
-      console.log(`📊 Detection complete for ${getDeviceName(view.type)}:`, result)
-      
-      updateViewIframeStatus(view.id, result.status, result)
-      
-      if (result.status === 'loaded') {
-        toast.success(`${getDeviceName(view.type)} preview loaded successfully`)
-      } else if (result.status === 'blocked') {
-        toast.info(`${getDeviceName(view.type)} preview blocked - website prevents embedding`)
-      }
-    } catch (error) {
-      console.log(`💥 Detection failed for ${getDeviceName(view.type)}:`, error)
-      updateViewIframeStatus(view.id, 'error', {
-        status: 'error',
-        url: view.url,
-        reason: error instanceof Error ? error.message : 'Unknown error',
-        confidence: 'high',
-        detectionTime: 0,
-        methods: {}
-      })
-    }
-  }
+// (lines 195–230 have been removed; the unused startIframeDetection function is deleted)
 
   const handleRetry = () => {
     updateViewIframeStatus(view.id, 'loading')
