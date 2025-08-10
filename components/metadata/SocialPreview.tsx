@@ -14,10 +14,23 @@ import {
 } from '@/components/ui/dialog'
 
 interface SocialPreviewProps {
-  metadata: WebsiteMetadata
+  metadata?: WebsiteMetadata | null
 }
 
 export default function SocialPreview({ metadata }: SocialPreviewProps) {
+  if (!metadata) {
+    return (
+      <div className="w-full">
+        <div className="flex items-center gap-3 mb-8">
+          <Share2 className="h-8 w-8 text-gray-600 dark:text-gray-400" />
+          <h1 className="text-3xl font-bold">Social Media</h1>
+        </div>
+        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+          <div className="text-xl">Loading social media data...</div>
+        </div>
+      </div>
+    )
+  }
   const { openGraph, twitterCard, seo } = metadata
 
   const SimpleListItem = ({ icon, label, value, status }: {
@@ -60,8 +73,8 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
                   {value}
                 </p>
                 {status === 'inherited' && (
-                  <p className="analysis-text-xs text-muted-foreground pl-3 border-l-2 border-border/40">
-                    Using SEO {label.toLowerCase()} as fallback
+                  <p className="analysis-text-xs text-muted-foreground pl-3 border-l-2 border-amber-200 border-l-amber-400">
+                    📋 Inherited from SEO meta {label.toLowerCase().replace('opengraph ', '')} - consider adding dedicated social media tags
                   </p>
                 )}
               </div>
@@ -78,11 +91,20 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
 
   const getSocialScore = () => {
     let score = 0
-    const maxScore = 4
+    const maxScore = 8 // OpenGraph (4) + Twitter (4)
+    
+    // OpenGraph scoring (proper social media tags)
     if (openGraph.title) score += 1
     if (openGraph.description) score += 1
     if (openGraph.image) score += 1
+    if (openGraph.type) score += 1
+    
+    // Twitter Card scoring (dedicated Twitter tags, not inherited)
     if (twitterCard.card) score += 1
+    if (twitterCard.title) score += 1  // Only count if explicitly set, not inherited
+    if (twitterCard.description) score += 1  // Only count if explicitly set
+    if (twitterCard.image) score += 1  // Twitter-specific image
+    
     return { score, maxScore, percentage: Math.round((score / maxScore) * 100) }
   }
 
@@ -100,17 +122,30 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
       } ${!isDialog ? 'cursor-pointer hover:border-border/80' : ''}`}>
         <div className={`${isDialog ? 'aspect-[2/1]' : 'aspect-[1.91/1]'} bg-muted/30 relative overflow-hidden`}>
           {(openGraph.image || twitterCard.image) ? (
-            <img 
-              src={image} 
-              alt="Social preview" 
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDQwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNzUgNzVIMjI1VjEyNUgxNzVWNzVaIiBzdHJva2U9IiM5Q0EzQUYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgo8cGF0aCBkPSJtMTg3IDk3IDEwIDEwIDEwLTEwIiBzdHJva2U9IiM5Q0EzQUYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K'
-              }}
-            />
+            <div className="w-full h-full relative">
+              <img 
+                src={image} 
+                alt="Social preview" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Hide the broken image and show emoji fallback
+                  e.currentTarget.style.display = 'none'
+                  const parent = e.currentTarget.parentElement
+                  if (parent && !parent.querySelector('.fallback-emoji')) {
+                    const fallback = document.createElement('div')
+                    fallback.className = 'fallback-emoji absolute inset-0 flex items-center justify-center text-muted-foreground'
+                    fallback.innerHTML = '<div class="text-center"><div class="text-4xl mb-2">🖼️</div><div class="text-xs">Image missing</div></div>'
+                    parent.appendChild(fallback)
+                  }
+                }}
+              />
+            </div>
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-              <Share2 className={`${isDialog ? 'h-12 w-12' : 'h-8 w-8'}`} />
+              <div className="text-center">
+                <div className="text-4xl mb-2">🖼️</div>
+                <div className="text-xs">Image missing</div>
+              </div>
             </div>
           )}
           {!isDialog && (
@@ -234,22 +269,29 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
   }
 
   return (
-    <div className="analysis-section space-y-6">
+    <div className="w-full space-y-10">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <FacebookLogo className="h-4 w-4 text-blue-600" weight="fill" />
-            <XLogo className="h-4 w-4 text-gray-900 dark:text-gray-100" weight="fill" />
-          </div>
-          <h3 className="text-lg font-semibold text-foreground">Social Media</h3>
+          <Share2 className="h-8 w-8 text-gray-600 dark:text-gray-400" />
+          <h1 className="text-3xl font-bold">Social Media</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <span className={`analysis-text-sm font-semibold ${
-            socialScore.percentage >= 75 ? 'text-emerald-600' : 
-            socialScore.percentage >= 50 ? 'text-amber-600' : 'text-red-600'
-          }`}>
-            {socialScore.percentage}% ({socialScore.score}/{socialScore.maxScore})
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <FacebookLogo className="h-5 w-5 text-blue-600" weight="fill" />
+            <XLogo className="h-5 w-5 text-gray-900 dark:text-gray-100" weight="fill" />
+          </div>
+          <div className="text-right">
+            <div className={`text-2xl font-bold ${
+              socialScore.percentage >= 75 ? 'text-emerald-600' : 
+              socialScore.percentage >= 50 ? 'text-amber-600' : 'text-red-600'
+            }`}>
+              {socialScore.percentage}%
+            </div>
+            <div className="text-sm text-gray-500">
+              {socialScore.score}/{socialScore.maxScore} dedicated tags
+            </div>
+          </div>
         </div>
       </div>
       
@@ -262,14 +304,14 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
         <SimpleListItem
           icon="📖"
           label="OpenGraph Title"
-          value={openGraph.title}
+          value={openGraph.title || seo.title}
           status={openGraph.title ? 'present' : seo.title ? 'inherited' : 'missing'}
         />
         
         <SimpleListItem
           icon="📝"
           label="OpenGraph Description"
-          value={openGraph.description}
+          value={openGraph.description || seo.description}
           status={openGraph.description ? 'present' : seo.description ? 'inherited' : 'missing'}
         />
         
@@ -287,23 +329,26 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
           status={twitterCard.card ? 'present' : 'missing'}
         />
         
-        {twitterCard.title && (
-          <SimpleListItem
-            icon="🐦"
-            label="Twitter Title"
-            value={twitterCard.title}
-            status="present"
-          />
-        )}
+        <SimpleListItem
+          icon="🐦"
+          label="Twitter Title"
+          value={twitterCard.title || openGraph.title || seo.title}
+          status={twitterCard.title ? 'present' : (openGraph.title || seo.title) ? 'inherited' : 'missing'}
+        />
         
-        {twitterCard.description && (
-          <SimpleListItem
-            icon="🐦"
-            label="Twitter Description"
-            value={twitterCard.description}
-            status="present"
-          />
-        )}
+        <SimpleListItem
+          icon="🐦"
+          label="Twitter Description"
+          value={twitterCard.description || openGraph.description || seo.description}
+          status={twitterCard.description ? 'present' : (openGraph.description || seo.description) ? 'inherited' : 'missing'}
+        />
+        
+        <SimpleListItem
+          icon="🖼️"
+          label="Twitter Image"
+          value={twitterCard.image || openGraph.image}
+          status={twitterCard.image ? 'present' : openGraph.image ? 'inherited' : 'missing'}
+        />
       </div>
     </div>
   )

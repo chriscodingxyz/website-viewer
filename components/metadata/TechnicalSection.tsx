@@ -15,10 +15,24 @@ import {
 } from 'lucide-react'
 
 interface TechnicalSectionProps {
-  metadata: WebsiteMetadata
+  metadata?: WebsiteMetadata | null
 }
 
-export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
+export default function TechnicalSection({ metadata }: TechnicalSectionProps) {
+  if (!metadata) {
+    return (
+      <div className="w-full">
+        <div className="flex items-center gap-3 mb-8">
+          <Settings className="h-8 w-8 text-gray-600 dark:text-gray-400" />
+          <h1 className="text-3xl font-bold">Technical</h1>
+        </div>
+        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+          <div className="text-xl">Loading technical data...</div>
+        </div>
+      </div>
+    )
+  }
+
   const { technical, headers, icons, structuredData, performance, analytics } =
     metadata
 
@@ -121,30 +135,33 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
   }
 
   return (
-    <div className='analysis-section space-y-6'>
-      <div className='flex items-center justify-between'>
-        <div className='flex items-center gap-2'>
-          <Settings className='h-4 w-4 text-blue-600' />
-          <h3 className='text-lg font-semibold text-foreground'>
-            Performance & Technical
-          </h3>
+    <div className="w-full space-y-10">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Settings className="h-8 w-8 text-gray-600 dark:text-gray-400" />
+          <h1 className="text-3xl font-bold">Technical</h1>
         </div>
-        <div className='flex items-center gap-2'>
-          <span
-            className={`analysis-text-sm font-semibold ${
-              getIssueCount() === 0
-                ? 'text-emerald-600'
-                : getIssueCount() <= 2
-                ? 'text-amber-600'
-                : 'text-red-600'
-            }`}
-          >
-            {getIssueCount()} {getIssueCount() === 1 ? 'issue' : 'issues'}
-          </span>
+        <div className="text-right">
+          <div className={`text-2xl font-bold ${
+            getIssueCount() === 0
+              ? 'text-emerald-600'
+              : getIssueCount() <= 2
+              ? 'text-amber-600'
+              : 'text-red-600'
+          }`}>
+            {getIssueCount()}
+          </div>
+          <div className="text-sm text-gray-500">
+            {getIssueCount() === 1 ? 'issue found' : 'issues found'}
+          </div>
         </div>
       </div>
 
-      <div className='space-y-0 bg-card/30 rounded-lg border border-border/50 p-4'>
+      {/* Performance Section */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-semibold">Performance</h2>
+        <div className="grid gap-6">
         {performance?.loadTime && (
           <div className='analysis-list-item'>
             <div className='flex items-start gap-4'>
@@ -266,7 +283,13 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
             </div>
           </div>
         )}
+        </div>
+      </div>
 
+      {/* Security & Headers Section */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-semibold">Security & Headers</h2>
+        
         {/* Server and Compression */}
         {headers?.server && (
           <div className='py-2 text-sm border-b border-gray-100 dark:border-gray-800'>

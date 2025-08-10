@@ -19,6 +19,7 @@ import {
   Copy,
   Loader2,
   AlertCircle,
+  CheckCircle,
   Settings,
   Expand,
   Eye,
@@ -110,6 +111,7 @@ export default function WebsiteView ({
   const containerRef = useRef<HTMLDivElement>(null)
   const [isEnlargeDialogOpen, setIsEnlargeDialogOpen] = useState(false)
   const [enlargeDialogScale, setEnlargeDialogScale] = useState(1)
+  const [realIframeStatus, setRealIframeStatus] = useState<'loading' | 'loaded' | 'error'>('loading')
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
   const { updateViewIframeStatus } = useWebsiteViewer()
 
@@ -145,12 +147,58 @@ export default function WebsiteView ({
     return () => window.removeEventListener('resize', updateScale)
   }, [view.type, displayDimensions, globalZoom])
 
-  // Detection is now handled in WebsiteViewerContext - no need to run here
+  // Monitor real iframe loading status
+  useEffect(() => {
+    const iframe = iframeRef.current
+    if (!iframe) return
+    
+    const handleLoad = () => {
+      console.log('Iframe loaded:', view.url)
+      
+      // Simple check: if we can read the iframe's title and it's a browser error, it's blocked
+      setTimeout(() => {
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
+          if (iframeDoc) {
+            const title = iframeDoc.title || ''
+            // Browser error pages have specific titles
+            if (title.includes('This site can\'t be reached') || 
+                title.includes('refused to connect') ||
+                iframeDoc.body?.innerText?.includes('ERR_CONNECTION_REFUSED')) {
+              setRealIframeStatus('error')
+            } else {
+              setRealIframeStatus('loaded')
+            }
+          } else {
+            // Can't read = cross-origin = probably worked
+            setRealIframeStatus('loaded')
+          }
+        } catch {
+          // Can't access = cross-origin = probably worked  
+          setRealIframeStatus('loaded')
+        }
+      }, 500)
+    }
+    
+    const handleError = () => {
+      console.log('Iframe failed to load:', view.url)
+      setRealIframeStatus('error')
+    }
+    
+    iframe.addEventListener('load', handleLoad)
+    iframe.addEventListener('error', handleError)
+    
+    return () => {
+      iframe.removeEventListener('load', handleLoad)
+      iframe.removeEventListener('error', handleError)
+    }
+  }, [view.url])
 
   // Refresh iframe on refresh key
   useEffect(() => {
     if (refreshKey && refreshKey > 0) {
       if (iframeRef.current) {
+        setRealIframeStatus('loading') // Reset status on refresh
         iframeRef.current.src = iframeRef.current.src
       }
     }
@@ -217,17 +265,14 @@ export default function WebsiteView ({
   }
 
   const getStatusIcon = () => {
-    switch (view.iframeStatus) {
+    // Only show icons for error states, no spinners
+    switch (realIframeStatus) {
       case 'loading':
-        return <Loader2 className='h-3 w-3 animate-spin text-primary' />
+        return null // No spinner - let it load quietly
       case 'loaded':
-        return null // No icon when loaded
-      case 'blocked':
-        return <AlertCircle className='h-3 w-3 text-orange-600' />
+        return null // No icon when loaded - don't annoy users
       case 'error':
-        return <AlertCircle className='h-3 w-3 text-destructive' />
-      case 'timeout':
-        return <AlertCircle className='h-3 w-3 text-amber-600' />
+        return <AlertCircle className='h-3 w-3 text-red-600' />
       default:
         return null
     }
@@ -473,6 +518,35 @@ export default function WebsiteView ({
           }}
           title={`View ${view.id}`}
         />
+        
+        {/* Loading/Error Overlay */}
+        {/* Removed loading overlay - let iframe load quietly */}
+        
+        {realIframeStatus === 'error' && (
+          <div className="absolute inset-0 bg-red-50 flex items-center justify-center">
+            <div className="text-center max-w-xs">
+              <AlertCircle className="h-8 w-8 text-red-600 mx-auto mb-2" />
+              <p className="text-sm text-red-600 mb-1">Content Blocked</p>
+              <p className="text-xs text-red-500 mb-3">
+                Website refuses iframe embedding or connection failed
+              </p>
+              <div className="space-y-2">
+                <button 
+                  onClick={refreshView}
+                  className="block mx-auto text-xs text-red-700 hover:text-red-900 underline"
+                >
+                  Try again
+                </button>
+                <button 
+                  onClick={() => window.open(view.url, '_blank')}
+                  className="block mx-auto text-xs text-blue-700 hover:text-blue-900 underline"
+                >
+                  Open directly
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Enlarge Dialog */}

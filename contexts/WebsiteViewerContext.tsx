@@ -138,6 +138,7 @@ function sanitizeLighthouseData(data: any): LighthouseReport {
 }
 
 export type ViewType = 'desktop' | 'tablet' | 'mobileLarge' | 'mobile'
+export type TabType = 'viewports' | 'seo' | 'social' | 'technical'
 
 export interface View {
   id: number
@@ -243,6 +244,9 @@ interface WebsiteViewerContextType {
   updateViewIframeStatus: (id: number, status: IframeStatus, result?: IframeDetectionResult) => void
   // Navigation
   clearSite: () => void
+  // Tab management
+  selectedTab: TabType
+  setSelectedTab: (tab: TabType) => void
 }
 
 const WebsiteViewerContext = createContext<
@@ -258,6 +262,8 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
   
+  // Tab state
+  const [selectedTab, setSelectedTab] = useState<TabType>('viewports')
   
   // Metadata state
   const [metadata, setMetadata] = useState<WebsiteMetadata | null>(null)
@@ -329,23 +335,19 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   }
 
   const loadSiteInternal = async (formattedUrl: string) => {
-    // Start with loading status while we check
+    // Just create views as loaded - no more broken detection
     const newViews = [
-      { id: nextId, url: formattedUrl, type: 'desktop' as ViewType, iframeStatus: 'loading' as IframeStatus },
-      { id: nextId + 1, url: formattedUrl, type: 'tablet' as ViewType, iframeStatus: 'loading' as IframeStatus },
-      { id: nextId + 2, url: formattedUrl, type: 'mobileLarge' as ViewType, iframeStatus: 'loading' as IframeStatus },
-      { id: nextId + 3, url: formattedUrl, type: 'mobile' as ViewType, iframeStatus: 'loading' as IframeStatus }
+      { id: nextId, url: formattedUrl, type: 'desktop' as ViewType, iframeStatus: 'loaded' as IframeStatus },
+      { id: nextId + 1, url: formattedUrl, type: 'tablet' as ViewType, iframeStatus: 'loaded' as IframeStatus },
+      { id: nextId + 2, url: formattedUrl, type: 'mobileLarge' as ViewType, iframeStatus: 'loaded' as IframeStatus },
+      { id: nextId + 3, url: formattedUrl, type: 'mobile' as ViewType, iframeStatus: 'loaded' as IframeStatus }
     ]
     
     setViews(newViews)
     setCurrentSite(formattedUrl)
     setNextId(nextId + 4)
     addToHistory(formattedUrl)
-    // Keep the URL in the field instead of clearing it
     setUrl(formattedUrl)
-    
-    // Run iframe detection immediately for all views
-    runIframeDetectionForAllViews(formattedUrl, newViews)
   }
 
   const updateUrlParams = () => {
@@ -411,40 +413,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     )
   }
 
-  // Run iframe detection for all views immediately when URL is loaded
-  const runIframeDetectionForAllViews = async (url: string, views: View[]) => {
-    // Create a temporary container for detection
-    const tempContainer = document.createElement('div')
-    tempContainer.style.position = 'absolute'
-    tempContainer.style.top = '-9999px'
-    tempContainer.style.left = '-9999px'
-    tempContainer.style.width = '100px'
-    tempContainer.style.height = '100px'
-    document.body.appendChild(tempContainer)
-
-    try {
-      // Run detection just once - all viewports will have the same blocking behavior
-      const result = await iframeDetectionService.detectIframeStatus(url, tempContainer, { timeout: 5000 })
-      
-      // Update all views with the same result
-      views.forEach(view => {
-        updateViewIframeStatus(view.id, result.status, result)
-      })
-      
-      if (result.status === 'blocked') {
-        toast.info('Website blocks iframe embedding - good security practice! For testing, consider disabling X-Frame-Options in dev/staging environments.')
-      }
-    } catch (error) {
-      console.error('Detection failed:', error)
-      // Mark all views as error
-      views.forEach(view => {
-        updateViewIframeStatus(view.id, 'error')
-      })
-    } finally {
-      // Clean up temp container
-      document.body.removeChild(tempContainer)
-    }
-  }
+  // Removed broken detection logic
 
   const clearSite = () => {
     setViews([])
@@ -494,29 +463,37 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   // Metadata functions
   const fetchMetadata = async (urlOverride?: string) => {
     const targetUrl = urlOverride || currentSite
-    if (!targetUrl) return
+    console.log('fetchMetadata called with:', { targetUrl, currentSite, urlOverride })
+    if (!targetUrl) {
+      console.log('No target URL, returning early')
+      return
+    }
 
+    console.log('Starting metadata fetch for:', targetUrl)
     setMetadataLoading(true)
     setMetadataError(null)
     
     try {
+      console.log('Making API call to:', `/api/metadata?url=${encodeURIComponent(targetUrl)}`)
       const response = await fetch(`/api/metadata?url=${encodeURIComponent(targetUrl)}`)
       const data = await response.json()
+      console.log('API response:', data)
       
       if (data.success && data.data) {
+        console.log('Metadata extraction successful, setting data')
         setMetadata(data.data)
-        toast.success('Metadata extracted successfully')
       } else {
+        console.log('Metadata extraction failed:', data.error)
         setMetadataError(data.error || 'Failed to extract metadata')
         setMetadata(null)
-        toast.error('Failed to extract metadata')
       }
     } catch (error) {
+      console.log('Metadata fetch error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       setMetadataError(errorMessage)
       setMetadata(null)
-      toast.error('Failed to extract metadata')
     } finally {
+      console.log('Setting metadata loading to false')
       setMetadataLoading(false)
     }
   }
@@ -729,7 +706,9 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     fetchAllLighthouseReports,
     clearLighthouseReports,
     updateViewIframeStatus,
-    clearSite
+    clearSite,
+    selectedTab,
+    setSelectedTab
   }
 
   return (

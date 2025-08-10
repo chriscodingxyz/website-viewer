@@ -1,84 +1,77 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React from 'react'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import ViewportsSection from './sections/ViewportsSection'
 import AnalysisSection from './sections/AnalysisSection'
-import PerformanceAnalysisSection from './sections/PerformanceAnalysisSection'
-
-interface SectionState {
-  viewports: { expanded: boolean }
-  analysis: { expanded: boolean }
-  performance: { expanded: boolean }
-}
+import SEOSection from './metadata/SEOSection'
+import SocialPreview from './metadata/SocialPreview'
+import TechnicalSection from './metadata/TechnicalSection'
+// import PerformanceAnalysisSection from './sections/PerformanceAnalysisSection'
 
 export default function SectionContainer() {
-  const { currentSite, metadataLoading, lighthouseLoading } = useWebsiteViewer()
+  const { currentSite, metadataLoading, fetchMetadata, metadata, selectedTab } = useWebsiteViewer() // lighthouseLoading
 
-  const [sectionState, setSectionState] = useState<SectionState>({
-    viewports: { expanded: false },
-    analysis: { expanded: false },
-    performance: { expanded: false },
-  })
 
-  const prevMetadataLoading = useRef(metadataLoading)
-  const prevLighthouseLoading = useRef(lighthouseLoading)
+  // Removed automatic tab switching - let users stay on their chosen tab
+  // const prevMetadataLoading = useRef(metadataLoading)
+  // const prevLighthouseLoading = useRef(lighthouseLoading)
 
-  useEffect(() => {
-    // When metadata analysis finishes, open the analysis section
-    if (prevMetadataLoading.current && !metadataLoading) {
-      setSectionState(prev => ({ ...prev, analysis: { ...prev.analysis, expanded: true } }))
-    }
-    prevMetadataLoading.current = metadataLoading
-  }, [metadataLoading])
+  // useEffect(() => {
+  //   // When metadata analysis finishes, switch to SEO/technical tab
+  //   if (prevMetadataLoading.current && !metadataLoading) {
+  //     setSelectedTab('seo')
+  //   }
+  //   prevMetadataLoading.current = metadataLoading
+  // }, [metadataLoading])
 
-  useEffect(() => {
-    // When lighthouse analysis finishes, open the performance section
-    if (prevLighthouseLoading.current && !lighthouseLoading) {
-      setSectionState(prev => ({ ...prev, performance: { ...prev.performance, expanded: true } }))
-    }
-    prevLighthouseLoading.current = lighthouseLoading
-  }, [lighthouseLoading])
-
-  const toggleSection = (sectionKey: keyof SectionState) => {
-    setSectionState(prev => {
-      const isCurrentlyExpanded = prev[sectionKey].expanded
-      
-      // If clicking on an already expanded section, collapse it
-      if (isCurrentlyExpanded) {
-        return {
-          ...prev,
-          [sectionKey]: { expanded: false }
-        }
-      }
-      
-      // Otherwise, collapse all sections and expand only the clicked one
-      return {
-        viewports: { expanded: sectionKey === 'viewports' },
-        analysis: { expanded: sectionKey === 'analysis' },
-        performance: { expanded: sectionKey === 'performance' }
-      }
-    })
-  }
+  // useEffect(() => {
+  //   // When lighthouse analysis finishes, switch to performance tab
+  //   if (prevLighthouseLoading.current && !lighthouseLoading) {
+  //     setSelectedTab('performance')
+  //   }
+  //   prevLighthouseLoading.current = lighthouseLoading
+  // }, [lighthouseLoading])
 
   if (!currentSite) {
     return null
   }
 
+  const renderTabContent = () => {
+    switch (selectedTab) {
+      case 'viewports':
+        return <ViewportsSection expanded={true} onToggle={() => {}} />
+      case 'seo':
+        return (
+          <div className="w-full py-6 px-6">
+            <SEOSection metadata={metadata} />
+          </div>
+        )
+      case 'social':
+        return (
+          <div className="w-full py-6 px-6">
+            <SocialPreview metadata={metadata} />
+          </div>
+        )
+      case 'technical':
+        return (
+          <div className="w-full py-6 px-6">
+            <TechnicalSection metadata={metadata} />
+          </div>
+        )
+      // case 'performance':
+      //   return <PerformanceAnalysisSection expanded={true} onToggle={() => {}} />
+      default:
+        return <ViewportsSection expanded={true} onToggle={() => {}} />
+    }
+  }
+
   return (
     <div className="w-full">
-      <ViewportsSection 
-        expanded={sectionState.viewports.expanded}
-        onToggle={() => toggleSection('viewports')}
-      />
-      <AnalysisSection 
-        expanded={sectionState.analysis.expanded}
-        onToggle={() => toggleSection('analysis')}
-      />
-      <PerformanceAnalysisSection 
-        expanded={sectionState.performance.expanded}
-        onToggle={() => toggleSection('performance')}
-      />
+      {/* Tab Content */}
+      <div className="w-full">
+        {renderTabContent()}
+      </div>
     </div>
   )
 }

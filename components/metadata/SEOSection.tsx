@@ -7,10 +7,24 @@ import { Badge } from '@/components/ui/badge'
 import { CheckCircle, AlertTriangle, XCircle, Info, Globe, ExternalLink } from 'lucide-react'
 
 interface SEOSectionProps {
-  metadata: WebsiteMetadata
+  metadata?: WebsiteMetadata | null
 }
 
 export default function SEOSection({ metadata }: SEOSectionProps) {
+  if (!metadata) {
+    return (
+      <div className="w-full">
+        <div className="flex items-center gap-3 mb-8">
+          <Globe className="h-8 w-8 text-gray-600 dark:text-gray-400" />
+          <h1 className="text-3xl font-bold">SEO Analysis</h1>
+        </div>
+        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+          <div className="text-xl">Loading SEO data...</div>
+        </div>
+      </div>
+    )
+  }
+
   const { seo, sitemap } = metadata
 
 
@@ -37,26 +51,6 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
     return <XCircle className="h-6 w-6 text-red-500" />
   }
 
-  const getElementStatus = (label: string, value?: string) => {
-    // Use blue for "Present" status instead of orange
-    const presentClasses = "border-blue-200 text-blue-700 bg-blue-100 dark:border-blue-800/70 dark:text-blue-300 dark:bg-blue-900/50";
-    
-    if (!value) {
-      return { badge: 'Missing', badgeClass: "border-red-200 text-red-700 bg-red-100 dark:border-red-800/70 dark:text-red-300 dark:bg-red-900/50" };
-    }
-
-    if (label === 'Title') {
-      if (value.length >= 30 && value.length <= 60) return { badge: 'Perfect', badgeClass: "border-green-200 text-green-700 bg-green-100 dark:border-green-800/70 dark:text-green-300 dark:bg-green-900/50" };
-      if (value.length < 30) return { badge: 'Too Short', badgeClass: "border-amber-200 text-amber-700 bg-amber-100 dark:border-amber-800/70 dark:text-amber-300 dark:bg-amber-900/50" };
-      return { badge: 'Too Long', badgeClass: "border-amber-200 text-amber-700 bg-amber-100 dark:border-amber-800/70 dark:text-amber-300 dark:bg-amber-900/50" };
-    }
-    if (label === 'Description') {
-      if (value.length >= 120 && value.length <= 160) return { badge: 'Perfect', badgeClass: "border-green-200 text-green-700 bg-green-100 dark:border-green-800/70 dark:text-green-300 dark:bg-green-900/50" };
-      if (value.length < 120) return { badge: 'Too Short', badgeClass: "border-amber-200 text-amber-700 bg-amber-100 dark:border-amber-800/70 dark:text-amber-300 dark:bg-amber-900/50" };
-      return { badge: 'Too Long', badgeClass: "border-amber-200 text-amber-700 bg-amber-100 dark:border-amber-800/70 dark:text-amber-300 dark:bg-amber-900/50" };
-    }
-    return { badge: 'Present', badgeClass: presentClasses };
-  }
 
   const seoScore = getSEOScore()
 
@@ -177,28 +171,40 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
   const hasGoodDescription = seo.description && seo.description.length >= 120 && seo.description.length <= 160
 
   return (
-    <div className="analysis-section space-y-6">
+    <div className="w-full space-y-10">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-foreground">SEO Elements</h3>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <Globe className="h-8 w-8 text-gray-600 dark:text-gray-400" />
+          <h1 className="text-3xl font-bold">SEO Analysis</h1>
+        </div>
+        <div className="flex items-center gap-3">
           {getScoreIcon(seoScore.percentage)}
-          <span className={`analysis-text-sm font-semibold ${getScoreColor(seoScore.percentage)}`}>
-            {seoScore.percentage}% ({seoScore.score}/{seoScore.maxScore})
-          </span>
+          <div className="text-right">
+            <div className={`text-2xl font-bold ${getScoreColor(seoScore.percentage)}`}>
+              {seoScore.percentage}%
+            </div>
+            <div className="text-sm text-gray-500">
+              {seoScore.score}/{seoScore.maxScore} optimized
+            </div>
+          </div>
         </div>
       </div>
-      
-      <div className="space-y-0 bg-card/30 rounded-lg border border-border/50 p-4">
+
+      {/* SEO Elements Section */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-semibold">Meta Tags</h2>
+        <div className="grid gap-6">
         <SimpleListItem 
             label="Title" 
             value={seo.title} 
-            isGood={hasGoodTitle} 
+            isGood={!!hasGoodTitle} 
             optimalRange="30-60 chars"
           />
           <SimpleListItem 
             label="Description" 
             value={seo.description} 
-            isGood={hasGoodDescription} 
+            isGood={!!hasGoodDescription} 
             optimalRange="120-160 chars"
           />
           <SimpleListItem 
@@ -237,17 +243,15 @@ export default function SEOSection({ metadata }: SEOSectionProps) {
             isGood={!!seo.author} 
             optimalRange="author information for content"
         />
+        </div>
       </div>
 
       {/* Sitemap Section */}
       {sitemap && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Globe className="h-4 w-4 text-blue-600" />
-            <h4 className="analysis-text-sm font-semibold text-foreground">Sitemap</h4>
-          </div>
+        <div className="space-y-6">
+          <h2 className="text-2xl font-semibold">Sitemaps & Robots</h2>
           
-          <div className="space-y-3 bg-card/30 rounded-lg border border-border/50 p-4">
+          <div className="space-y-6">
             {/* robots.txt Status */}
             {sitemap.robotsTxt && (
               <div className="analysis-list-item">

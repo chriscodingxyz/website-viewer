@@ -26,7 +26,7 @@ export interface DetectionOptions {
 
 class IframeDetectionService {
   private defaultOptions: Required<DetectionOptions> = {
-    timeout: 15000, // Increased timeout - don't give false positives for slow sites
+    timeout: 12000, // Reasonable timeout - allow slow sites to load
     enablePreflight: true,
     checkContentAccess: true
   }
@@ -50,6 +50,8 @@ class IframeDetectionService {
     }
 
     try {
+      // Note: Removed early domain blocking check to avoid false positives
+      // We'll use known blocked domains only as hints later in the process
       // Method 1: Quick preflight check (limited by CORS)
       if (opts.enablePreflight) {
         try {
@@ -100,10 +102,28 @@ class IframeDetectionService {
             result.confidence = 'medium'
           }
         } else {
-          // Handle other statuses
-          result.status = result.methods.iframeLoad.status || 'error'
-          result.reason = result.methods.iframeLoad.reason || 'Unknown error'
-          result.confidence = 'high'
+          // Handle other statuses with less aggressive classification
+          const loadStatus = result.methods.iframeLoad.status
+          if (loadStatus === 'timeout') {
+            // Don't immediately assume timeout = blocked, check if it's a known blocked domain
+            if (this.isDomainKnownToBlock(url)) {
+              result.status = 'blocked'
+              result.reason = 'timeout-known-blocked'
+              result.confidence = 'high'
+            } else {
+              result.status = 'timeout'
+              result.reason = 'loading-timeout'
+              result.confidence = 'low'  // Low confidence - could be slow loading
+            }
+          } else if (loadStatus === 'error') {
+            result.status = 'error'
+            result.reason = 'loading-error'  
+            result.confidence = 'medium'
+          } else {
+            result.status = loadStatus || 'error'
+            result.reason = result.methods.iframeLoad.reason || 'Unknown error'
+            result.confidence = 'medium'
+          }
         }
       } catch (error) {
         console.log('❌ Iframe load test failed:', error)
@@ -207,13 +227,13 @@ class IframeDetectionService {
         resolve(result)
       }
 
-      // Set up timeout - treat as timeout, not blocked (could be slow site)
+      // Set up timeout - could be slow loading or blocked
       timeoutId = setTimeout(() => {
         console.log('⏰ Iframe detection timeout for:', url)
         resolveOnce({
           status: 'timeout',
           iframe: null,
-          reason: 'Loading timeout - website may be slow or blocked'
+          reason: 'Loading timeout - may be slow loading or blocked'
         })
       }, timeout)
 
@@ -231,9 +251,9 @@ class IframeDetectionService {
       iframe.addEventListener('error', () => {
         console.log('❌ Iframe error for:', url)
         resolveOnce({
-          status: 'blocked', // Changed from 'error' to 'blocked' since most errors are due to blocking
+          status: 'error', // Don't assume error = blocked
           iframe: null,
-          reason: 'Website prevents iframe embedding'
+          reason: 'Failed to load iframe - could be network issue or blocking'
         })
       })
 
@@ -247,10 +267,21 @@ class IframeDetectionService {
       const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
 
       if (!iframeDoc) {
+        // Can't access content due to cross-origin - this is normal for most sites
+        // Check iframe dimensions as a hint - blocked iframes often have 0 or very small dimensions
+        const rect = iframe.getBoundingClientRect()
+        if (rect.width === 0 || rect.height === 0) {
+          return {
+            blocked: true,
+            reason: 'zero-dimensions',
+            message: 'Iframe has zero dimensions - likely blocked'
+          }
+        }
+        
         return {
-          blocked: true,
-          reason: 'no-document-access',
-          message: 'Cannot access iframe content due to same-origin policy'
+          blocked: false,
+          reason: 'cross-origin-success',
+          message: 'Cross-origin access denied - iframe loaded successfully but content protected'
         }
       }
 
@@ -289,9 +320,9 @@ class IframeDetectionService {
 
     } catch (error) {
       return {
-        blocked: true,
-        reason: 'access-denied',
-        message: 'Cross-origin access denied - website likely allows embedding',
+        blocked: false,
+        reason: 'cross-origin-success',
+        message: 'Cross-origin access denied - iframe loaded successfully but content protected',
         error: error instanceof Error ? error.message : 'Unknown error'
       }
     }
@@ -310,18 +341,56 @@ class IframeDetectionService {
     try {
       const hostname = new URL(url).hostname.toLowerCase()
       const blockedDomains = [
-        'google.com',
-        'facebook.com', 
-        'twitter.com',
-        'instagram.com',
-        'linkedin.com',
-        'amazon.com',
-        'apple.com',
-        'microsoft.com',
-        'youtube.com',
-        'github.com',
-        'stackoverflow.com',
-        'reddit.com'
+        // Google Services
+        'google.com', 'google.ca', 'google.co.uk', 'google.com.au', 'google.de', 'google.fr',
+        'gmail.com', 'docs.google.com', 'drive.google.com', 'maps.google.com', 'photos.google.com',
+        'accounts.google.com', 'myaccount.google.com', 'pay.google.com', 'cloud.google.com',
+        
+        // Social Media
+        'facebook.com', 'fb.com', 'messenger.com', 'instagram.com', 'whatsapp.com',
+        'twitter.com', 'x.com', 'linkedin.com', 'tiktok.com', 'snapchat.com',
+        'pinterest.com', 'discord.com', 'telegram.org', 'signal.org',
+        
+        // Video Platforms
+        'youtube.com', 'youtu.be', 'vimeo.com', 'twitch.tv', 'netflix.com',
+        'hulu.com', 'disneyplus.com', 'primevideo.com', 'hbomax.com',
+        
+        // E-commerce & Shopping
+        'amazon.com', 'amazon.ca', 'amazon.co.uk', 'amazon.de', 'amazon.fr',
+        'ebay.com', 'walmart.com', 'target.com', 'bestbuy.com', 'etsy.com',
+        'shopify.com', 'aliexpress.com', 'alibaba.com',
+        
+        // Financial & Banking
+        'paypal.com', 'stripe.com', 'square.com', 'coinbase.com', 'binance.com',
+        'wellsfargo.com', 'bankofamerica.com', 'chase.com', 'citibank.com',
+        'americanexpress.com', 'discover.com', 'capitalone.com',
+        
+        // Tech Companies
+        'apple.com', 'icloud.com', 'microsoft.com', 'live.com', 'outlook.com',
+        'office.com', 'onedrive.com', 'xbox.com', 'skype.com',
+        'adobe.com', 'salesforce.com', 'zoom.us', 'slack.com',
+        
+        // Development & Code
+        'github.com', 'gitlab.com', 'bitbucket.org', 'stackoverflow.com',
+        'npmjs.com', 'pypi.org', 'docker.com', 'aws.amazon.com',
+        'console.aws.amazon.com', 'azure.microsoft.com', 'console.cloud.google.com',
+        
+        // Communication & Email
+        'yahoo.com', 'protonmail.com', 'mail.com', 'aol.com',
+        
+        // News & Media
+        'nytimes.com', 'wsj.com', 'washingtonpost.com', 'cnn.com',
+        'bbc.com', 'reuters.com', 'bloomberg.com', 'forbes.com',
+        
+        // Government & Security
+        'irs.gov', 'usa.gov', 'canada.ca', 'gov.uk', 'uscis.gov',
+        
+        // Dating & Social
+        'tinder.com', 'bumble.com', 'match.com', 'okcupid.com',
+        
+        // General Sites Known for Strict Policies
+        'reddit.com', 'quora.com', 'medium.com', 'substack.com',
+        'notion.so', 'airtable.com', 'figma.com', 'canva.com'
       ]
 
       return blockedDomains.some(domain => 
@@ -332,19 +401,72 @@ class IframeDetectionService {
     }
   }
 
+  // Retry detection with different strategy for uncertain results
+  async retryDetection(
+    url: string, 
+    container: HTMLElement, 
+    previousResult?: IframeDetectionResult,
+    options?: DetectionOptions
+  ): Promise<IframeDetectionResult> {
+    const opts = { 
+      ...this.defaultOptions, 
+      ...options, 
+      timeout: 5000, // Shorter timeout for retry
+      checkContentAccess: false // Skip content access check on retry
+    }
+    
+    console.log('🔄 Retrying iframe detection for:', url, 'Previous result:', previousResult?.status)
+    
+    // If previous result was timeout or uncertain, try with more aggressive blocking detection
+    if (previousResult?.status === 'timeout' || previousResult?.confidence === 'low') {
+      // Use even shorter timeout for retry
+      opts.timeout = 3000
+      
+      try {
+        const result = await this.detectIframeStatus(url, container, opts)
+        // If still uncertain, default to blocked for safety
+        if (result.confidence === 'low' || result.status === 'timeout') {
+          result.status = 'blocked'
+          result.reason = 'retry-timeout-blocked'
+          result.confidence = 'medium'
+        }
+        return result
+      } catch (error) {
+        return {
+          status: 'blocked',
+          url,
+          reason: 'retry-failed',
+          confidence: 'medium',
+          detectionTime: 0,
+          methods: { retryError: error instanceof Error ? error.message : 'Unknown error' }
+        }
+      }
+    }
+    
+    // For other cases, return original result or run fresh detection
+    return previousResult || this.detectIframeStatus(url, container, opts)
+  }
+
   // Get user-friendly message for different blocking scenarios
   getBlockedMessage(result: IframeDetectionResult): string {
     switch (result.reason) {
+      case 'known-blocked-domain':
+        return 'This website is known to block iframe embedding for security.'
       case 'explicit-headers':
         return 'This website prevents embedding for security reasons.'
       case 'loading-timeout':
+      case 'retry-timeout-blocked':
         return 'Website took too long to load - likely blocked or experiencing issues.'
+      case 'loading-error':
+        return 'Website failed to load in iframe - likely blocked by security headers.'
       case 'no-document-access':
         return 'Website loaded but content is not accessible due to security policies.'
       case 'blocked-content':
         return 'Website explicitly refuses to be embedded in other sites.'
       case 'empty-content':
         return 'Website loaded but appears to be empty or blocked.'
+      case 'retry-failed':
+        return 'Multiple detection attempts failed - website likely blocks embedding.'
       default:
         return 'Website cannot be previewed due to security restrictions.'
     }

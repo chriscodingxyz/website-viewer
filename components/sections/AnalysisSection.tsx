@@ -32,13 +32,13 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
     return { score, maxScore, percentage: Math.round((score / maxScore) * 100) }
   }
 
-  const getPerformanceScore = (metadata: any) => {
-    if (!metadata.performance?.loadTime) return { grade: 'Unknown', color: 'text-gray-500', bgColor: 'bg-gray-100' }
-    const loadTime = metadata.performance.loadTime
-    if (loadTime < 1000) return { grade: 'Excellent', color: 'text-green-700', bgColor: 'bg-green-100' }
-    if (loadTime < 3000) return { grade: 'Good', color: 'text-yellow-700', bgColor: 'bg-yellow-100' }
-    return { grade: 'Poor', color: 'text-red-700', bgColor: 'bg-red-100' }
-  }
+  // const getPerformanceScore = (metadata: any) => {
+  //   if (!metadata.performance?.loadTime) return { grade: 'Unknown', color: 'text-gray-500', bgColor: 'bg-gray-100' }
+  //   const loadTime = metadata.performance.loadTime
+  //   if (loadTime < 1000) return { grade: 'Excellent', color: 'text-green-700', bgColor: 'bg-green-100' }
+  //   if (loadTime < 3000) return { grade: 'Good', color: 'text-yellow-700', bgColor: 'bg-yellow-100' }
+  //   return { grade: 'Poor', color: 'text-red-700', bgColor: 'bg-red-100' }
+  // }
 
   const getSocialScore = (metadata: any) => {
     let score = 0
@@ -53,10 +53,10 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
 
   const getCriticalIssues = (metadata: any) => {
     const issues = []
-    const { seo, performance, openGraph } = metadata
+    const { seo, openGraph } = metadata // performance
     if (!seo.title) issues.push('Missing title')
     if (!seo.description) issues.push('Missing meta description')
-    if (performance?.loadTime && performance.loadTime > 3000) issues.push('Slow loading time')
+    // if (performance?.loadTime && performance.loadTime > 3000) issues.push('Slow loading time')
     if (!openGraph.image) issues.push('Missing social image')
     return issues
   }
@@ -98,82 +98,34 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
   }
 
   return (
-    <section className="w-full border-b border-border bg-background">
-      <div className="w-full border-b border-border/50 cursor-pointer bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 sticky top-16 z-40" onClick={onToggle}>
-        <div className="w-full px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center text-white">
-                <BarChart3 className="h-4 w-4" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-foreground mb-1">Website Analysis</h2>
-                <p className="text-sm text-muted-foreground">SEO, social media, technical details, and performance insights</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              {!metadata && !metadataLoading && (
-                <Button size="sm" onClick={(e) => { e.stopPropagation(); fetchMetadata(); }} className="bg-orange-600 hover:bg-orange-700 text-white">
-                  <Search className="h-4 w-4 mr-2" />
-                  Extract Data
-                </Button>
-              )}
-              {metadataLoading && (
-                <div className="flex items-center gap-2 text-sm font-semibold text-orange-600"><Loader2 className="h-5 w-5 animate-spin" />Extracting...</div>
-              )}
-              {metadata && !metadataLoading && (
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-green-600"><CheckCircle className="h-5 w-5" />Analysis Ready</div>
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button variant="outline" size="sm" onClick={copyMetadata}><Copy className="h-3 w-3 mr-1" />Copy</Button>
-                    <Button variant="outline" size="sm" onClick={exportMetadata}><Download className="h-3 w-3 mr-1" />Export</Button>
-                  </div>
-                </div>
-              )}
-               {metadataError && (
-                 <div className="flex items-center gap-2 text-sm font-semibold text-red-600"><AlertCircle className="h-5 w-5" />Error</div>
-              )}
-              <div onClick={(e) => e.stopPropagation()}>{expanded ? <ChevronUp className="h-6 w-6 text-muted-foreground" /> : <ChevronDown className="h-6 w-6 text-muted-foreground" />}</div>
-            </div>
+    <div className="w-full">
+      {metadata && (
+        <div className="flex items-center justify-center gap-3 px-6 py-3 bg-muted/20 border-b border-border/50">
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={copyMetadata}>
+              <Copy className="h-3 w-3 mr-1" />
+              Copy
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportMetadata}>
+              <Download className="h-3 w-3 mr-1" />
+              Export
+            </Button>
           </div>
         </div>
-      </div>
+      )}
 
-
-      {expanded && (
-        <div className="w-full py-6 px-6 relative">
-          {!metadata && !metadataLoading && !metadataError && (
+      <div className="w-full py-6 px-6 relative">
+        {!metadata && !currentSite && (
             <div className="flex items-center justify-center h-32 bg-muted/10 rounded-xl">
               <div className="text-center">
                 <Search className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
-                <h3 className="text-lg font-semibold mb-2">Extract Website Data</h3>
-                <p className="text-sm text-muted-foreground max-w-md">Click the &quot;Extract Data&quot; button in the header to get started.</p>
+                <h3 className="text-lg font-semibold mb-2">Website Analysis</h3>
+                <p className="text-sm text-muted-foreground max-w-md">Enter a website URL to automatically extract metadata and analyze the site.</p>
               </div>
             </div>
           )}
 
-          {metadataLoading && (
-            <div className="flex items-center justify-center h-32 bg-orange-50/80 dark:bg-orange-950/40 border border-orange-200/60 dark:border-orange-800/40 rounded-xl">
-              <div className="text-center">
-                <Loader2 className="h-8 w-8 mx-auto text-orange-600 dark:text-orange-400 animate-spin mb-3" />
-                <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Analyzing Website</h3>
-                <p className="text-orange-700 dark:text-orange-300 font-medium">Extracting metadata for {currentSite}...</p>
-              </div>
-            </div>
-          )}
-
-          {metadataError && (
-            <div className="flex items-center justify-center h-32 bg-red-50 dark:bg-red-950/10 rounded-xl">
-              <div className="text-center">
-                <AlertCircle className="h-8 w-8 mx-auto text-red-500 mb-3" />
-                <h3 className="text-lg font-semibold mb-2 text-red-800 dark:text-red-200">Analysis Failed</h3>
-                <p className="text-sm text-red-600 dark:text-red-400 mb-4">{metadataError}</p>
-                <Button onClick={() => fetchMetadata()} variant="outline" size="sm"><Search className="h-4 w-4 mr-2" />Try Again</Button>
-              </div>
-            </div>
-          )}
-
-          {metadata && (
+          {currentSite && (
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               {/* Left column - SEO takes full width */}
               <div className="xl:col-span-1">
@@ -194,7 +146,6 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
             </div>
           )}
         </div>
-      )}
-    </section>
+    </div>
   )
 }
