@@ -3,83 +3,120 @@
 import React, { useState } from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle, AlertTriangle, XCircle, Share2, ExternalLink, Eye } from 'lucide-react'
-import { FacebookLogo, XLogo } from '@phosphor-icons/react'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Share2,
+  ExternalLink,
+  Eye,
+  Search
+} from 'lucide-react'
+import {
+  FacebookLogo,
+  XLogo,
+  GoogleLogo,
+  DiscordLogo,
+  WhatsappLogo,
+  LinkedinLogo,
+  TelegramLogo
+} from '@phosphor-icons/react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from '@/components/ui/dialog'
+import Image from 'next/image'
 
 interface SocialPreviewProps {
   metadata?: WebsiteMetadata | null
 }
 
-export default function SocialPreview({ metadata }: SocialPreviewProps) {
+export default function SocialPreview ({ metadata }: SocialPreviewProps) {
   if (!metadata) {
     return (
-      <div className="w-full">
-        <div className="flex items-center gap-3 mb-8">
-          <Share2 className="h-8 w-8 text-gray-600 dark:text-gray-400" />
-          <h1 className="text-3xl font-bold">Social Media</h1>
-        </div>
-        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-          <div className="text-xl">Loading social media data...</div>
+      <div className='w-full'>
+        <div className='text-center py-16 text-gray-500 dark:text-gray-400'>
+          <div className='text-xl'>Loading social media data...</div>
         </div>
       </div>
     )
   }
   const { openGraph, twitterCard, seo } = metadata
 
-  const SimpleListItem = ({ icon, label, value, status }: {
+  const SimpleListItem = ({
+    icon,
+    label,
+    value,
+    status
+  }: {
     icon: string
     label: string
     value?: string
     status: 'present' | 'missing' | 'inherited'
   }) => {
-    const statusIcon = status === 'present' 
-      ? <CheckCircle className="h-4 w-4" /> 
-      : status === 'inherited'
-      ? <AlertTriangle className="h-4 w-4" />
-      : <XCircle className="h-4 w-4" />
-    
-    const badgeClass = status === 'present' 
-      ? 'analysis-badge-success'
-      : status === 'inherited'
-      ? 'analysis-badge-warning'
-      : 'analysis-badge-error'
-    
-    const statusText = status === 'present' ? 'Set' : status === 'inherited' ? 'Inherited' : 'Missing'
-    
+    const statusIcon =
+      status === 'present' ? (
+        <CheckCircle className='h-4 w-4' />
+      ) : status === 'inherited' ? (
+        <AlertTriangle className='h-4 w-4' />
+      ) : (
+        <XCircle className='h-4 w-4' />
+      )
+
+    const badgeClass =
+      status === 'present'
+        ? 'analysis-badge-success'
+        : status === 'inherited'
+        ? 'analysis-badge-warning'
+        : 'analysis-badge-error'
+
+    const statusText =
+      status === 'present'
+        ? 'Set'
+        : status === 'inherited'
+        ? 'Inherited'
+        : 'Missing'
+
     return (
-      <div className="analysis-list-item">
-        <div className="flex items-start gap-4">
-          <div className={`mt-0.5 ${status === 'present' ? 'text-emerald-600' : status === 'inherited' ? 'text-amber-600' : 'text-red-600'}`}>
+      <div className='analysis-list-item'>
+        <div className='flex items-start gap-4'>
+          <div
+            className={`mt-0.5 ${
+              status === 'present'
+                ? 'text-emerald-600'
+                : status === 'inherited'
+                ? 'text-amber-600'
+                : 'text-red-600'
+            }`}
+          >
             {statusIcon}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold text-foreground analysis-text-sm">{label}</span>
-              <div className={badgeClass}>
-                {statusText}
-              </div>
+          <div className='flex-1 min-w-0'>
+            <div className='flex items-center justify-between mb-2'>
+              <span className='font-semibold text-foreground analysis-text-sm'>
+                {label}
+              </span>
+              <div className={badgeClass}>{statusText}</div>
             </div>
-            
+
             {value ? (
-              <div className="space-y-2">
-                <p className="text-muted-foreground analysis-text-sm leading-relaxed break-words">
+              <div className='space-y-2'>
+                <p className='text-muted-foreground analysis-text-sm leading-relaxed break-words'>
                   {value}
                 </p>
                 {status === 'inherited' && (
-                  <p className="analysis-text-xs text-muted-foreground pl-3 border-l-2 border-amber-200 border-l-amber-400">
-                    📋 Inherited from SEO meta {label.toLowerCase().replace('opengraph ', '')} - consider adding dedicated social media tags
+                  <p className='analysis-text-xs text-muted-foreground pl-3 border-l-2 border-amber-200 border-l-amber-400'>
+                    📋 Inherited from SEO meta{' '}
+                    {label.toLowerCase().replace('opengraph ', '')} - consider
+                    adding dedicated social media tags
                   </p>
                 )}
               </div>
             ) : (
-              <p className="analysis-text-xs text-muted-foreground pl-3 border-l-2 border-border/40">
+              <p className='analysis-text-xs text-muted-foreground pl-3 border-l-2 border-border/40'>
                 Add {label.toLowerCase()} for better social media sharing
               </p>
             )}
@@ -92,262 +129,705 @@ export default function SocialPreview({ metadata }: SocialPreviewProps) {
   const getSocialScore = () => {
     let score = 0
     const maxScore = 8 // OpenGraph (4) + Twitter (4)
-    
+
     // OpenGraph scoring (proper social media tags)
     if (openGraph.title) score += 1
     if (openGraph.description) score += 1
     if (openGraph.image) score += 1
     if (openGraph.type) score += 1
-    
+
     // Twitter Card scoring (dedicated Twitter tags, not inherited)
     if (twitterCard.card) score += 1
-    if (twitterCard.title) score += 1  // Only count if explicitly set, not inherited
-    if (twitterCard.description) score += 1  // Only count if explicitly set
-    if (twitterCard.image) score += 1  // Twitter-specific image
-    
+    if (twitterCard.title) score += 1 // Only count if explicitly set, not inherited
+    if (twitterCard.description) score += 1 // Only count if explicitly set
+    if (twitterCard.image) score += 1 // Twitter-specific image
+
     return { score, maxScore, percentage: Math.round((score / maxScore) * 100) }
   }
 
   const socialScore = getSocialScore()
 
-  const SocialPreviewCard = ({ platform }: { platform: 'facebook' | 'twitter' }) => {
-    const isTwitter = platform === 'twitter'
-    const title = (isTwitter ? twitterCard.title : openGraph.title) || seo.title || 'No Title'
-    const description = (isTwitter ? twitterCard.description : openGraph.description) || seo.description || 'No Description'
-    const image = (isTwitter ? twitterCard.image : openGraph.image) || '/placeholder-social.jpg'
-    
-    const SocialCard = ({ isDialog = false }: { isDialog?: boolean }) => (
-      <div className={`border border-border rounded-lg overflow-hidden bg-card ${
-        isDialog ? 'shadow-none' : 'shadow-sm hover:shadow-md transition-shadow'
-      } ${!isDialog ? 'cursor-pointer hover:border-border/80' : ''}`}>
-        <div className={`${isDialog ? 'aspect-[2/1]' : 'aspect-[1.91/1]'} bg-muted/30 relative overflow-hidden`}>
-          {(openGraph.image || twitterCard.image) ? (
-            <div className="w-full h-full relative">
-              <img 
-                src={image} 
-                alt="Social preview" 
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Hide the broken image and show emoji fallback
-                  e.currentTarget.style.display = 'none'
-                  const parent = e.currentTarget.parentElement
-                  if (parent && !parent.querySelector('.fallback-emoji')) {
-                    const fallback = document.createElement('div')
-                    fallback.className = 'fallback-emoji absolute inset-0 flex items-center justify-center text-muted-foreground'
-                    fallback.innerHTML = '<div class="text-center"><div class="text-4xl mb-2">🖼️</div><div class="text-xs">Image missing</div></div>'
-                    parent.appendChild(fallback)
-                  }
-                }}
+  const SocialPreviewCard = ({
+    platform
+  }: {
+    platform:
+      | 'facebook'
+      | 'twitter'
+      | 'google'
+      | 'discord'
+      | 'whatsapp'
+      | 'linkedin'
+      | 'telegram'
+  }) => {
+    const title =
+      openGraph.title || twitterCard.title || seo.title || 'No Title'
+    const description =
+      openGraph.description ||
+      twitterCard.description ||
+      seo.description ||
+      'No Description'
+    const image = openGraph.image || twitterCard.image
+    const siteName = openGraph.siteName || new URL(metadata.url).hostname
+    const url = metadata.url
+
+    const SocialCard = ({ isDialog = false }: { isDialog?: boolean }) => {
+      const getPlatformIcon = () => {
+        switch (platform) {
+          case 'google':
+            return <Search className='h-4 w-4 text-blue-600' />
+          case 'discord':
+            return (
+              <DiscordLogo className='h-4 w-4 text-indigo-500' weight='fill' />
+            )
+          case 'whatsapp':
+            return (
+              <WhatsappLogo className='h-4 w-4 text-green-500' weight='fill' />
+            )
+          case 'linkedin':
+            return (
+              <LinkedinLogo className='h-4 w-4 text-blue-700' weight='fill' />
+            )
+          case 'telegram':
+            return (
+              <TelegramLogo className='h-4 w-4 text-blue-500' weight='fill' />
+            )
+          case 'twitter':
+            return (
+              <XLogo
+                className='h-4 w-4 text-gray-900 dark:text-gray-100'
+                weight='fill'
               />
+            )
+          case 'facebook':
+            return (
+              <FacebookLogo className='h-4 w-4 text-blue-600' weight='fill' />
+            )
+          default:
+            return null
+        }
+      }
+
+      const getPlatformName = () => {
+        switch (platform) {
+          case 'google':
+            return 'Google Search'
+          case 'discord':
+            return 'Discord'
+          case 'whatsapp':
+            return 'WhatsApp'
+          case 'linkedin':
+            return 'LinkedIn'
+          case 'telegram':
+            return 'Telegram'
+          case 'twitter':
+            return 'Twitter/X'
+          case 'facebook':
+            return 'Facebook'
+          default:
+            return platform
+        }
+      }
+
+      // Google Search Result Style
+      if (platform === 'google') {
+        return (
+          <div className='space-y-4'>
+            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+              <svg className='w-4 h-4' viewBox='0 0 24 24' fill='none'>
+                <path
+                  d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'
+                  fill='#4285F4'
+                />
+                <path
+                  d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z'
+                  fill='#34A853'
+                />
+                <path
+                  d='M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z'
+                  fill='#FBBC05'
+                />
+                <path
+                  d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z'
+                  fill='#EA4335'
+                />
+              </svg>
+              <span className='text-sm font-medium text-gray-700'>Google</span>
             </div>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <div className="text-4xl mb-2">🖼️</div>
-                <div className="text-xs">Image missing</div>
+            <div className='bg-white'>
+              <div className='flex items-center gap-2 mb-1'>
+                <div className='w-4 h-4 rounded-sm overflow-hidden flex-shrink-0'>
+                  {metadata.icons && metadata.icons.length > 0 ? (
+                    <img
+                      src={metadata.icons[0].href}
+                      alt='favicon'
+                      className='w-full h-full object-contain'
+                      onError={e => {
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                  ) : (
+                    <div className='w-4 h-4 bg-gray-100 rounded-sm'></div>
+                  )}
+                </div>
+                <div className='text-sm text-green-700 truncate font-normal'>
+                  {url}
+                </div>
               </div>
+              <h3 className='text-blue-600 text-xl mb-1 line-clamp-1 hover:underline cursor-pointer font-normal'>
+                {title}
+              </h3>
+              <p className='text-gray-600 text-sm line-clamp-2 leading-relaxed'>
+                {description}
+              </p>
             </div>
-          )}
-          {!isDialog && (
-            <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
-              <Eye className="h-6 w-6 text-white" />
-            </div>
-          )}
-        </div>
-        <div className={`${isDialog ? 'p-6' : 'p-4'} analysis-font`}>
-          <div className="analysis-text-xs text-muted-foreground mb-2 uppercase tracking-wider font-medium">
-            {isTwitter ? 'Twitter Card' : 'Facebook/LinkedIn'}
           </div>
-          <h4 className={`font-semibold text-foreground ${isDialog ? 'text-base' : 'analysis-text-sm'} mb-2 ${isDialog ? '' : 'line-clamp-2'} leading-snug`}>
-            {title}
-          </h4>
-          <p className={`${isDialog ? 'text-sm' : 'analysis-text-xs'} text-muted-foreground ${isDialog ? '' : 'line-clamp-2'} leading-relaxed`}>
-            {description}
-          </p>
-          {isDialog && (
-            <div className="mt-4 pt-4 border-t border-border/50">
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-foreground">Title</span>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-1 rounded-md font-medium ${
-                          title.length <= 60 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 
-                          'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                        }`}>
-                          {title.length} chars
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground pl-3 border-l-2 border-border/40">
-                      <div className="flex justify-between">
-                        <span>Current length:</span>
-                        <span className="font-medium">{title.length} characters</span>
-                      </div>
-                      <div className="flex justify-between mt-1">
-                        <span>Recommended:</span>
-                        <span className="font-medium">{isTwitter ? '70 characters max' : '60 characters max'}</span>
-                      </div>
-                    </div>
-                  </div>
+        )
+      }
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-foreground">Description</span>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-1 rounded-md font-medium ${
-                          description.length <= (isTwitter ? 200 : 155) ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 
-                          'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                        }`}>
-                          {description.length} chars
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground pl-3 border-l-2 border-border/40">
-                      <div className="flex justify-between">
-                        <span>Current length:</span>
-                        <span className="font-medium">{description.length} characters</span>
-                      </div>
-                      <div className="flex justify-between mt-1">
-                        <span>Recommended:</span>
-                        <span className="font-medium">{isTwitter ? '200 characters max' : '155 characters max'}</span>
-                      </div>
-                    </div>
+      // Discord Rich Embed Style
+      if (platform === 'discord') {
+        return (
+          <div className='space-y-4'>
+            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+              <DiscordLogo className='w-4 h-4 text-indigo-500' weight='fill' />
+              <span className='text-sm font-medium text-gray-700'>Discord</span>
+            </div>
+            <div className='bg-gray-800 text-white p-4 rounded-lg'>
+              <div className='flex items-center gap-3 mb-4'>
+                <Image
+                  src='/v1punk.png'
+                  alt='cryptopunk'
+                  width={40}
+                  height={40}
+                  className='w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center'
+                />
+                <div>
+                  <div className='flex items-center gap-2'>
+                    <span className='text-white font-medium'>
+                      cryptopunk420
+                    </span>
+                    <div className='w-3 h-3 bg-green-500 rounded-full'></div>
+                    <span className='text-xs text-gray-400'>
+                      Today at 3:14 PM
+                    </span>
                   </div>
-
-                  {image && image !== '/placeholder-social.jpg' && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-foreground">Image</span>
-                        <div className="analysis-badge-success">
-                          Set
-                        </div>
-                      </div>
-                      <div className="text-xs text-muted-foreground pl-3 border-l-2 border-border/40">
-                        <div className="flex justify-between">
-                          <span>URL:</span>
-                          <span className="font-medium truncate ml-2 max-w-48">{image}</span>
-                        </div>
-                        <div className="flex justify-between mt-1">
-                          <span>Recommended size:</span>
-                          <span className="font-medium">{isTwitter ? '1200×628px' : '1200×630px'}</span>
-                        </div>
-                      </div>
+                </div>
+              </div>
+              <div className='ml-13'>
+                <a href={url} className='text-blue-400 hover:underline text-sm'>
+                  {url}
+                </a>
+                <div className='border-l-4 border-blue-500 bg-gray-700 p-4 rounded-r mt-2 max-w-lg'>
+                  <div className='text-blue-400 text-sm mb-1'>{siteName}</div>
+                  <h4 className='text-blue-300 text-base font-medium mb-2 line-clamp-2'>
+                    {title}
+                  </h4>
+                  <p className='text-gray-300 text-sm line-clamp-2 leading-relaxed mb-3'>
+                    {description}
+                  </p>
+                  {image && (
+                    <div className='w-full max-w-sm h-48 bg-gray-600 rounded overflow-hidden'>
+                      <img
+                        src={image}
+                        alt='Discord preview'
+                        className='w-full h-full object-cover'
+                      />
                     </div>
                   )}
                 </div>
+                <div className='flex items-center gap-4 mt-2'>
+                  <div className='flex items-center gap-1'>
+                    <span className='text-lg'>❤️</span>
+                    <span className='text-gray-400 text-sm'>4</span>
+                  </div>
+                  <div className='flex items-center gap-1'>
+                    <span className='text-lg'>⚡</span>
+                    <span className='text-gray-400 text-sm'>7</span>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
-        </div>
-      </div>
-    )
-    
-    return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <div>
-            <SocialCard />
           </div>
-        </DialogTrigger>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {isTwitter ? (
-                <XLogo className="h-5 w-5 text-gray-900 dark:text-gray-100" weight="fill" />
-              ) : (
-                <FacebookLogo className="h-5 w-5 text-blue-600" weight="fill" />
+        )
+      }
+
+      // WhatsApp Link Preview Style
+      if (platform === 'whatsapp') {
+        return (
+          <div className='space-y-4'>
+            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+              <WhatsappLogo className='w-4 h-4 text-green-500' weight='fill' />
+              <span className='text-sm font-medium text-gray-700'>
+                WhatsApp
+              </span>
+            </div>
+            <div className='flex justify-end'>
+              <div className='max-w-xs bg-green-200 rounded-2xl p-2 relative'>
+                {image && (
+                  <div className='w-full h-32 bg-gray-800 rounded-t-lg overflow-hidden mb-0'>
+                    <Image
+                      src={image}
+                      alt='WhatsApp preview'
+                      width={200}
+                      height={128}
+                      className='w-full h-full object-cover'
+                    />
+                  </div>
+                )}
+                <div className='bg-green-200 rounded-b-lg p-2'>
+                  <h4 className='text-gray-800 text-sm font-medium mb-1 line-clamp-1'>
+                    {title}
+                  </h4>
+                  <p className='text-gray-600 text-xs line-clamp-2 mb-2'>
+                    {description}
+                  </p>
+
+                  <div className='flex items-center justify-between'>
+                    <div className='text-sm text-green-600 underline'>
+                      {url}
+                    </div>
+                    <div className='flex items-center gap-1'>
+                      <span className='text-xs text-gray-400' style={{fontSize: '10px'}}>4:20 PM</span>
+                      <div className='flex text-blue-600'>
+                        <svg
+                          className='w-3 h-3'
+                          fill='currentColor'
+                          viewBox='0 0 24 24'
+                        >
+                          <path d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z' />
+                        </svg>
+                        <svg
+                          className='w-3 h-3 -ml-1'
+                          fill='currentColor'
+                          viewBox='0 0 24 24'
+                        >
+                          <path d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z' />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      // LinkedIn Post Preview Style
+      if (platform === 'linkedin') {
+        return (
+          <div className='space-y-4'>
+            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+              <LinkedinLogo className='w-4 h-4 text-blue-700' weight='fill' />
+              <span className='text-sm font-medium text-gray-700'>
+                Linkedin
+              </span>
+            </div>
+            <div className='bg-white border border-gray-200 rounded-lg p-4'>
+              <div className='flex items-start gap-3 mb-3'>
+                <div className='w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center'>
+                  <span className='text-white font-medium text-lg'>JD</span>
+                </div>
+                <div className='flex-1'>
+                  <div className='flex items-center gap-2 mb-1'>
+                    <h3 className='font-semibold text-gray-900'>John Doe</h3>
+                    <span className='text-gray-500'>• You</span>
+                  </div>
+                  <p className='text-sm text-gray-600 mb-1'>
+                    VP of a Big Company
+                  </p>
+                  <div className='flex items-center gap-1 text-xs text-gray-500'>
+                    <span>3w</span>
+                    <span>•</span>
+                    <div className='w-3 h-3 rounded-full bg-gray-400 flex items-center justify-center'>
+                      <div className='w-1.5 h-1.5 bg-white rounded-full'></div>
+                    </div>
+                  </div>
+                </div>
+                <button className='text-gray-400 hover:text-gray-600'>
+                  <svg
+                    className='w-5 h-5'
+                    fill='currentColor'
+                    viewBox='0 0 20 20'
+                  >
+                    <path d='M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z' />
+                  </svg>
+                </button>
+              </div>
+
+              <p className='text-gray-900 text-sm mb-4 leading-relaxed'>
+                {image 
+                  ? "Just analyzed this site and wow - they've nailed their SEO game! Proper OpenGraph images, social media tags, the works. This is exactly how you optimize for social sharing. 💯" 
+                  : "Found this interesting site, but they're missing a huge opportunity. No social media images or proper OpenGraph tags - they could get so much more engagement with better SEO setup!"
+                }
+              </p>
+
+              <div className='border border-gray-200 rounded-lg overflow-hidden'>
+                <div className='flex'>
+                  {image && (
+                    <div className='w-24 h-16 bg-gray-100 flex-shrink-0'>
+                      <img
+                        src={image}
+                        alt='LinkedIn preview'
+                        className='w-full h-full object-cover'
+                      />
+                    </div>
+                  )}
+                  <div className='flex-1 p-3 min-w-0'>
+                    <h4 className='text-gray-900 text-sm font-medium mb-1 line-clamp-1'>
+                      {title}
+                    </h4>
+                    <p className='text-gray-600 text-xs mb-1'>
+                      {new URL(url).hostname}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      // Telegram Instant View Style
+      if (platform === 'telegram') {
+        return (
+          <div className='space-y-4'>
+            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+              <TelegramLogo className='w-4 h-4 text-blue-500' weight='fill' />
+              <span className='text-sm font-medium text-gray-700'>
+                Telegram
+              </span>
+            </div>
+            <div className='flex justify-end'>
+              <div className='max-w-xs bg-blue-500 rounded-2xl p-3'>
+                <div className='text-white text-xs underline mb-2'>
+                  {url}
+                </div>
+                <div className='bg-blue-400 rounded-lg p-3 mb-2'>
+                  <div className='text-white text-sm mb-1'>
+                    {new URL(url).hostname}
+                  </div>
+                  <h4 className='text-white text-base font-medium mb-2 line-clamp-2'>
+                    {title}
+                  </h4>
+                  <p className='text-blue-100 text-sm line-clamp-3 mb-3'>
+                    {description}
+                  </p>
+                  {image && (
+                    <div className='w-full h-48 bg-gray-600 rounded-lg overflow-hidden'>
+                      <Image
+                        src={image}
+                        alt='Telegram preview'
+                        width={320}
+                        height={192}
+                        className='w-full h-full object-cover'
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className='flex items-center justify-end'>
+                  <span className='text-xs text-white'>4:20 PM</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      // Facebook Post Style
+      if (platform === 'facebook') {
+        return (
+          <div className='space-y-4'>
+            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+              <FacebookLogo className='w-4 h-4 text-blue-600' weight='fill' />
+              <span className='text-sm font-medium text-gray-700'>
+                Facebook
+              </span>
+            </div>
+            <div className='bg-white border border-gray-200 rounded-lg p-4'>
+              <div className='flex items-start gap-3 mb-3'>
+                <Image
+                  src='/markzuck.png'
+                  alt='avatar'
+                  width={40}
+                  height={40}
+                  className='w-10 h-10 object-cover rounded-full'
+                />
+                <div className='flex-1'>
+                  <div className='flex items-center gap-2 mb-1'>
+                    <h3 className='font-semibold text-gray-900'>
+                      Mark Zuckerberg
+                    </h3>
+                    <div className='w-4 h-4 text-blue-500'>
+                      <svg fill='currentColor' viewBox='0 0 20 20'>
+                        <path
+                          fillRule='evenodd'
+                          d='M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+                          clipRule='evenodd'
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className='flex items-center gap-1 text-xs text-gray-500'>
+                    <span>Just Now</span>
+                    <span>•</span>
+                    <div className='w-3 h-3'>
+                      <svg fill='currentColor' viewBox='0 0 20 20'>
+                        <path d='M10 12a2 2 0 100-4 2 2 0 000 4z' />
+                        <path
+                          fillRule='evenodd'
+                          d='M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z'
+                          clipRule='evenodd'
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                <button className='text-gray-400 hover:text-gray-600'>
+                  <svg
+                    className='w-5 h-5'
+                    fill='currentColor'
+                    viewBox='0 0 20 20'
+                  >
+                    <path d='M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z' />
+                  </svg>
+                </button>
+              </div>
+
+              <div className='text-gray-900 text-sm mb-3 leading-relaxed'>
+                {image 
+                  ? "Interesting site with solid social media fundamentals. Good OpenGraph implementation - this is what proper web development looks like. Meta approves! 👍" 
+                  : "Checked out this site - potential is there but missing key social media optimization. No OpenGraph images means poor sharing experience. Room for improvement."
+                }
+              </div>
+
+              <div className='text-blue-600 text-sm mb-3 hover:underline cursor-pointer'>
+                {url}
+              </div>
+
+              <div className='border border-gray-200 rounded-lg overflow-hidden'>
+                {image && (
+                  <div className='aspect-[1.91/1] bg-gray-100'>
+                    <img
+                      src={image}
+                      alt='Facebook preview'
+                      className='w-full h-full object-cover'
+                    />
+                  </div>
+                )}
+                <div className='p-4 bg-gray-50'>
+                  <div className='text-gray-500 text-xs mb-1 uppercase'>
+                    {new URL(url).hostname}
+                  </div>
+                  <h4 className='font-semibold text-gray-900 text-base mb-2 line-clamp-2'>
+                    {title}
+                  </h4>
+                  <p className='text-gray-600 text-sm line-clamp-2'>
+                    {description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      // Twitter/X Card Style
+      return (
+        <div className='space-y-4'>
+          <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+            <XLogo className='w-4 h-4 text-gray-900' weight='fill' />
+            <span className='text-sm font-medium text-gray-700'>Twitter/X</span>
+          </div>
+          <div className='bg-black text-white rounded-2xl p-4 max-w-lg'>
+            <div className='flex items-start gap-3 mb-3'>
+              <div className='w-10 h-10 bg-gray-600 rounded-full overflow-hidden'>
+                <img
+                  src='/NATKmh45_400x400.jpg'
+                  alt='Elon Musk'
+                  className='w-full h-full object-cover'
+                />
+              </div>
+              <div className='flex-1'>
+                <div className='flex items-center gap-2 mb-1'>
+                  <h3 className='font-bold text-white'>Elon Musk</h3>
+                  <div className='w-5 h-5 text-blue-400'>
+                    <svg fill='currentColor' viewBox='0 0 20 20'>
+                      <path
+                        fillRule='evenodd'
+                        d='M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+                        clipRule='evenodd'
+                      />
+                    </svg>
+                  </div>
+                  <span className='text-gray-500'>@elonmusk</span>
+                  <span className='text-gray-500'>•</span>
+                  <span className='text-gray-500'>3h</span>
+                </div>
+              </div>
+            </div>
+
+            <div className='text-white text-base mb-3'>
+              {twitterCard.image 
+                ? "Finally! A site that actually has proper Twitter Card images. Most devs are too lazy to implement this correctly. Respect. 🚀" 
+                : openGraph.image
+                ? "No dedicated Twitter image but at least you have OpenGraph. It'll inherit, but dedicated twitter:image tags are always better. Acceptable. ✅"
+                : "No Twitter Card image AND no OpenGraph image? Seriously? It's 2024. Fix your meta tags. This is embarrassing."
+              }
+            </div>
+
+            <div className='border border-gray-700 rounded-2xl overflow-hidden'>
+              {image && (
+                <div className='aspect-[1.91/1] bg-gray-800'>
+                  <img
+                    src={image}
+                    alt='Twitter preview'
+                    className='w-full h-full object-cover'
+                  />
+                </div>
               )}
-              {isTwitter ? 'Twitter Card' : 'Facebook/LinkedIn'} Preview
-            </DialogTitle>
-          </DialogHeader>
-          <SocialCard isDialog />
-        </DialogContent>
-      </Dialog>
-    )
+              <div className='p-4'>
+                <div className='text-gray-400 text-sm mb-1'>
+                  From {new URL(url).hostname}
+                </div>
+                <h4 className='font-normal text-white text-base mb-2 line-clamp-2'>
+                  {title}
+                </h4>
+                <p className='text-gray-400 text-sm line-clamp-2'>
+                  {description}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    return <SocialCard />
   }
 
   return (
-    <div className="w-full space-y-10">
+    <div className='w-full space-y-10'>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Share2 className="h-8 w-8 text-gray-600 dark:text-gray-400" />
-          <h1 className="text-3xl font-bold">Social Media</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <FacebookLogo className="h-5 w-5 text-blue-600" weight="fill" />
-            <XLogo className="h-5 w-5 text-gray-900 dark:text-gray-100" weight="fill" />
+      <div className='flex items-center justify-end'>
+        <div className='flex items-center gap-3'>
+          <div className='flex items-center gap-2'>
+            <Search className='h-4 w-4 text-blue-600' />
+            <FacebookLogo className='h-4 w-4 text-blue-600' weight='fill' />
+            <XLogo
+              className='h-4 w-4 text-gray-900 dark:text-gray-100'
+              weight='fill'
+            />
+            <DiscordLogo className='h-4 w-4 text-indigo-500' weight='fill' />
+            <WhatsappLogo className='h-4 w-4 text-green-500' weight='fill' />
+            <LinkedinLogo className='h-4 w-4 text-blue-700' weight='fill' />
+            <TelegramLogo className='h-4 w-4 text-blue-500' weight='fill' />
           </div>
-          <div className="text-right">
-            <div className={`text-2xl font-bold ${
-              socialScore.percentage >= 75 ? 'text-emerald-600' : 
-              socialScore.percentage >= 50 ? 'text-amber-600' : 'text-red-600'
-            }`}>
+          <div className='text-right'>
+            <div
+              className={`text-2xl font-bold ${
+                socialScore.percentage >= 75
+                  ? 'text-emerald-600'
+                  : socialScore.percentage >= 50
+                  ? 'text-amber-600'
+                  : 'text-red-600'
+              }`}
+            >
               {socialScore.percentage}%
             </div>
-            <div className="text-sm text-gray-500">
+            <div className='text-sm text-gray-500'>
               {socialScore.score}/{socialScore.maxScore} dedicated tags
             </div>
           </div>
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <SocialPreviewCard platform="facebook" />
-        <SocialPreviewCard platform="twitter" />
+
+      <div className='space-y-6 max-w-2xl mx-auto'>
+        <SocialPreviewCard platform='google' />
+        <SocialPreviewCard platform='facebook' />
+        <SocialPreviewCard platform='twitter' />
+        <SocialPreviewCard platform='discord' />
+        <SocialPreviewCard platform='whatsapp' />
+        <SocialPreviewCard platform='linkedin' />
+        <SocialPreviewCard platform='telegram' />
       </div>
-      
-      <div className="space-y-0 bg-card/30 rounded-lg border border-border/50 p-4">
+
+      <div className='space-y-0 bg-card/30 rounded-lg border border-border/50 p-4'>
         <SimpleListItem
-          icon="📖"
-          label="OpenGraph Title"
+          icon='📖'
+          label='OpenGraph Title'
           value={openGraph.title || seo.title}
-          status={openGraph.title ? 'present' : seo.title ? 'inherited' : 'missing'}
+          status={
+            openGraph.title ? 'present' : seo.title ? 'inherited' : 'missing'
+          }
         />
-        
+
         <SimpleListItem
-          icon="📝"
-          label="OpenGraph Description"
+          icon='📝'
+          label='OpenGraph Description'
           value={openGraph.description || seo.description}
-          status={openGraph.description ? 'present' : seo.description ? 'inherited' : 'missing'}
+          status={
+            openGraph.description
+              ? 'present'
+              : seo.description
+              ? 'inherited'
+              : 'missing'
+          }
         />
-        
+
         <SimpleListItem
-          icon="🖼️"
-          label="OpenGraph Image"
+          icon='🖼️'
+          label='OpenGraph Image'
           value={openGraph.image}
           status={openGraph.image ? 'present' : 'missing'}
         />
-        
+
         <SimpleListItem
-          icon="🐦"
-          label="Twitter Card"
+          icon='🐦'
+          label='Twitter Card'
           value={twitterCard.card ? `${twitterCard.card} card` : undefined}
           status={twitterCard.card ? 'present' : 'missing'}
         />
-        
+
         <SimpleListItem
-          icon="🐦"
-          label="Twitter Title"
+          icon='🐦'
+          label='Twitter Title'
           value={twitterCard.title || openGraph.title || seo.title}
-          status={twitterCard.title ? 'present' : (openGraph.title || seo.title) ? 'inherited' : 'missing'}
+          status={
+            twitterCard.title
+              ? 'present'
+              : openGraph.title || seo.title
+              ? 'inherited'
+              : 'missing'
+          }
         />
-        
+
         <SimpleListItem
-          icon="🐦"
-          label="Twitter Description"
-          value={twitterCard.description || openGraph.description || seo.description}
-          status={twitterCard.description ? 'present' : (openGraph.description || seo.description) ? 'inherited' : 'missing'}
+          icon='🐦'
+          label='Twitter Description'
+          value={
+            twitterCard.description || openGraph.description || seo.description
+          }
+          status={
+            twitterCard.description
+              ? 'present'
+              : openGraph.description || seo.description
+              ? 'inherited'
+              : 'missing'
+          }
         />
-        
+
         <SimpleListItem
-          icon="🖼️"
-          label="Twitter Image"
+          icon='🖼️'
+          label='Twitter Image'
           value={twitterCard.image || openGraph.image}
-          status={twitterCard.image ? 'present' : openGraph.image ? 'inherited' : 'missing'}
+          status={
+            twitterCard.image
+              ? 'present'
+              : openGraph.image
+              ? 'inherited'
+              : 'missing'
+          }
         />
       </div>
     </div>

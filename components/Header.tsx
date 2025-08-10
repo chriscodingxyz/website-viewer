@@ -34,6 +34,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { FontSelector } from '@/components/FontSelector'
 
 type TabType = 'viewports' | 'seo' | 'social' | 'technical'
 
@@ -123,7 +124,7 @@ export function Header () {
   }
 
   return (
-    <header className='fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border'>
+    <header className='fixed top-0 left-0 right-0 z-50 bg-background border-b border-border'>
       <div className='py-4 px-3'>
         <div className='mx-auto'>
           <div className='flex gap-4 flex-row items-center'>
@@ -261,7 +262,8 @@ export function Header () {
                 </PopoverContent>
               </Popover>
             </div>
-            <div className='flex gap-3'>
+            <div className='flex gap-2'>
+              <FontSelector />
               <Button
                 size='sm'
                 disabled={!formatUrl(url)}
