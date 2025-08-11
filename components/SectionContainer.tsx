@@ -9,7 +9,7 @@ import SocialPreview from './metadata/SocialPreview'
 import TechnicalSection from './metadata/TechnicalSection'
 
 export default function SectionContainer() {
-  const { currentSite, metadataLoading, fetchMetadata, metadata, selectedTab } = useWebsiteViewer()
+  const { currentSite, metadata, selectedTab } = useWebsiteViewer()
 
 
   // Removed automatic tab switching - let users stay on their chosen tab

@@ -203,6 +203,9 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setNextId(nextId + 4)
     addToHistory(formattedUrl)
     setUrl(formattedUrl)
+    
+    // Automatically start metadata extraction in the background
+    fetchMetadata(formattedUrl)
   }
 
   const updateUrlParams = () => {
