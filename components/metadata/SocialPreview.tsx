@@ -232,7 +232,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
       if (platform === 'google') {
         return (
           <div className='space-y-4'>
-            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-0'>
               <svg className='w-4 h-4' viewBox='0 0 24 24' fill='none'>
                 <path
                   d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'
@@ -291,7 +291,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
       if (platform === 'discord') {
         return (
           <div className='space-y-4'>
-            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-0'>
               <DiscordLogo className='w-4 h-4 text-indigo-500' weight='fill' />
               <span className='text-sm font-medium text-gray-700'>Discord</span>
             </div>
@@ -361,7 +361,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
       if (platform === 'whatsapp') {
         return (
           <div className='space-y-4'>
-            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-0'>
               <WhatsappLogo className='w-4 h-4 text-green-500' weight='fill' />
               <span className='text-sm font-medium text-gray-700'>
                 WhatsApp
@@ -428,7 +428,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
       if (platform === 'linkedin') {
         return (
           <div className='space-y-4'>
-            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-0'>
               <LinkedinLogo className='w-4 h-4 text-blue-700' weight='fill' />
               <span className='text-sm font-medium text-gray-700'>
                 Linkedin
@@ -505,7 +505,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
       if (platform === 'telegram') {
         return (
           <div className='space-y-4'>
-            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-0'>
               <TelegramLogo className='w-4 h-4 text-blue-500' weight='fill' />
               <span className='text-sm font-medium text-gray-700'>
                 Telegram
@@ -549,7 +549,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
       if (platform === 'facebook') {
         return (
           <div className='space-y-4'>
-            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-0'>
               <FacebookLogo className='w-4 h-4 text-blue-600' weight='fill' />
               <span className='text-sm font-medium text-gray-700'>
                 Facebook
@@ -648,7 +648,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
       // Twitter/X Card Style
       return (
         <div className='space-y-4'>
-          <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+          <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-0'>
             <XLogo className='w-4 h-4 text-gray-900' weight='fill' />
             <span className='text-sm font-medium text-gray-700'>Twitter/X</span>
           </div>
@@ -759,7 +759,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
         </div>
       </div>
 
-      <div className='space-y-6 max-w-2xl mx-auto'>
+      <div className='space-y-10 max-w-2xl mx-auto'>
         <SocialPreviewCard platform='google' />
         <SocialPreviewCard platform='facebook' />
         <SocialPreviewCard platform='twitter' />
