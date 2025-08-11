@@ -218,7 +218,7 @@ class IframeDetectionService {
   private iframeLoadTest(url: string, container: HTMLElement, timeout: number): Promise<DetectionMethodResult> {
     return new Promise((resolve) => {
       // Starting iframe detection
-      
+
       const iframe = document.createElement('iframe')
       iframe.src = url
       iframe.style.width = '100%'
@@ -227,8 +227,7 @@ class IframeDetectionService {
       iframe.style.display = 'none' // Hide during detection
 
       let hasResolved = false
-      let timeoutId: NodeJS.Timeout
-
+      let timeoutId: ReturnType<typeof setTimeout>
       const resolveOnce = (result: DetectionMethodResult) => {
         if (hasResolved) return
         hasResolved = true
