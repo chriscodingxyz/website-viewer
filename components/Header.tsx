@@ -34,7 +34,6 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import { FontSelector } from '@/components/FontSelector'
 
 type TabType = 'viewports' | 'seo' | 'social' | 'technical'
 
@@ -263,7 +262,6 @@ export function Header () {
               </Popover>
             </div>
             <div className='flex gap-2'>
-              <FontSelector />
               <Button
                 size='sm'
                 disabled={!formatUrl(url)}
