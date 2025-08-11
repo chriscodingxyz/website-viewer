@@ -687,7 +687,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
                 ? 'Finally! A site that actually has proper Twitter Card images. Most devs are too lazy to implement this correctly. Respect. 🚀'
                 : openGraph.image
                 ? "No dedicated Twitter image but at least you have OpenGraph. It'll inherit, but dedicated twitter:image tags are always better. Acceptable. ✅"
-                : "No Twitter Card image AND no OpenGraph image? Seriously? It's 2024. Fix your meta tags. This is embarrassing."}
+                : `No Twitter Card image AND no OpenGraph image? Seriously? It's ${new Date().getFullYear()}. Fix your meta tags. This is embarrassing.`}
             </div>
 
             <div className='border border-gray-700 rounded-2xl overflow-hidden'>
