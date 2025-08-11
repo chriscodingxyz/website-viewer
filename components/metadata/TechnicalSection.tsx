@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import Image from 'next/image'
 import { WebsiteMetadata } from '@/types/metadata'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -333,88 +332,6 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
               />
             )}
 
-            {icons && icons.length > 0 ? (
-              <div className='bg-card/30 border border-border/50 rounded-lg p-4 hover:bg-card/50 transition-colors'>
-                <div className='flex items-start gap-3'>
-                  <div className='flex-shrink-0 text-emerald-600'>
-                    <CheckCircle className='h-4 w-4' />
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <div className='flex items-start justify-between mb-3'>
-                      <div className='flex-1'>
-                        <h4 className='font-medium text-foreground text-sm'>
-                          Favicons
-                        </h4>
-                      </div>
-                      <div className='ml-3 flex-shrink-0 analysis-badge-success'>
-                        {icons.length} {icons.length === 1 ? 'icon' : 'icons'}
-                      </div>
-                    </div>
-
-                    <div className='space-y-3'>
-                      {icons.slice(0, 4).map((icon, index) => (
-                        <div
-                          key={index}
-                          className='flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border/30'
-                        >
-                          <div className='flex items-center gap-3'>
-                            {icon.href && (
-                              <Image
-                                src={icon.href}
-                                alt={`${icon.sizes || 'favicon'}`}
-                                width={32}
-                                height={32}
-                                className='w-8 h-8 rounded border bg-background shadow-sm'
-                                onError={(e) => {
-                                  e.currentTarget.src =
-                                    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik04IDhIMTZWMTZIOFY4WiIgc3Ryb2tlPSIjOUNBM0FGIiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+Cg=='
-                                }}
-                                unoptimized
-                              />
-                            )}
-                            <div className='flex-1 min-w-0'>
-                              <div className='flex items-center gap-2 mb-1'>
-                                <span className='analysis-text-sm font-medium text-foreground'>
-                                  {icon.rel || 'icon'}
-                                </span>
-                                {icon.sizes && (
-                                  <span className='analysis-text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-800/30'>
-                                    {icon.sizes}
-                                  </span>
-                                )}
-                              </div>
-                              {icon.type && (
-                                <span className='analysis-text-xs text-muted-foreground'>
-                                  {icon.type}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      {icons.length > 4 && (
-                        <p className='analysis-text-xs text-muted-foreground text-center py-2'>
-                          +{icons.length - 4} more{' '}
-                          {icons.length - 4 === 1 ? 'icon' : 'icons'}
-                        </p>
-                      )}
-                    </div>
-
-                    <p className='analysis-text-xs text-muted-foreground mt-3 pl-3 border-l-2 border-border/40'>
-                      Icons help browsers display your site in tabs, bookmarks,
-                      and shortcuts
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <SimpleListItem
-                icon='favicon'
-                label='Favicons'
-                value={undefined}
-                status='warning'
-              />
-            )}
 
             <div className='bg-card/30 border border-border/50 rounded-lg p-4 hover:bg-card/50 transition-colors'>
               <div className='flex items-start gap-3'>

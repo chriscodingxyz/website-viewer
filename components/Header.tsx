@@ -126,7 +126,7 @@ export function Header () {
     <header className='fixed top-0 left-0 right-0 z-50 bg-background border-b border-border'>
       <div className='py-4 px-3'>
         <div className='mx-auto'>
-          <div className='flex gap-4 flex-row items-center'>
+          <div className='flex gap-1 flex-row items-center'>
             {/* Home Button - Only show when site is loaded */}
             {currentSite && (
               <Button
