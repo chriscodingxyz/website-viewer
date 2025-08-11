@@ -5,6 +5,19 @@
 
 export type IframeStatus = 'ready' | 'loading' | 'loaded' | 'blocked' | 'error' | 'timeout'
 
+interface DetectionMethodResult {
+  success?: boolean
+  error?: string
+  details?: string
+  accessible?: boolean
+  blocked?: boolean
+  reason?: string
+  headers?: Record<string, unknown>
+  status?: string
+  iframe?: HTMLIFrameElement
+  retryError?: string
+}
+
 export interface IframeDetectionResult {
   status: IframeStatus
   url: string
@@ -12,9 +25,9 @@ export interface IframeDetectionResult {
   confidence: 'low' | 'medium' | 'high'
   detectionTime: number
   methods: {
-    preflight?: any
-    iframeLoad?: any
-    contentVerification?: any
+    preflight?: DetectionMethodResult
+    iframeLoad?: DetectionMethodResult
+    contentVerification?: DetectionMethodResult
   }
 }
 
@@ -39,7 +52,7 @@ class IframeDetectionService {
     const startTime = performance.now()
     const opts = { ...this.defaultOptions, ...options }
     
-    console.log('🚀 Starting iframe detection for:', url, 'with options:', opts)
+    // Starting iframe detection
     
     const result: IframeDetectionResult = {
       status: 'loading',
@@ -63,11 +76,11 @@ class IframeDetectionService {
             result.reason = 'explicit-headers'
             result.confidence = 'high'
             result.detectionTime = performance.now() - startTime
-            console.log('🛡️ Blocked by headers:', result)
+            // Blocked by headers
             return result
           }
         } catch (error) {
-          console.log('⚠️ Preflight check failed (normal for CORS):', error)
+          // Preflight check failed (normal for CORS)
           result.methods.preflight = { error: error instanceof Error ? error.message : 'Unknown error' }
         }
       }
@@ -120,27 +133,31 @@ class IframeDetectionService {
             result.reason = 'loading-error'  
             result.confidence = 'medium'
           } else {
-            result.status = loadStatus || 'error'
+            // Ensure loadStatus is a valid IframeStatus, fallback to 'error' if not
+            const validStatus: IframeStatus = (loadStatus && ['ready', 'loading', 'loaded', 'blocked', 'error', 'timeout'].includes(loadStatus)) 
+              ? loadStatus as IframeStatus 
+              : 'error'
+            result.status = validStatus
             result.reason = result.methods.iframeLoad.reason || 'Unknown error'
             result.confidence = 'medium'
           }
         }
       } catch (error) {
-        console.log('❌ Iframe load test failed:', error)
+        // Iframe load test failed
         result.status = 'error'
         result.reason = error instanceof Error ? error.message : 'Unknown error'
         result.confidence = 'high'
       }
 
     } catch (error) {
-      console.log('💥 Detection failed completely:', error)
+      // Detection failed completely
       result.status = 'error'
       result.reason = error instanceof Error ? error.message : 'Detection failed'
       result.confidence = 'high'
     }
 
     result.detectionTime = performance.now() - startTime
-    console.log('🏁 Final detection result:', result)
+    // Detection complete
     return result
   }
 
@@ -198,9 +215,9 @@ class IframeDetectionService {
     }
   }
 
-  private iframeLoadTest(url: string, container: HTMLElement, timeout: number): Promise<any> {
+  private iframeLoadTest(url: string, container: HTMLElement, timeout: number): Promise<DetectionMethodResult> {
     return new Promise((resolve) => {
-      console.log('🔍 Starting iframe detection for:', url)
+      // Starting iframe detection
       
       const iframe = document.createElement('iframe')
       iframe.src = url
@@ -212,12 +229,12 @@ class IframeDetectionService {
       let hasResolved = false
       let timeoutId: NodeJS.Timeout
 
-      const resolveOnce = (result: any) => {
+      const resolveOnce = (result: DetectionMethodResult) => {
         if (hasResolved) return
         hasResolved = true
         clearTimeout(timeoutId)
         
-        console.log('🎯 Iframe detection result for', url, ':', result)
+        // Iframe detection complete
         
         // Clean up the test iframe
         if (iframe.parentNode) {
@@ -229,17 +246,17 @@ class IframeDetectionService {
 
       // Set up timeout - could be slow loading or blocked
       timeoutId = setTimeout(() => {
-        console.log('⏰ Iframe detection timeout for:', url)
+        // Iframe detection timeout
         resolveOnce({
           status: 'timeout',
-          iframe: null,
+          iframe: undefined,
           reason: 'Loading timeout - may be slow loading or blocked'
         })
       }, timeout)
 
       // Load event
       iframe.addEventListener('load', () => {
-        console.log('✅ Iframe loaded for:', url)
+        // Iframe loaded successfully
         resolveOnce({
           status: 'loaded',
           iframe,
@@ -249,10 +266,10 @@ class IframeDetectionService {
 
       // Error event  
       iframe.addEventListener('error', () => {
-        console.log('❌ Iframe error for:', url)
+        // Iframe loading error
         resolveOnce({
           status: 'error', // Don't assume error = blocked
-          iframe: null,
+          iframe: undefined,
           reason: 'Failed to load iframe - could be network issue or blocking'
         })
       })
@@ -415,7 +432,7 @@ class IframeDetectionService {
       checkContentAccess: false // Skip content access check on retry
     }
     
-    console.log('🔄 Retrying iframe detection for:', url, 'Previous result:', previousResult?.status)
+    // Retrying iframe detection
     
     // If previous result was timeout or uncertain, try with more aggressive blocking detection
     if (previousResult?.status === 'timeout' || previousResult?.confidence === 'low') {
@@ -438,7 +455,7 @@ class IframeDetectionService {
           reason: 'retry-failed',
           confidence: 'medium',
           detectionTime: 0,
-          methods: { retryError: error instanceof Error ? error.message : 'Unknown error' }
+          methods: { preflight: { error: error instanceof Error ? error.message : 'Unknown error', retryError: error instanceof Error ? error.message : 'Unknown error' } }
         }
       }
     }

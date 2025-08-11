@@ -464,15 +464,16 @@ export async function GET (request: NextRequest) {
       appleItunes:
         $('meta[name="apple-itunes-app"]').attr('content') || undefined,
       msapplicationConfig:
-        $('meta[name="msapplication-config"]').attr('content') || undefined
+        $('meta[name="msapplication-config"]').attr('content') || undefined,
+      doctype: html.match(/<!DOCTYPE\s+[^>]+>/i)?.[0] || undefined
     }
 
     // Extract structured data (JSON-LD)
-    const structuredData: Array<{ type: string; data: any }> = []
+    const structuredData: Array<{ type: string; data: Record<string, unknown> }> = []
     $('script[type="application/ld+json"]').each((_, element) => {
       try {
-        const data = JSON.parse($(element).html() || '{}')
-        if (data['@type']) {
+        const data = JSON.parse($(element).html() || '{}') as Record<string, unknown>
+        if (data['@type'] && typeof data['@type'] === 'string') {
           structuredData.push({
             type: data['@type'],
             data
@@ -503,7 +504,8 @@ export async function GET (request: NextRequest) {
       contentSecurityPolicy:
         response.headers['content-security-policy'] || undefined,
       strictTransportSecurity:
-        response.headers['strict-transport-security'] || undefined
+        response.headers['strict-transport-security'] || undefined,
+      xContentTypeOptions: response.headers['x-content-type-options'] || undefined
     }
 
     // Extract sitemap information (run in parallel with analytics)

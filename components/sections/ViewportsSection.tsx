@@ -102,22 +102,22 @@ export default function ViewportsSection({ expanded, onToggle }: ViewportsSectio
 
   return (
     <div className="w-full">
-      {/* Zoom Controls Only */}
+      {/* Zoom Controls - Positioned Bottom Right */}
       {views.length > 0 && (
-        <div className="flex items-center justify-center px-6 py-3 bg-muted/30 border-b border-border/50">
-          <div className="flex items-center gap-1 px-2 py-1 bg-background/80 border border-border/40 rounded-lg shadow-sm h-6">
+        <div className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-40 pointer-events-none">
+          <div className="flex items-center gap-1 px-3 py-2 bg-background/95 backdrop-blur-sm border border-border/60 rounded-lg shadow-lg pointer-events-auto">
             <Button
               variant="ghost"
               size="sm"
               onClick={globalZoomOut}
               disabled={globalZoomStepIndex === 2}
               title="Zoom out (Min: 100%)"
-              className="h-5 w-5 p-0 rounded-full hover:bg-accent disabled:opacity-30"
+              className="h-6 w-6 p-0 rounded-full hover:bg-accent disabled:opacity-30"
             >
               <ZoomOut className="h-3 w-3" />
             </Button>
             <span
-              className="text-xs font-medium w-10 text-center tabular-nums cursor-pointer hover:text-primary transition-colors px-1 py-0.5 rounded-md hover:bg-accent"
+              className="text-sm font-medium min-w-[2.5rem] text-center tabular-nums cursor-pointer hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-accent"
               onClick={resetGlobalZoom}
               title="Click to reset zoom to 100%"
             >
@@ -129,7 +129,7 @@ export default function ViewportsSection({ expanded, onToggle }: ViewportsSectio
               onClick={globalZoomIn}
               disabled={globalZoomStepIndex === zoomSteps.length - 1}
               title="Zoom in (Max: 200%)"
-              className="h-5 w-5 p-0 rounded-full hover:bg-accent disabled:opacity-30"
+              className="h-6 w-6 p-0 rounded-full hover:bg-accent disabled:opacity-30"
             >
               <ZoomIn className="h-3 w-3" />
             </Button>

@@ -257,13 +257,16 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
               <div className='flex items-center gap-2 mb-1'>
                 <div className='w-4 h-4 rounded-sm overflow-hidden flex-shrink-0'>
                   {metadata.icons && metadata.icons.length > 0 ? (
-                    <img
+                    <Image
                       src={metadata.icons[0].href}
                       alt='favicon'
+                      width={16}
+                      height={16}
                       className='w-full h-full object-contain'
                       onError={e => {
                         e.currentTarget.style.display = 'none'
                       }}
+                      unoptimized
                     />
                   ) : (
                     <div className='w-4 h-4 bg-gray-100 rounded-sm'></div>
@@ -327,10 +330,13 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
                   </p>
                   {image && (
                     <div className='w-full max-w-sm h-48 bg-gray-600 rounded overflow-hidden'>
-                      <img
+                      <Image
                         src={image}
                         alt='Discord preview'
+                        width={400}
+                        height={192}
                         className='w-full h-full object-cover'
+                        unoptimized
                       />
                     </div>
                   )}
@@ -387,7 +393,12 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
                       {url}
                     </div>
                     <div className='flex items-center gap-1'>
-                      <span className='text-xs text-gray-400' style={{fontSize: '10px'}}>4:20 PM</span>
+                      <span
+                        className='text-xs text-gray-400'
+                        style={{ fontSize: '10px' }}
+                      >
+                        4:20 PM
+                      </span>
                       <div className='flex text-blue-600'>
                         <svg
                           className='w-3 h-3'
@@ -456,20 +467,22 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
               </div>
 
               <p className='text-gray-900 text-sm mb-4 leading-relaxed'>
-                {image 
-                  ? "Just analyzed this site and wow - they've nailed their SEO game! Proper OpenGraph images, social media tags, the works. This is exactly how you optimize for social sharing. 💯" 
-                  : "Found this interesting site, but they're missing a huge opportunity. No social media images or proper OpenGraph tags - they could get so much more engagement with better SEO setup!"
-                }
+                {image
+                  ? "Just analyzed this site and wow - they've nailed their SEO game! Proper OpenGraph images, social media tags, the works. This is exactly how you optimize for social sharing. 💯"
+                  : "Found this interesting site, but they're missing a huge opportunity. No social media images or proper OpenGraph tags - they could get so much more engagement with better SEO setup!"}
               </p>
 
               <div className='border border-gray-200 rounded-lg overflow-hidden'>
                 <div className='flex'>
                   {image && (
                     <div className='w-24 h-16 bg-gray-100 flex-shrink-0'>
-                      <img
+                      <Image
                         src={image}
                         alt='LinkedIn preview'
+                        width={96}
+                        height={64}
                         className='w-full h-full object-cover'
+                        unoptimized
                       />
                     </div>
                   )}
@@ -500,9 +513,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
             </div>
             <div className='flex justify-end'>
               <div className='max-w-xs bg-blue-500 rounded-2xl p-3'>
-                <div className='text-white text-xs underline mb-2'>
-                  {url}
-                </div>
+                <div className='text-white text-xs underline mb-2'>{url}</div>
                 <div className='bg-blue-400 rounded-lg p-3 mb-2'>
                   <div className='text-white text-sm mb-1'>
                     {new URL(url).hostname}
@@ -595,10 +606,9 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
               </div>
 
               <div className='text-gray-900 text-sm mb-3 leading-relaxed'>
-                {image 
-                  ? "Interesting site with solid social media fundamentals. Good OpenGraph implementation - this is what proper web development looks like. Meta approves! 👍" 
-                  : "Checked out this site - potential is there but missing key social media optimization. No OpenGraph images means poor sharing experience. Room for improvement."
-                }
+                {image
+                  ? 'Interesting site with solid social media fundamentals. Good OpenGraph implementation - this is what proper web development looks like. Meta approves! 👍'
+                  : 'Checked out this site - potential is there but missing key social media optimization. No OpenGraph images means poor sharing experience. Room for improvement.'}
               </div>
 
               <div className='text-blue-600 text-sm mb-3 hover:underline cursor-pointer'>
@@ -608,10 +618,13 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
               <div className='border border-gray-200 rounded-lg overflow-hidden'>
                 {image && (
                   <div className='aspect-[1.91/1] bg-gray-100'>
-                    <img
+                    <Image
                       src={image}
                       alt='Facebook preview'
+                      width={400}
+                      height={209}
                       className='w-full h-full object-cover'
+                      unoptimized
                     />
                   </div>
                 )}
@@ -642,9 +655,11 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
           <div className='bg-black text-white rounded-2xl p-4 max-w-lg'>
             <div className='flex items-start gap-3 mb-3'>
               <div className='w-10 h-10 bg-gray-600 rounded-full overflow-hidden'>
-                <img
+                <Image
                   src='/NATKmh45_400x400.jpg'
                   alt='Elon Musk'
+                  width={40}
+                  height={40}
                   className='w-full h-full object-cover'
                 />
               </div>
@@ -668,21 +683,23 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
             </div>
 
             <div className='text-white text-base mb-3'>
-              {twitterCard.image 
-                ? "Finally! A site that actually has proper Twitter Card images. Most devs are too lazy to implement this correctly. Respect. 🚀" 
+              {twitterCard.image
+                ? 'Finally! A site that actually has proper Twitter Card images. Most devs are too lazy to implement this correctly. Respect. 🚀'
                 : openGraph.image
                 ? "No dedicated Twitter image but at least you have OpenGraph. It'll inherit, but dedicated twitter:image tags are always better. Acceptable. ✅"
-                : "No Twitter Card image AND no OpenGraph image? Seriously? It's 2024. Fix your meta tags. This is embarrassing."
-              }
+                : "No Twitter Card image AND no OpenGraph image? Seriously? It's 2024. Fix your meta tags. This is embarrassing."}
             </div>
 
             <div className='border border-gray-700 rounded-2xl overflow-hidden'>
               {image && (
                 <div className='aspect-[1.91/1] bg-gray-800'>
-                  <img
+                  <Image
                     src={image}
                     alt='Twitter preview'
+                    width={400}
+                    height={209}
                     className='w-full h-full object-cover'
+                    unoptimized
                   />
                 </div>
               )}

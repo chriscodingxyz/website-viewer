@@ -92,21 +92,30 @@ export default function PerformanceSection ({
           />
         )}
         
-        {performance?.size && (
+        {performance?.responseTime && (
           <SimpleListItem
-            icon="📦"
-            label="Page Size"
-            value={formatBytes(performance.size)}
-            status={getStatus('size', performance.size)}
+            icon="⏱️"
+            label="Response Time"
+            value={formatDuration(performance.responseTime)}
+            status={getStatus('responseTime', performance.responseTime)}
           />
         )}
         
-        {performance?.requests && (
+        {performance?.contentLength && (
           <SimpleListItem
-            icon="🔗"
-            label="HTTP Requests"
-            value={performance.requests}
-            status={performance.requests < 50 ? 'good' : performance.requests < 100 ? 'warning' : 'poor'}
+            icon="📦"
+            label="Content Length"
+            value={formatBytes(performance.contentLength)}
+            status={getStatus('contentLength', performance.contentLength)}
+          />
+        )}
+        
+        {performance?.statusCode && (
+          <SimpleListItem
+            icon="🔢"
+            label="Status Code"
+            value={performance.statusCode.toString()}
+            status={performance.statusCode < 300 ? 'good' : performance.statusCode < 400 ? 'warning' : 'poor'}
           />
         )}
         
@@ -119,20 +128,20 @@ export default function PerformanceSection ({
           />
         )}
         
-        {headers?.['content-encoding'] && (
+        {headers?.contentEncoding && (
           <SimpleListItem
             icon="🗜️"
             label="Compression"
-            value={headers['content-encoding']}
+            value={headers.contentEncoding}
             status="good"
           />
         )}
         
-        {headers?.['cache-control'] && (
+        {headers?.cacheControl && (
           <SimpleListItem
             icon="💾"
             label="Cache Control"
-            value={headers['cache-control']}
+            value={headers.cacheControl}
             status="good"
           />
         )}

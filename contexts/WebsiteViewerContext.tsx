@@ -317,37 +317,27 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   // Metadata functions
   const fetchMetadata = async (urlOverride?: string) => {
     const targetUrl = urlOverride || currentSite
-    console.log('fetchMetadata called with:', { targetUrl, currentSite, urlOverride })
     if (!targetUrl) {
-      console.log('No target URL, returning early')
       return
     }
-
-    console.log('Starting metadata fetch for:', targetUrl)
     setMetadataLoading(true)
     setMetadataError(null)
     
     try {
-      console.log('Making API call to:', `/api/metadata?url=${encodeURIComponent(targetUrl)}`)
       const response = await fetch(`/api/metadata?url=${encodeURIComponent(targetUrl)}`)
       const data = await response.json()
-      console.log('API response:', data)
       
       if (data.success && data.data) {
-        console.log('Metadata extraction successful, setting data')
         setMetadata(data.data)
       } else {
-        console.log('Metadata extraction failed:', data.error)
         setMetadataError(data.error || 'Failed to extract metadata')
         setMetadata(null)
       }
     } catch (error) {
-      console.log('Metadata fetch error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       setMetadataError(errorMessage)
       setMetadata(null)
     } finally {
-      console.log('Setting metadata loading to false')
       setMetadataLoading(false)
     }
   }

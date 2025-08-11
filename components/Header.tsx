@@ -305,10 +305,6 @@ export function Header () {
                       tab.id === 'technical') &&
                     currentSite
                   ) {
-                    console.log(
-                      'Triggering metadata extraction for:',
-                      currentSite
-                    )
                     fetchMetadata()
                   }
                 }}

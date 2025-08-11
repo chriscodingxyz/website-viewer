@@ -55,6 +55,7 @@ export const TechnicalMetadataSchema = z.object({
   appleTouchIcon: z.string().optional(),
   appleItunes: z.string().optional(),
   msapplicationConfig: z.string().optional(),
+  doctype: z.string().optional(),
 })
 
 // Sitemap information
@@ -115,12 +116,13 @@ export const ResponseHeadersSchema = z.object({
   xFrameOptions: z.string().optional(),
   contentSecurityPolicy: z.string().optional(),
   strictTransportSecurity: z.string().optional(),
+  xContentTypeOptions: z.string().optional(),
 })
 
 // Structured data (JSON-LD)
 export const StructuredDataSchema = z.object({
   type: z.string(),
-  data: z.record(z.any()),
+  data: z.record(z.unknown()),
 })
 
 // Complete metadata schema

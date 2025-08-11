@@ -10,6 +10,7 @@ import SocialPreview from '../metadata/SocialPreview'
 import TechnicalSection from '../metadata/TechnicalSection'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { WebsiteMetadata } from '@/types/metadata'
 
 interface AnalysisSectionProps {
   expanded: boolean
@@ -20,7 +21,8 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
   const { metadata, metadataLoading, metadataError, fetchMetadata, currentSite } = useWebsiteViewer()
 
   // Helper functions from OverviewDashboard
-  const getSEOScore = (metadata: any) => {
+  const getSEOScore = (metadata: WebsiteMetadata | null) => {
+    if (!metadata) return { score: 0, maxScore: 5, percentage: 0 }
     let score = 0
     const maxScore = 5
     const { seo } = metadata
@@ -40,7 +42,8 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
   //   return { grade: 'Poor', color: 'text-red-700', bgColor: 'bg-red-100' }
   // }
 
-  const getSocialScore = (metadata: any) => {
+  const getSocialScore = (metadata: WebsiteMetadata | null) => {
+    if (!metadata) return { score: 0, maxScore: 4, percentage: 0 }
     let score = 0
     const maxScore = 4
     const { openGraph, twitterCard } = metadata
@@ -51,7 +54,8 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
     return { score, maxScore, percentage: Math.round((score / maxScore) * 100) }
   }
 
-  const getCriticalIssues = (metadata: any) => {
+  const getCriticalIssues = (metadata: WebsiteMetadata | null) => {
+    if (!metadata) return []
     const issues = []
     const { seo, openGraph } = metadata // performance
     if (!seo.title) issues.push('Missing title')

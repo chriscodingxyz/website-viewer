@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
 import { WebsiteMetadata } from '@/types/metadata'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -135,7 +136,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
     let issues = 0
     if (!metadata.url.startsWith('https://')) issues++
     if (!metadata.seo.viewport) issues++
-    if (!headers?.['content-security-policy']) issues++
+    if (!headers?.contentSecurityPolicy) issues++
     return issues
   }
 
@@ -186,14 +187,14 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
 
       {/* Technical Analysis */}
       <div className='max-w-2xl mx-auto space-y-8'>
-        {performance?.size && (
+        {performance?.contentLength && (
           <div className='analysis-list-item'>
             <div className='flex items-start gap-4'>
               <div
                 className={`mt-0.5 ${
-                  performance.size < 1000000
+                  performance.contentLength < 1000000
                     ? 'text-emerald-600'
-                    : performance.size < 5000000
+                    : performance.contentLength < 5000000
                     ? 'text-amber-600'
                     : 'text-red-600'
                 }`}
@@ -207,61 +208,28 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                   </span>
                   <div
                     className={`analysis-badge ${
-                      performance.size < 1000000
+                      performance.contentLength < 1000000
                         ? 'analysis-badge-success'
-                        : performance.size < 5000000
+                        : performance.contentLength < 5000000
                         ? 'analysis-badge-warning'
                         : 'analysis-badge-error'
                     }`}
                   >
-                    {performance.size < 1000000
+                    {performance.contentLength < 1000000
                       ? 'Optimized'
-                      : performance.size < 5000000
+                      : performance.contentLength < 5000000
                       ? 'Acceptable'
                       : 'Large'}
                   </div>
                 </div>
                 <p className='text-muted-foreground analysis-text-sm leading-relaxed'>
-                  {formatBytes(performance.size)}
+                  {formatBytes(performance.contentLength)}
                 </p>
               </div>
             </div>
           </div>
         )}
 
-        {performance?.requests && (
-          <div className='py-3 text-sm'>
-            <div className='flex items-start gap-3'>
-              <span className='text-base mt-0.5'>🔗</span>
-              <div className='flex-1 min-w-0'>
-                <div className='flex items-center justify-between mb-1'>
-                  <span className='font-bold text-gray-900 dark:text-gray-100'>
-                    HTTP Requests
-                  </span>
-                  <Badge
-                    variant='outline'
-                    className={`text-xs shrink-0 ${
-                      performance.requests < 50
-                        ? 'bg-green-50 text-green-700 border-green-300'
-                        : performance.requests < 100
-                        ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
-                        : 'bg-red-50 text-red-700 border-red-300'
-                    }`}
-                  >
-                    {performance.requests < 50
-                      ? 'Good'
-                      : performance.requests < 100
-                      ? 'Fair'
-                      : 'Many'}
-                  </Badge>
-                </div>
-                <p className='text-gray-700 dark:text-gray-300'>
-                  &quot;{performance.requests}&quot;
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Performance Section */}
         <div className='space-y-6 bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/20 rounded-lg p-4'>
@@ -334,7 +302,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
               </div>
             )}
 
-            {headers?.['content-encoding'] && (
+            {headers?.contentEncoding && (
               <div className='py-3 text-sm'>
                 <div className='flex items-start gap-3'>
                   <span className='text-base mt-0.5'>🗜️</span>
@@ -351,14 +319,14 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                       </Badge>
                     </div>
                     <p className='text-gray-700 dark:text-gray-300'>
-                      &quot;{headers['content-encoding']}&quot;
+                      &quot;{headers.contentEncoding}&quot;
                     </p>
                   </div>
                 </div>
               </div>
             )}
 
-            {headers?.['cache-control'] && (
+            {headers?.cacheControl && (
               <div className='py-3 text-sm'>
                 <div className='flex items-start gap-3'>
                   <span className='text-base mt-0.5'>💾</span>
@@ -375,7 +343,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                       </Badge>
                     </div>
                     <p className='text-gray-700 dark:text-gray-300'>
-                      &quot;{headers['cache-control']}&quot;
+                      &quot;{headers.cacheControl}&quot;
                     </p>
                   </div>
                 </div>
@@ -391,7 +359,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
               status={getSecurityStatus()}
             />
 
-            {headers?.['content-security-policy'] ? (
+            {headers?.contentSecurityPolicy ? (
               <SimpleListItem
                 icon='🛡️'
                 label='Content Security Policy'
@@ -460,14 +428,17 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                         >
                           <div className='flex items-center gap-3'>
                             {icon.href && (
-                              <img
+                              <Image
                                 src={icon.href}
                                 alt={`${icon.sizes || 'favicon'}`}
+                                width={32}
+                                height={32}
                                 className='w-8 h-8 rounded border bg-background shadow-sm'
-                                onError={e => {
+                                onError={(e) => {
                                   e.currentTarget.src =
                                     'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik04IDhIMTZWMTZIOFY4WiIgc3Ryb2tlPSIjOUNBM0FGIiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+Cg=='
                                 }}
+                                unoptimized
                               />
                             )}
                             <div className='flex-1 min-w-0'>
@@ -557,7 +528,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                             key={index}
                             className='analysis-text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-md border border-blue-200 dark:border-blue-800/30 font-medium'
                           >
-                            {schema['@type'] || schema.type || 'Schema'}
+                            {schema.type || 'Schema'}
                           </div>
                         ))}
                         {structuredData.length > 4 && (
@@ -579,8 +550,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                               className='bg-muted/30 rounded-lg p-3 border border-border/30'
                             >
                               <div className='analysis-text-xs font-semibold text-foreground mb-2'>
-                                {schema['@type'] ||
-                                  schema.type ||
+                                {schema.type ||
                                   `Schema ${index + 1}`}
                               </div>
                               <pre className='analysis-text-xs text-muted-foreground overflow-x-auto whitespace-pre-wrap max-h-32 overflow-y-auto font-mono'>
@@ -611,25 +581,25 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
               </div>
             </div>
 
-            {headers?.['x-frame-options'] && (
+            {headers?.xFrameOptions && (
               <SimpleListItem
                 icon='🔐'
                 label='X-Frame-Options'
-                value={headers['x-frame-options']}
+                value={headers.xFrameOptions}
                 status='good'
               />
             )}
 
-            {headers?.['x-content-type-options'] && (
+            {headers?.xContentTypeOptions && (
               <SimpleListItem
                 icon='🛡️'
                 label='X-Content-Type-Options'
-                value={headers['x-content-type-options']}
+                value={headers.xContentTypeOptions}
                 status='good'
               />
             )}
 
-            {headers?.['strict-transport-security'] && (
+            {headers?.strictTransportSecurity && (
               <SimpleListItem
                 icon='🔒'
                 label='HSTS'

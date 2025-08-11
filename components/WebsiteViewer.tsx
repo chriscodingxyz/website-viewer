@@ -5,12 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Globe, ZoomIn, ZoomOut } from 'lucide-react'
 import { toast } from 'sonner'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
-import { useFavorites } from '@/contexts/FavoritesContext'
-import { useHistory } from '@/contexts/HistoryContext'
 import SectionContainer from './SectionContainer'
 
 export default function WebsiteViewer () {
-  const [refreshKey] = useState(0)
   
   const {
     currentSite,
@@ -26,11 +23,7 @@ export default function WebsiteViewer () {
     metadata,
     metadataLoading,
     metadataError,
-    fetchMetadata
   } = useWebsiteViewer()
-  
-  const { favorites } = useFavorites()
-  const { history } = useHistory()
 
   // Global zoom functions
   const globalZoomIn = () => {

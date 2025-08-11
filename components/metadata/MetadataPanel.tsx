@@ -16,17 +16,13 @@ import {
   Globe,
   Loader2,
   AlertCircle,
-  CheckCircle,
-  BarChart3,
-  MapPin
+  CheckCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
 import SEOSection from './SEOSection'
 import SocialPreview from './SocialPreview'
 import TechnicalSection from './TechnicalSection'
 import PerformanceSection from './PerformanceSection'
-import SitemapSection from './SitemapSection'
-import AnalyticsSection from './AnalyticsSection'
 
 interface MetadataPanelProps {
   metadata: WebsiteMetadata | null
@@ -216,14 +212,6 @@ export default function MetadataPanel({
                   <CheckCircle className="h-3 w-3" />
                   Performance
                 </TabsTrigger>
-                <TabsTrigger value="sitemap" className="flex items-center gap-1 text-xs">
-                  <MapPin className="h-3 w-3" />
-                  Sitemap
-                </TabsTrigger>
-                <TabsTrigger value="analytics" className="flex items-center gap-1 text-xs">
-                  <BarChart3 className="h-3 w-3" />
-                  Analytics
-                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="seo">
@@ -242,13 +230,6 @@ export default function MetadataPanel({
                 <PerformanceSection metadata={metadata} />
               </TabsContent>
 
-              <TabsContent value="sitemap">
-                <SitemapSection metadata={metadata} />
-              </TabsContent>
-
-              <TabsContent value="analytics">
-                <AnalyticsSection metadata={metadata} />
-              </TabsContent>
             </Tabs>
           )}
         </CollapsibleContent>

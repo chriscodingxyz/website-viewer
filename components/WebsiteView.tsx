@@ -32,8 +32,7 @@ import { iframeDetectionService } from '@/services/IframeDetectionService'
 import { 
   IframeLoading, 
   IframeBlocked, 
-  IframeError, 
-  IframeTimeout 
+  IframeError 
 } from '@/components/fallbacks/IframeFallbacks'
 import {
   DropdownMenu,
@@ -153,7 +152,6 @@ export default function WebsiteView ({
     if (!iframe) return
     
     const handleLoad = () => {
-      console.log('Iframe loaded:', view.url)
       
       // Simple check: if we can read the iframe's title and it's a browser error, it's blocked
       setTimeout(() => {
@@ -181,7 +179,6 @@ export default function WebsiteView ({
     }
     
     const handleError = () => {
-      console.log('Iframe failed to load:', view.url)
       setRealIframeStatus('error')
     }
     
