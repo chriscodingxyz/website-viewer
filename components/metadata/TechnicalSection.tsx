@@ -4,6 +4,12 @@ import React from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
 import { Badge } from '@/components/ui/badge'
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import {
   CheckCircle,
   AlertTriangle,
   XCircle,
@@ -29,7 +35,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
     )
   }
 
-  const { technical, headers, icons, structuredData, performance, analytics } =
+  const { technical, headers, icons, structuredData, performance } =
     metadata
 
   const formatBytes = (bytes: number) => {
@@ -53,22 +59,6 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
     status: 'good' | 'warning' | 'missing' | 'error'
     customStatusText?: string
   }) => {
-    const statusIcon =
-      status === 'good' ? (
-        <CheckCircle className='h-4 w-4' />
-      ) : status === 'warning' ? (
-        <AlertTriangle className='h-4 w-4' />
-      ) : (
-        <XCircle className='h-4 w-4' />
-      )
-
-    const badgeClass =
-      status === 'good'
-        ? 'analysis-badge-success'
-        : status === 'warning'
-        ? 'analysis-badge-warning'
-        : 'analysis-badge-error'
-
     const statusText =
       customStatusText ||
       (status === 'good'
@@ -88,44 +78,60 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
       displayValue = 'Not configured'
     }
 
-    return (
-      <div className='bg-card/30 border border-border/50 rounded-lg p-4 hover:bg-card/50 transition-colors'>
-        <div className='flex items-start gap-3'>
-          <div
-            className={`flex-shrink-0 ${
-              status === 'good'
-                ? 'text-emerald-600'
-                : status === 'warning'
-                ? 'text-amber-600'
-                : 'text-red-600'
-            }`}
-          >
-            {statusIcon}
-          </div>
-          
-          <div className='flex-1 min-w-0'>
-            <div className='flex items-start justify-between mb-3'>
-              <div className='flex-1'>
-                <h4 className='font-medium text-foreground text-sm'>
-                  {label}
-                </h4>
-              </div>
-              <div className={`ml-3 flex-shrink-0 ${badgeClass}`}>
-                {statusText}
-              </div>
-            </div>
+    const getBgColor = () => {
+      switch (status) {
+        case 'good':
+          return 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800/30'
+        case 'warning':
+          return 'bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800/30'
+        default:
+          return 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800/30'
+      }
+    }
 
-            <div className='space-y-3'>
-              <p className='text-muted-foreground text-sm leading-relaxed break-words'>
-                {displayValue}
-              </p>
-              {!value && (
-                <div className='bg-muted/30 rounded-md p-3 text-xs text-muted-foreground'>
-                  Consider configuring for better performance and security
-                </div>
-              )}
-            </div>
+    const getStatusColor = () => {
+      switch (status) {
+        case 'good':
+          return 'text-green-700 dark:text-green-300'
+        case 'warning':
+          return 'text-yellow-700 dark:text-yellow-300'
+        default:
+          return 'text-red-700 dark:text-red-300'
+      }
+    }
+
+    const getStatusIcon = () => {
+      switch (status) {
+        case 'good':
+          return <CheckCircle className='h-4 w-4 text-green-600' />
+        case 'warning':
+          return <AlertTriangle className='h-4 w-4 text-yellow-600' />
+        default:
+          return <XCircle className='h-4 w-4 text-red-600' />
+      }
+    }
+
+    return (
+      <div className={`border rounded-lg p-3 ${getBgColor()}`}>
+        <div className='flex items-center justify-between mb-2'>
+          <div className='flex items-center gap-2'>
+            {getStatusIcon()}
+            <h4 className='font-medium text-foreground text-sm'>{label}</h4>
           </div>
+          <span className={`text-xs font-medium px-2 py-1 rounded ${getStatusColor()}`}>
+            {statusText}
+          </span>
+        </div>
+
+        <div className='space-y-2'>
+          <p className='text-sm text-muted-foreground line-clamp-2'>
+            {displayValue}
+          </p>
+          {!value && (
+            <p className={`text-xs ${getStatusColor()}`}>
+              Consider configuring for better performance and security
+            </p>
+          )}
         </div>
       </div>
     )
@@ -149,57 +155,41 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
       {/* Header */}
       <div className='flex items-center justify-end'>
         <div className='flex items-center gap-3'>
-          <div className='flex items-center gap-2'>
-            <Settings className='h-4 w-4 text-purple-600' />
-            <Badge
-              variant='outline'
-              className='text-xs bg-blue-50 text-blue-700 border-blue-200'
+          <Settings className='h-4 w-4 text-purple-600' />
+          <div className='text-right'>
+            <div
+              className={`text-2xl font-bold ${
+                getIssueCount() === 0
+                  ? 'text-emerald-600'
+                  : getIssueCount() <= 2
+                  ? 'text-amber-600'
+                  : 'text-red-600'
+              }`}
             >
-              Performance
-            </Badge>
-            <Badge
-              variant='outline'
-              className='text-xs bg-green-50 text-green-700 border-green-200'
-            >
-              Security
-            </Badge>
-            <Badge
-              variant='outline'
-              className='text-xs bg-purple-50 text-purple-700 border-purple-200'
-            >
-              Config
-            </Badge>
-          </div>
-        </div>
-        <div className='text-right'>
-          <div
-            className={`text-2xl font-bold ${
-              getIssueCount() === 0
-                ? 'text-emerald-600'
-                : getIssueCount() <= 2
-                ? 'text-amber-600'
-                : 'text-red-600'
-            }`}
-          >
-            {getIssueCount()}
-          </div>
-          <div className='text-sm text-gray-500'>
-            {getIssueCount() === 1 ? 'issue found' : 'issues found'}
+              {getIssueCount()}
+            </div>
+            <div className='text-sm text-gray-500'>
+              {getIssueCount() === 1 ? 'issue found' : 'issues found'}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Technical Analysis */}
-      <div className='max-w-2xl mx-auto space-y-8'>
+      <div className='max-w-2xl mx-auto'>
+        <Accordion type="multiple" className="w-full space-y-4" defaultValue={["performance", "security"]}>
 
 
-        {/* Performance Section */}
-        <div className='space-y-6'>
-          <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
-            <Zap className='h-4 w-4 text-blue-600' />
-            <span className='text-sm font-medium text-gray-700'>Performance</span>
-          </div>
-          <div className='space-y-4'>
+          {/* Performance Section */}
+          <AccordionItem value="performance" className="border border-border/50 rounded-lg bg-card/30">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <div className='flex items-center gap-3'>
+                <Zap className='h-5 w-5 text-blue-600' />
+                <span className='font-medium text-foreground'>Performance</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className='space-y-4'>
             {performance?.contentLength && (
               <SimpleListItem
                 icon='📏'
@@ -242,16 +232,20 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                 }
               />
             )}
-          </div>
-        </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
 
-        {/* Security Section */}
-        <div className='space-y-6'>
-          <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
-            <Shield className='h-4 w-4 text-green-600' />
-            <span className='text-sm font-medium text-gray-700'>Security & Headers</span>
-          </div>
-          <div className='space-y-4'>
+          {/* Security Section */}
+          <AccordionItem value="security" className="border border-border/50 rounded-lg bg-card/30">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <div className='flex items-center gap-3'>
+                <Shield className='h-5 w-5 text-green-600' />
+                <span className='font-medium text-foreground'>Security & Headers</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className='space-y-4'>
             {headers?.server && (
               <SimpleListItem
                 icon='🖥️'
@@ -306,16 +300,20 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                 status='warning'
               />
             )}
-          </div>
-        </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
 
-        {/* Technical Configuration */}
-        <div className='space-y-6'>
-          <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
-            <Settings className='h-4 w-4 text-purple-600' />
-            <span className='text-sm font-medium text-gray-700'>Technical Configuration</span>
-          </div>
-          <div className='space-y-4'>
+          {/* Technical Configuration */}
+          <AccordionItem value="configuration" className="border border-border/50 rounded-lg bg-card/30">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <div className='flex items-center gap-3'>
+                <Settings className='h-5 w-5 text-purple-600' />
+                <span className='font-medium text-foreground'>Technical Configuration</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className='space-y-4'>
             <SimpleListItem
               icon='📱'
               label='Mobile Responsive'
@@ -516,215 +514,10 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                 </div>
               </div>
             )}
-
-            {/* Analytics Section */}
-            {analytics && (
-              <div className='bg-card/30 border border-border/50 rounded-lg p-4 hover:bg-card/50 transition-colors'>
-                <div className='flex items-start gap-3'>
-                  <div
-                    className={`flex-shrink-0 ${
-                      analytics.googleAnalytics.present ||
-                      analytics.googleTagManager.present ||
-                      analytics.otherAnalytics.some(a => a.detected)
-                        ? 'text-emerald-600'
-                        : 'text-red-600'
-                    }`}
-                  >
-                    {analytics.googleAnalytics.present ||
-                    analytics.googleTagManager.present ||
-                    analytics.otherAnalytics.some(a => a.detected) ? (
-                      <CheckCircle className='h-4 w-4' />
-                    ) : (
-                      <XCircle className='h-4 w-4' />
-                    )}
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <div className='flex items-start justify-between mb-3'>
-                      <div className='flex-1'>
-                        <h4 className='font-medium text-foreground text-sm'>
-                          Analytics
-                        </h4>
-                      </div>
-                      <div
-                        className={`ml-3 flex-shrink-0 ${
-                          analytics.googleAnalytics.present ||
-                          analytics.googleTagManager.present ||
-                          analytics.otherAnalytics.some(a => a.detected)
-                            ? 'analysis-badge-success'
-                            : 'analysis-badge-error'
-                        }`}
-                      >
-                        {(() => {
-                          const totalTools = [
-                            analytics.googleAnalytics.present,
-                            analytics.googleTagManager.present,
-                            ...analytics.otherAnalytics.map(
-                              tool => tool.detected
-                            )
-                          ].filter(Boolean).length
-                          return totalTools > 0
-                            ? `${totalTools} ${
-                                totalTools === 1 ? 'tool' : 'tools'
-                              }`
-                            : 'None'
-                        })()}
-                      </div>
-                    </div>
-
-                    <div className='space-y-3'>
-                      {/* Google Analytics */}
-                      <div className='flex items-center gap-3'>
-                        <div
-                          className={`w-2 h-2 rounded-full ${
-                            analytics.googleAnalytics.present
-                              ? 'bg-green-500'
-                              : 'bg-gray-300'
-                          }`}
-                        ></div>
-                        <span className='analysis-text-sm font-medium text-foreground'>
-                          Google Analytics
-                        </span>
-                        {analytics.googleAnalytics.present &&
-                          analytics.googleAnalytics.trackingIds.length > 0 && (
-                            <div className='flex gap-1'>
-                              {analytics.googleAnalytics.trackingIds
-                                .slice(0, 2)
-                                .map((id, index) => (
-                                  <Badge
-                                    key={index}
-                                    variant='outline'
-                                    className='text-xs font-mono'
-                                  >
-                                    {id}
-                                  </Badge>
-                                ))}
-                              {analytics.googleAnalytics.trackingIds.length >
-                                2 && (
-                                <Badge variant='outline' className='text-xs'>
-                                  +
-                                  {analytics.googleAnalytics.trackingIds
-                                    .length - 2}
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                      </div>
-
-                      {/* Google Tag Manager */}
-                      <div className='flex items-center gap-3'>
-                        <div
-                          className={`w-2 h-2 rounded-full ${
-                            analytics.googleTagManager.present
-                              ? 'bg-green-500'
-                              : 'bg-gray-300'
-                          }`}
-                        ></div>
-                        <span className='analysis-text-sm font-medium text-foreground'>
-                          Google Tag Manager
-                        </span>
-                        {analytics.googleTagManager.present &&
-                          analytics.googleTagManager.containerIds.length >
-                            0 && (
-                            <div className='flex gap-1'>
-                              {analytics.googleTagManager.containerIds
-                                .slice(0, 2)
-                                .map((id, index) => (
-                                  <Badge
-                                    key={index}
-                                    variant='outline'
-                                    className='text-xs font-mono'
-                                  >
-                                    {id}
-                                  </Badge>
-                                ))}
-                              {analytics.googleTagManager.containerIds.length >
-                                2 && (
-                                <Badge variant='outline' className='text-xs'>
-                                  +
-                                  {analytics.googleTagManager.containerIds
-                                    .length - 2}
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                      </div>
-
-                      {/* Other Analytics Tools */}
-                      {analytics.otherAnalytics.filter(tool => tool.detected)
-                        .length > 0 && (
-                        <div className='space-y-2'>
-                          <div className='analysis-text-xs text-muted-foreground font-medium'>
-                            Other Tools:
-                          </div>
-                          <div className='flex flex-wrap gap-2'>
-                            {analytics.otherAnalytics
-                              .filter(tool => tool.detected)
-                              .slice(0, 4)
-                              .map((tool, index) => (
-                                <div
-                                  key={index}
-                                  className='flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-800/30'
-                                >
-                                  <div className='w-1.5 h-1.5 rounded-full bg-green-500'></div>
-                                  <span className='analysis-text-xs font-medium'>
-                                    {tool.name}
-                                  </span>
-                                </div>
-                              ))}
-                            {analytics.otherAnalytics.filter(
-                              tool => tool.detected
-                            ).length > 4 && (
-                              <div className='px-2 py-1 text-xs text-muted-foreground'>
-                                +
-                                {analytics.otherAnalytics.filter(
-                                  tool => tool.detected
-                                ).length - 4}{' '}
-                                more
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Implementation Details */}
-                      {analytics.googleAnalytics.present && (
-                        <div className='analysis-text-xs text-muted-foreground pl-3 border-l-2 border-border/40'>
-                          <div className='space-y-1'>
-                            {analytics.googleAnalytics.ga4 && (
-                              <div>• GA4 implementation detected</div>
-                            )}
-                            {analytics.googleAnalytics.universalAnalytics && (
-                              <div>• Universal Analytics detected</div>
-                            )}
-                            {analytics.googleAnalytics.gtag && (
-                              <div>• Global Site Tag (gtag) implementation</div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* No Analytics Found */}
-                      {!analytics.googleAnalytics.present &&
-                        !analytics.googleTagManager.present &&
-                        analytics.otherAnalytics.filter(tool => tool.detected)
-                          .length === 0 && (
-                          <div className='space-y-2'>
-                            <p className='text-red-600 dark:text-red-400 analysis-text-sm font-medium'>
-                              No analytics tools detected
-                            </p>
-                            <p className='analysis-text-xs text-muted-foreground pl-3 border-l-2 border-border/40'>
-                              Consider implementing Google Analytics 4 or other
-                              analytics tools to track website performance
-                            </p>
-                          </div>
-                        )}
-                    </div>
-                  </div>
-                </div>
               </div>
-            )}
-          </div>
-        </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
     </div>
   )
