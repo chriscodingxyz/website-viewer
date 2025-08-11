@@ -90,10 +90,10 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
     }
 
     return (
-      <div className='analysis-list-item'>
-        <div className='flex items-start gap-4'>
+      <div className='bg-card/30 border border-border/50 rounded-lg p-4 hover:bg-card/50 transition-colors'>
+        <div className='flex items-start gap-3'>
           <div
-            className={`mt-0.5 ${
+            className={`flex-shrink-0 ${
               status === 'good'
                 ? 'text-emerald-600'
                 : status === 'warning'
@@ -103,22 +103,27 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
           >
             {statusIcon}
           </div>
+          
           <div className='flex-1 min-w-0'>
-            <div className='flex items-center justify-between mb-2'>
-              <span className='font-semibold text-foreground analysis-text-sm'>
-                {label}
-              </span>
-              <div className={badgeClass}>{statusText}</div>
+            <div className='flex items-start justify-between mb-3'>
+              <div className='flex-1'>
+                <h4 className='font-medium text-foreground text-sm'>
+                  {label}
+                </h4>
+              </div>
+              <div className={`ml-3 flex-shrink-0 ${badgeClass}`}>
+                {statusText}
+              </div>
             </div>
 
-            <div className='space-y-2'>
-              <p className='text-muted-foreground analysis-text-sm leading-relaxed break-words'>
+            <div className='space-y-3'>
+              <p className='text-muted-foreground text-sm leading-relaxed break-words'>
                 {displayValue}
               </p>
               {!value && (
-                <p className='analysis-text-xs text-muted-foreground pl-3 border-l-2 border-border/40'>
+                <div className='bg-muted/30 rounded-md p-3 text-xs text-muted-foreground'>
                   Consider configuring for better performance and security
-                </p>
+                </div>
               )}
             </div>
           </div>
@@ -187,61 +192,36 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
 
       {/* Technical Analysis */}
       <div className='max-w-2xl mx-auto space-y-8'>
-        {performance?.contentLength && (
-          <div className='analysis-list-item'>
-            <div className='flex items-start gap-4'>
-              <div
-                className={`mt-0.5 ${
-                  performance.contentLength < 1000000
-                    ? 'text-emerald-600'
-                    : performance.contentLength < 5000000
-                    ? 'text-amber-600'
-                    : 'text-red-600'
-                }`}
-              >
-                <Settings className='h-4 w-4' />
-              </div>
-              <div className='flex-1 min-w-0'>
-                <div className='flex items-center justify-between mb-2'>
-                  <span className='font-semibold text-foreground analysis-text-sm'>
-                    Page Size
-                  </span>
-                  <div
-                    className={`analysis-badge ${
-                      performance.contentLength < 1000000
-                        ? 'analysis-badge-success'
-                        : performance.contentLength < 5000000
-                        ? 'analysis-badge-warning'
-                        : 'analysis-badge-error'
-                    }`}
-                  >
-                    {performance.contentLength < 1000000
-                      ? 'Optimized'
-                      : performance.contentLength < 5000000
-                      ? 'Acceptable'
-                      : 'Large'}
-                  </div>
-                </div>
-                <p className='text-muted-foreground analysis-text-sm leading-relaxed'>
-                  {formatBytes(performance.contentLength)}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
 
         {/* Performance Section */}
-        <div className='space-y-6 bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/20 rounded-lg p-4'>
-          <div className='flex items-center gap-3'>
-            <div className='p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg'>
-              <Zap className='h-5 w-5 text-blue-600 dark:text-blue-400' />
-            </div>
-            <h3 className='text-xl font-semibold text-foreground'>
-              Performance
-            </h3>
+        <div className='space-y-6'>
+          <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+            <Zap className='h-4 w-4 text-blue-600' />
+            <span className='text-sm font-medium text-gray-700'>Performance</span>
           </div>
           <div className='space-y-4'>
+            {performance?.contentLength && (
+              <SimpleListItem
+                icon='📏'
+                label='Page Size'
+                value={formatBytes(performance.contentLength)}
+                status={
+                  performance.contentLength < 1000000
+                    ? 'good'
+                    : performance.contentLength < 5000000
+                    ? 'warning'
+                    : 'error'
+                }
+                customStatusText={
+                  performance.contentLength < 1000000
+                    ? 'Optimized'
+                    : performance.contentLength < 5000000
+                    ? 'Acceptable'
+                    : 'Large'
+                }
+              />
+            )}
             {performance?.loadTime && (
               <SimpleListItem
                 icon='⚡'
@@ -267,87 +247,40 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
         </div>
 
         {/* Security Section */}
-        <div className='space-y-6 bg-gradient-to-r from-green-50 to-transparent dark:from-green-900/20 rounded-lg p-4'>
-          <div className='flex items-center gap-3'>
-            <div className='p-2 bg-green-100 dark:bg-green-900/40 rounded-lg'>
-              <Shield className='h-5 w-5 text-green-600 dark:text-green-400' />
-            </div>
-            <h3 className='text-xl font-semibold text-foreground'>
-              Security & Headers
-            </h3>
+        <div className='space-y-6'>
+          <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+            <Shield className='h-4 w-4 text-green-600' />
+            <span className='text-sm font-medium text-gray-700'>Security & Headers</span>
           </div>
           <div className='space-y-4'>
-            {/* Server and Compression */}
             {headers?.server && (
-              <div className='py-3 text-sm'>
-                <div className='flex items-start gap-3'>
-                  <span className='text-base mt-0.5'>🖥️</span>
-                  <div className='flex-1 min-w-0'>
-                    <div className='flex items-center justify-between mb-1'>
-                      <span className='font-bold text-gray-900 dark:text-gray-100'>
-                        Server
-                      </span>
-                      <Badge
-                        variant='outline'
-                        className='text-xs shrink-0 bg-green-50 text-green-700 border-green-300'
-                      >
-                        Good
-                      </Badge>
-                    </div>
-                    <p className='text-gray-700 dark:text-gray-300'>
-                      &quot;{headers.server}&quot;
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <SimpleListItem
+                icon='🖥️'
+                label='Server'
+                value={headers.server}
+                status='good'
+                customStatusText='Good'
+              />
             )}
 
             {headers?.contentEncoding && (
-              <div className='py-3 text-sm'>
-                <div className='flex items-start gap-3'>
-                  <span className='text-base mt-0.5'>🗜️</span>
-                  <div className='flex-1 min-w-0'>
-                    <div className='flex items-center justify-between mb-1'>
-                      <span className='font-bold text-gray-900 dark:text-gray-100'>
-                        Compression
-                      </span>
-                      <Badge
-                        variant='outline'
-                        className='text-xs shrink-0 bg-green-50 text-green-700 border-green-300'
-                      >
-                        Enabled
-                      </Badge>
-                    </div>
-                    <p className='text-gray-700 dark:text-gray-300'>
-                      &quot;{headers.contentEncoding}&quot;
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <SimpleListItem
+                icon='🗜️'
+                label='Compression'
+                value={headers.contentEncoding}
+                status='good'
+                customStatusText='Enabled'
+              />
             )}
 
             {headers?.cacheControl && (
-              <div className='py-3 text-sm'>
-                <div className='flex items-start gap-3'>
-                  <span className='text-base mt-0.5'>💾</span>
-                  <div className='flex-1 min-w-0'>
-                    <div className='flex items-center justify-between mb-1'>
-                      <span className='font-bold text-gray-900 dark:text-gray-100'>
-                        Cache Control
-                      </span>
-                      <Badge
-                        variant='outline'
-                        className='text-xs shrink-0 bg-green-50 text-green-700 border-green-300'
-                      >
-                        Configured
-                      </Badge>
-                    </div>
-                    <p className='text-gray-700 dark:text-gray-300'>
-                      &quot;{headers.cacheControl}&quot;
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <SimpleListItem
+                icon='💾'
+                label='Cache Control'
+                value={headers.cacheControl}
+                status='good'
+                customStatusText='Configured'
+              />
             )}
 
             <SimpleListItem
@@ -378,14 +311,10 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
         </div>
 
         {/* Technical Configuration */}
-        <div className='space-y-6 bg-gradient-to-r from-purple-50 to-transparent dark:from-purple-900/20 rounded-lg p-4'>
-          <div className='flex items-center gap-3'>
-            <div className='p-2 bg-purple-100 dark:bg-purple-900/40 rounded-lg'>
-              <Settings className='h-5 w-5 text-purple-600 dark:text-purple-400' />
-            </div>
-            <h3 className='text-xl font-semibold text-foreground'>
-              Technical Configuration
-            </h3>
+        <div className='space-y-6'>
+          <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+            <Settings className='h-4 w-4 text-purple-600' />
+            <span className='text-sm font-medium text-gray-700'>Technical Configuration</span>
           </div>
           <div className='space-y-4'>
             <SimpleListItem
@@ -405,17 +334,19 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
             )}
 
             {icons && icons.length > 0 ? (
-              <div className='analysis-list-item'>
-                <div className='flex items-start gap-4'>
-                  <div className='mt-0.5 text-emerald-600'>
+              <div className='bg-card/30 border border-border/50 rounded-lg p-4 hover:bg-card/50 transition-colors'>
+                <div className='flex items-start gap-3'>
+                  <div className='flex-shrink-0 text-emerald-600'>
                     <CheckCircle className='h-4 w-4' />
                   </div>
                   <div className='flex-1 min-w-0'>
-                    <div className='flex items-center justify-between mb-2'>
-                      <span className='font-semibold text-foreground analysis-text-sm'>
-                        Favicons
-                      </span>
-                      <div className='analysis-badge-success'>
+                    <div className='flex items-start justify-between mb-3'>
+                      <div className='flex-1'>
+                        <h4 className='font-medium text-foreground text-sm'>
+                          Favicons
+                        </h4>
+                      </div>
+                      <div className='ml-3 flex-shrink-0 analysis-badge-success'>
                         {icons.length} {icons.length === 1 ? 'icon' : 'icons'}
                       </div>
                     </div>
@@ -485,10 +416,10 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
               />
             )}
 
-            <div className='analysis-list-item'>
-              <div className='flex items-start gap-4'>
+            <div className='bg-card/30 border border-border/50 rounded-lg p-4 hover:bg-card/50 transition-colors'>
+              <div className='flex items-start gap-3'>
                 <div
-                  className={`mt-0.5 ${
+                  className={`flex-shrink-0 ${
                     structuredData && structuredData.length > 0
                       ? 'text-emerald-600'
                       : 'text-red-600'
@@ -501,12 +432,14 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                   )}
                 </div>
                 <div className='flex-1 min-w-0'>
-                  <div className='flex items-center justify-between mb-2'>
-                    <span className='font-semibold text-foreground analysis-text-sm'>
-                      JSON-LD / Structured Data
-                    </span>
+                  <div className='flex items-start justify-between mb-3'>
+                    <div className='flex-1'>
+                      <h4 className='font-medium text-foreground text-sm'>
+                        JSON-LD / Structured Data
+                      </h4>
+                    </div>
                     <div
-                      className={`analysis-badge ${
+                      className={`ml-3 flex-shrink-0 ${
                         structuredData && structuredData.length > 0
                           ? 'analysis-badge-success'
                           : 'analysis-badge-error'
@@ -628,38 +561,40 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
 
             {/* HTTP Headers Details */}
             {Object.keys(headers || {}).length > 0 && (
-              <div className='py-3 text-sm'>
+              <div className='bg-card/30 border border-border/50 rounded-lg p-4 hover:bg-card/50 transition-colors'>
                 <div className='flex items-start gap-3'>
-                  <span className='text-base mt-0.5'>📡</span>
+                  <div className='flex-shrink-0 text-blue-600'>
+                    <BarChart3 className='h-4 w-4' />
+                  </div>
                   <div className='flex-1 min-w-0'>
-                    <div className='flex items-center justify-between mb-1'>
-                      <span className='font-bold text-gray-900 dark:text-gray-100'>
-                        HTTP Headers
-                      </span>
-                      <Badge
-                        variant='outline'
-                        className='text-xs shrink-0 bg-blue-50 text-blue-700 border-blue-300'
-                      >
+                    <div className='flex items-start justify-between mb-3'>
+                      <div className='flex-1'>
+                        <h4 className='font-medium text-foreground text-sm'>
+                          HTTP Headers
+                        </h4>
+                      </div>
+                      <div className='ml-3 flex-shrink-0 analysis-badge-success'>
                         {Object.keys(headers || {}).length} headers
-                      </Badge>
+                      </div>
                     </div>
 
-                    <details className='mt-2'>
-                      <summary className='text-xs text-blue-600 dark:text-blue-400 cursor-pointer hover:text-blue-700 dark:hover:text-blue-300'>
-                        View All HTTP Headers
-                      </summary>
-                      <div className='mt-2 bg-gray-50 dark:bg-gray-800 rounded p-2'>
-                        <pre className='text-xs text-gray-600 dark:text-gray-400 overflow-x-auto whitespace-pre-wrap'>
-                          {Object.entries(headers || {})
-                            .map(([key, value]) => `${key}: ${value}`)
-                            .join('\n')}
-                        </pre>
+                    <div className='space-y-3'>
+                      <details className='bg-muted/30 rounded-md p-3'>
+                        <summary className='text-xs text-blue-600 dark:text-blue-400 cursor-pointer hover:text-blue-700 dark:hover:text-blue-300 font-medium'>
+                          View All HTTP Headers
+                        </summary>
+                        <div className='mt-3 bg-background/50 rounded p-2'>
+                          <pre className='text-xs text-muted-foreground overflow-x-auto whitespace-pre-wrap max-h-40 overflow-y-auto font-mono'>
+                            {Object.entries(headers || {})
+                              .map(([key, value]) => `${key}: ${value}`)
+                              .join('\n')}
+                          </pre>
+                        </div>
+                      </details>
+                      <div className='bg-muted/30 rounded-md p-3 text-xs text-muted-foreground'>
+                        Server response headers for debugging and optimization
                       </div>
-                    </details>
-
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                      Server response headers for debugging and optimization
-                    </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -667,10 +602,10 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
 
             {/* Analytics Section */}
             {analytics && (
-              <div className='analysis-list-item'>
-                <div className='flex items-start gap-4'>
+              <div className='bg-card/30 border border-border/50 rounded-lg p-4 hover:bg-card/50 transition-colors'>
+                <div className='flex items-start gap-3'>
                   <div
-                    className={`mt-0.5 ${
+                    className={`flex-shrink-0 ${
                       analytics.googleAnalytics.present ||
                       analytics.googleTagManager.present ||
                       analytics.otherAnalytics.some(a => a.detected)
@@ -687,12 +622,14 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                     )}
                   </div>
                   <div className='flex-1 min-w-0'>
-                    <div className='flex items-center justify-between mb-2'>
-                      <span className='font-semibold text-foreground analysis-text-sm'>
-                        Analytics
-                      </span>
+                    <div className='flex items-start justify-between mb-3'>
+                      <div className='flex-1'>
+                        <h4 className='font-medium text-foreground text-sm'>
+                          Analytics
+                        </h4>
+                      </div>
                       <div
-                        className={`analysis-badge ${
+                        className={`ml-3 flex-shrink-0 ${
                           analytics.googleAnalytics.present ||
                           analytics.googleTagManager.present ||
                           analytics.otherAnalytics.some(a => a.detected)

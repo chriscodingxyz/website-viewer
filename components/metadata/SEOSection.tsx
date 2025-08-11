@@ -127,10 +127,10 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
     }
 
     return (
-      <div className='analysis-list-item'>
-        <div className='flex items-start gap-4'>
+      <div className='bg-card/30 border border-border/50 rounded-lg p-4 hover:bg-card/50 transition-colors'>
+        <div className='flex items-start gap-3'>
           <div
-            className={`mt-0.5 ${
+            className={`flex-shrink-0 ${
               badgeClass.includes('success')
                 ? 'text-emerald-600'
                 : badgeClass.includes('warning')
@@ -140,40 +140,41 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
           >
             {statusIcon}
           </div>
+          
           <div className='flex-1 min-w-0'>
-            <div className='flex items-center justify-between mb-2'>
-              <span className='font-semibold text-foreground analysis-text-sm'>
-                {label}
-              </span>
-              <div className={badgeClass}>{statusText}</div>
+            <div className='flex items-start justify-between mb-3'>
+              <div className='flex-1'>
+                <h4 className='font-medium text-foreground text-sm'>
+                  {label}
+                </h4>
+              </div>
+              <div className={`ml-3 flex-shrink-0 ${badgeClass}`}>
+                {statusText}
+              </div>
             </div>
 
             {value ? (
-              <div className='space-y-2'>
-                <p className='text-muted-foreground analysis-text-sm leading-relaxed break-words'>
+              <div className='space-y-3'>
+                <p className='text-muted-foreground text-sm leading-relaxed break-words'>
                   {value}
                 </p>
                 {showDetails && (
-                  <div className='analysis-text-xs text-muted-foreground space-y-1 pl-3 border-l-2 border-border/40'>
+                  <div className='bg-muted/30 rounded-md p-3 text-xs text-muted-foreground space-y-1'>
                     {(label === 'Title' || label === 'Description') && (
-                      <>
-                        <div>
-                          Length:{' '}
-                          <span
-                            className={`font-medium ${
-                              isGood ? 'text-emerald-600' : 'text-amber-600'
-                            }`}
-                          >
+                      <div className='flex items-center justify-between'>
+                        <span>
+                          Length: <span className={`font-medium ${
+                            isGood ? 'text-emerald-600' : 'text-amber-600'
+                          }`}>
                             {value.length} characters
                           </span>
-                        </div>
-                        <div>
-                          Recommended:{' '}
-                          <span className='font-medium text-foreground'>
+                        </span>
+                        <span className='text-muted-foreground'>
+                          Recommended: <span className='font-medium text-foreground'>
                             {optimalRange}
                           </span>
-                        </div>
-                      </>
+                        </span>
+                      </div>
                     )}
                     {label === 'Keywords' && (
                       <div>Help search engines understand your content</div>
@@ -182,13 +183,13 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
                 )}
               </div>
             ) : (
-              <div className='space-y-2'>
-                <p className='text-red-600 dark:text-red-400 analysis-text-sm font-medium'>
+              <div className='space-y-3'>
+                <p className='text-red-600 dark:text-red-400 text-sm font-medium'>
                   Not configured
                 </p>
-                <p className='analysis-text-xs text-muted-foreground pl-3 border-l-2 border-border/40'>
+                <div className='bg-muted/30 rounded-md p-3 text-xs text-muted-foreground'>
                   {optimalRange || 'Recommended for better SEO'}
-                </p>
+                </div>
               </div>
             )}
           </div>
@@ -254,6 +255,13 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
     seo.description.length >= 120 &&
     seo.description.length <= 160
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   return (
     <div className='w-full space-y-10'>
       {/* Header */}
@@ -263,22 +271,29 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
             <Globe className='h-4 w-4 text-blue-600' />
             <Badge
               variant='outline'
-              className='text-xs bg-blue-50 text-blue-700 border-blue-200'
+              className='text-xs bg-blue-50 text-blue-700 border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors'
+              onClick={() => scrollToSection('meta-tags')}
             >
-              SEO
+              Meta Tags
             </Badge>
-            <Badge
-              variant='outline'
-              className='text-xs bg-green-50 text-green-700 border-green-200'
-            >
-              Meta
-            </Badge>
-            <Badge
-              variant='outline'
-              className='text-xs bg-purple-50 text-purple-700 border-purple-200'
-            >
-              Schema
-            </Badge>
+            {sitemap && (
+              <Badge
+                variant='outline'
+                className='text-xs bg-orange-50 text-orange-700 border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors'
+                onClick={() => scrollToSection('sitemaps')}
+              >
+                Sitemaps
+              </Badge>
+            )}
+            {recommendations.length > 0 && (
+              <Badge
+                variant='outline'
+                className='text-xs bg-purple-50 text-purple-700 border-purple-200 cursor-pointer hover:bg-purple-100 transition-colors'
+                onClick={() => scrollToSection('recommendations')}
+              >
+                Tips
+              </Badge>
+            )}
           </div>
           {getScoreIcon(seoScore.percentage)}
           <div className='text-right'>
@@ -299,14 +314,10 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
       {/* SEO Analysis */}
       <div className='max-w-2xl mx-auto space-y-8'>
         {/* Meta Tags */}
-        <div className='space-y-6 bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/20 rounded-lg p-4'>
-          <div className='flex items-center gap-3'>
-            <div className='p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg'>
-              <Globe className='h-5 w-5 text-blue-600 dark:text-blue-400' />
-            </div>
-            <h3 className='text-xl font-semibold text-foreground'>
-              Meta Tags & SEO Elements
-            </h3>
+        <div id="meta-tags" className='space-y-6 scroll-mt-24'>
+          <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+            <Globe className='h-4 w-4 text-blue-600' />
+            <span className='text-sm font-medium text-gray-700'>Meta Tags & SEO Elements</span>
           </div>
           <div className='space-y-4'>
             <SimpleListItem
@@ -362,23 +373,19 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
 
         {/* Sitemaps & Robots */}
         {sitemap && (
-          <div className='space-y-6 bg-gradient-to-r from-green-50 to-transparent dark:from-green-900/20 rounded-lg p-4'>
-            <div className='flex items-center gap-3'>
-              <div className='p-2 bg-green-100 dark:bg-green-900/40 rounded-lg'>
-                <BarChart3 className='h-5 w-5 text-green-600 dark:text-green-400' />
-              </div>
-              <h3 className='text-xl font-semibold text-foreground'>
-                Sitemaps & Robots
-              </h3>
+          <div id="sitemaps" className='space-y-6 scroll-mt-24'>
+            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
+              <BarChart3 className='h-4 w-4 text-green-600' />
+              <span className='text-sm font-medium text-gray-700'>Sitemaps & Robots</span>
             </div>
 
             <div className='space-y-6'>
               {/* robots.txt Status */}
               {sitemap.robotsTxt && (
-                <div className='analysis-list-item'>
-                  <div className='flex items-start gap-4'>
+                <div className='bg-card/30 border border-border/50 rounded-lg p-4 hover:bg-card/50 transition-colors'>
+                  <div className='flex items-start gap-3'>
                     <div
-                      className={`mt-0.5 ${
+                      className={`flex-shrink-0 ${
                         sitemap.robotsTxt.accessible ||
                         sitemap.robotsTxt.hasMetaRobots
                           ? 'text-emerald-600'
@@ -393,24 +400,26 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
                       )}
                     </div>
                     <div className='flex-1 min-w-0'>
-                      <div className='flex items-center justify-between mb-2'>
-                        <span className='font-semibold text-foreground analysis-text-sm'>
-                          {sitemap.robotsTxt.accessible
-                            ? sitemap.robotsTxt.url.endsWith('.js')
-                              ? 'robots.js'
-                              : 'robots.txt'
-                            : sitemap.robotsTxt.hasMetaRobots
-                            ? 'Robots Configuration'
-                            : 'robots.txt'}
-                        </span>
+                      <div className='flex items-start justify-between mb-3'>
+                        <div className='flex-1'>
+                          <h4 className='font-medium text-foreground text-sm'>
+                            {sitemap.robotsTxt.accessible
+                              ? sitemap.robotsTxt.url.endsWith('.js')
+                                ? 'robots.js'
+                                : 'robots.txt'
+                              : sitemap.robotsTxt.hasMetaRobots
+                              ? 'Robots Configuration'
+                              : 'robots.txt'}
+                          </h4>
+                        </div>
                         <div
-                          className={
+                          className={`ml-3 flex-shrink-0 ${
                             sitemap.robotsTxt.accessible
                               ? 'analysis-badge-success'
                               : sitemap.robotsTxt.hasMetaRobots
                               ? 'analysis-badge-success'
                               : 'analysis-badge-error'
-                          }
+                          }`}
                         >
                           {sitemap.robotsTxt.accessible
                             ? 'Found'
@@ -419,16 +428,18 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
                             : 'Missing'}
                         </div>
                       </div>
-                      <div className='analysis-text-xs text-muted-foreground'>
-                        {sitemap.robotsTxt.accessible
-                          ? `${
-                              sitemap.robotsTxt.url.endsWith('.js')
-                                ? 'robots.js'
-                                : 'robots.txt'
-                            } found - helps search engines understand crawling rules`
-                          : sitemap.robotsTxt.hasMetaRobots
-                          ? `robots.txt not needed - using Next.js meta robots config: "${sitemap.robotsTxt.metaContent}"`
-                          : 'robots file not found - consider adding robots.txt or robots.js for better SEO'}
+                      <div className='space-y-3'>
+                        <div className='bg-muted/30 rounded-md p-3 text-xs text-muted-foreground'>
+                          {sitemap.robotsTxt.accessible
+                            ? `${
+                                sitemap.robotsTxt.url.endsWith('.js')
+                                  ? 'robots.js'
+                                  : 'robots.txt'
+                              } found - helps search engines understand crawling rules`
+                            : sitemap.robotsTxt.hasMetaRobots
+                            ? `robots.txt not needed - using Next.js meta robots config: "${sitemap.robotsTxt.metaContent}"`
+                            : 'robots file not found - consider adding robots.txt or robots.js for better SEO'}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -436,10 +447,10 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
               )}
 
               {/* Sitemap Summary */}
-              <div className='analysis-list-item'>
-                <div className='flex items-start gap-4'>
+              <div className='bg-card/30 border border-border/50 rounded-lg p-4 hover:bg-card/50 transition-colors'>
+                <div className='flex items-start gap-3'>
                   <div
-                    className={`mt-0.5 ${
+                    className={`flex-shrink-0 ${
                       sitemap.sitemaps.some(s => s.accessible)
                         ? 'text-emerald-600'
                         : 'text-red-600'
@@ -452,10 +463,12 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
                     )}
                   </div>
                   <div className='flex-1 min-w-0'>
-                    <div className='flex items-center justify-between mb-2'>
-                      <span className='font-semibold text-foreground analysis-text-sm'>
-                        Sitemaps
-                      </span>
+                    <div className='flex items-start justify-between mb-3'>
+                      <div className='flex-1'>
+                        <h4 className='font-medium text-foreground text-sm'>
+                          Sitemaps
+                        </h4>
+                      </div>
                       {(() => {
                         const accessibleCount = sitemap.sitemaps.filter(
                           s => s.accessible
@@ -464,19 +477,19 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
 
                         if (accessibleCount > 0) {
                           return (
-                            <div className='analysis-badge-success'>
+                            <div className='ml-3 flex-shrink-0 analysis-badge-success'>
                               {accessibleCount} found
                             </div>
                           )
                         } else if (totalCount > 0) {
                           return (
-                            <div className='analysis-badge-warning'>
+                            <div className='ml-3 flex-shrink-0 analysis-badge-warning'>
                               Found but not accessible
                             </div>
                           )
                         } else {
                           return (
-                            <div className='analysis-badge-error'>
+                            <div className='ml-3 flex-shrink-0 analysis-badge-error'>
                               None found
                             </div>
                           )
@@ -558,12 +571,10 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
         )}
 
         {recommendations.length > 0 && (
-          <div className='space-y-4'>
-            <div className='flex items-center gap-2'>
+          <div id="recommendations" className='space-y-6 scroll-mt-24'>
+            <div className='inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5 mb-4'>
               <Info className='h-4 w-4 text-blue-600' />
-              <h4 className='analysis-text-sm font-semibold text-foreground'>
-                Recommendations
-              </h4>
+              <span className='text-sm font-medium text-gray-700'>Recommendations</span>
             </div>
             <div className='space-y-3'>
               {recommendations.slice(0, 6).map((rec, index) => (
