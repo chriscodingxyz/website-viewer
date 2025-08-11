@@ -3,9 +3,16 @@
 import React from 'react'
 import ThemeToggle from '@/components/ThemeToggle'
 import { GithubLogo, LinkedinLogo, XLogo } from '@phosphor-icons/react'
+import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear()
+  const { currentSite } = useWebsiteViewer()
+
+  // Hide footer when a site is loaded (analysis tools take over)
+  if (currentSite) {
+    return null
+  }
 
   return (
     <footer className='border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>

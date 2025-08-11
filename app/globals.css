@@ -22,6 +22,35 @@
   }
 }
 
+/* Font family utilities */
+.font-ibm-plex-mono {
+  font-family: var(--font-ibm-plex-mono), monospace;
+}
+
+.font-inter {
+  font-family: var(--font-inter), sans-serif;
+}
+
+.font-roboto {
+  font-family: var(--font-roboto), sans-serif;
+}
+
+.font-montserrat {
+  font-family: var(--font-montserrat), sans-serif;
+}
+
+.font-poppins {
+  font-family: var(--font-poppins), sans-serif;
+}
+
+.font-lato {
+  font-family: var(--font-lato), sans-serif;
+}
+
+.font-playfair-display {
+  font-family: var(--font-playfair-display), serif;
+}
+
 /* Custom animations and transitions */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
@@ -165,6 +194,45 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Analysis section typography utilities */
+.analysis-font {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.analysis-text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.analysis-text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.analysis-section {
+  @apply analysis-font;
+}
+
+.analysis-list-item {
+  @apply py-3 border-b border-border/50 last:border-b-0;
+}
+
+.analysis-badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border;
+}
+
+.analysis-badge-success {
+  @apply analysis-badge bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800/30;
+}
+
+.analysis-badge-warning {
+  @apply analysis-badge bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800/30;
+}
+
+.analysis-badge-error {
+  @apply analysis-badge bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800/30;
 }
 
 .responsive-text-sm {

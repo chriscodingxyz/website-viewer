@@ -4,14 +4,20 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { toast } from 'sonner'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
+import { WebsiteMetadata } from '@/types/metadata'
+import { IframeStatus, IframeDetectionResult, iframeDetectionService } from '@/services/IframeDetectionService'
+
 
 export type ViewType = 'desktop' | 'tablet' | 'mobileLarge' | 'mobile'
+export type TabType = 'viewports' | 'seo' | 'social' | 'technical'
 
 export interface View {
   id: number
   url: string
   type: ViewType
   refreshKey?: number
+  iframeStatus: IframeStatus
+  iframeResult?: IframeDetectionResult
 }
 
 const isValidUrl = (url: string): boolean => {
@@ -92,6 +98,19 @@ interface WebsiteViewerContextType {
   setGlobalZoomStepIndex: (index: number) => void
   globalZoomStepIndex: number
   zoomSteps: number[]
+  // Metadata functionality
+  metadata: WebsiteMetadata | null
+  metadataLoading: boolean
+  metadataError: string | null
+  fetchMetadata: (url?: string) => Promise<void>
+  clearMetadata: () => void
+  // Iframe preview functionality
+  updateViewIframeStatus: (id: number, status: IframeStatus, result?: IframeDetectionResult) => void
+  // Navigation
+  clearSite: () => void
+  // Tab management
+  selectedTab: TabType
+  setSelectedTab: (tab: TabType) => void
 }
 
 const WebsiteViewerContext = createContext<
@@ -106,16 +125,23 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   const [isInputHighlighted, setIsInputHighlighted] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
+  
+  // Tab state
+  const [selectedTab, setSelectedTab] = useState<TabType>('viewports')
+  
+  // Metadata state
+  const [metadata, setMetadata] = useState<WebsiteMetadata | null>(null)
+  const [metadataLoading, setMetadataLoading] = useState(false)
+  const [metadataError, setMetadataError] = useState<string | null>(null)
+
 
   const { favorites } = useFavorites()
   const { history, addToHistory } = useHistory()
 
-  // Load site and zoom from URL params on mount
+  // Load site from URL params on mount
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const siteParam = urlParams.get('site')
-    const zoomParam = urlParams.get('zoom')
-    let shouldUpdateUrl = false
     
     if (siteParam) {
       // Auto-add protocol based on domain
@@ -125,27 +151,32 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
         loadSiteInternal(fullUrl)
       }
     }
-    
-    if (zoomParam) {
-      const zoomValue = parseInt(zoomParam)
-      const validZooms = [100, 125, 150, 200]
-      if (validZooms.includes(zoomValue)) {
-        const stepIndex = zoomSteps.findIndex(step => step === zoomValue / 100)
-        if (stepIndex !== -1) {
-          setGlobalZoomStepIndex(stepIndex)
+  }, [])
+
+  // Update URL parameters when URL input changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const urlParams = new URLSearchParams(window.location.search)
+      
+      if (url && url.trim()) {
+        const formattedUrl = formatUrl(url)
+        if (formattedUrl) {
+          const cleanDomain = stripUrlForParams(formattedUrl)
+          urlParams.set('site', cleanDomain)
+        } else {
+          urlParams.delete('site')
         }
       } else {
-        // Invalid zoom value - remove it from URL
-        urlParams.delete('zoom')
-        shouldUpdateUrl = true
+        urlParams.delete('site')
       }
-    }
+      
+      const paramString = urlParams.toString()
+      const finalUrl = paramString ? `${window.location.pathname}?${paramString}` : window.location.pathname
+      window.history.pushState({}, '', finalUrl)
+    }, 300) // Debounce for 300ms
     
-    // Update URL if we removed invalid zoom parameter
-    if (shouldUpdateUrl) {
-      window.history.replaceState({}, '', `${window.location.pathname}?${urlParams}`)
-    }
-  }, [])
+    return () => clearTimeout(timeoutId)
+  }, [url])
 
   // Global zoom state
   const zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2]
@@ -158,40 +189,45 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setTimeout(() => setIsInputHighlighted(false), 1000)
   }
 
-  const loadSiteInternal = (formattedUrl: string) => {
-    // Replace all views with new site's 4 viewports
-    setViews([
-      { id: nextId, url: formattedUrl, type: 'desktop' },
-      { id: nextId + 1, url: formattedUrl, type: 'tablet' },
-      { id: nextId + 2, url: formattedUrl, type: 'mobileLarge' },
-      { id: nextId + 3, url: formattedUrl, type: 'mobile' }
-    ])
+  const loadSiteInternal = async (formattedUrl: string) => {
+    // Just create views as loaded - no more broken detection
+    const newViews = [
+      { id: nextId, url: formattedUrl, type: 'desktop' as ViewType, iframeStatus: 'loaded' as IframeStatus },
+      { id: nextId + 1, url: formattedUrl, type: 'tablet' as ViewType, iframeStatus: 'loaded' as IframeStatus },
+      { id: nextId + 2, url: formattedUrl, type: 'mobileLarge' as ViewType, iframeStatus: 'loaded' as IframeStatus },
+      { id: nextId + 3, url: formattedUrl, type: 'mobile' as ViewType, iframeStatus: 'loaded' as IframeStatus }
+    ]
+    
+    setViews(newViews)
     setCurrentSite(formattedUrl)
     setNextId(nextId + 4)
     addToHistory(formattedUrl)
-    // Keep the URL in the field instead of clearing it
     setUrl(formattedUrl)
+    
+    // Automatically start metadata extraction in the background
+    fetchMetadata(formattedUrl)
   }
 
   const updateUrlParams = () => {
     const urlParams = new URLSearchParams(window.location.search)
     
-    // Update site param if we have a current site
-    if (currentSite) {
-      const cleanDomain = stripUrlForParams(currentSite)
-      urlParams.set('site', cleanDomain)
-    }
-    
-    // Update zoom param if not default (100%)
-    const zoomPercent = Math.round(globalZoom * 100)
-    const validZooms = [100, 125, 150, 200]
-    if (validZooms.includes(zoomPercent) && zoomPercent !== 100) {
-      urlParams.set('zoom', zoomPercent.toString())
+    // Update site param based on current URL input
+    if (url && url.trim()) {
+      const formattedUrl = formatUrl(url)
+      if (formattedUrl) {
+        const cleanDomain = stripUrlForParams(formattedUrl)
+        urlParams.set('site', cleanDomain)
+      } else {
+        urlParams.delete('site')
+      }
     } else {
-      urlParams.delete('zoom')
+      urlParams.delete('site')
     }
     
-    window.history.pushState({}, '', `${window.location.pathname}?${urlParams}`)
+    // Construct the final URL
+    const paramString = urlParams.toString()
+    const finalUrl = paramString ? `${window.location.pathname}?${paramString}` : window.location.pathname
+    window.history.pushState({}, '', finalUrl)
   }
 
   const loadSite = (urlOverride?: string) => {
@@ -222,17 +258,34 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
   const updateGlobalZoom = (stepIndex: number) => {
     setGlobalZoomStepIndex(stepIndex)
-    // Update URL params after state is set
-    setTimeout(() => updateUrlParams(), 0)
   }
+
+  // Iframe preview functionality
+  const updateViewIframeStatus = (id: number, status: IframeStatus, result?: IframeDetectionResult) => {
+    setViews(prevViews => 
+      prevViews.map(view => 
+        view.id === id 
+          ? { ...view, iframeStatus: status, iframeResult: result }
+          : view
+      )
+    )
+  }
+
+  // Removed broken detection logic
 
   const clearSite = () => {
     setViews([])
     setCurrentSite(null)
+    setUrl('')
+    clearMetadata()
+    // Clear URL params
+    window.history.pushState({}, '', window.location.pathname)
+    toast.success('Returned to homepage')
   }
 
   const handleUrlChange = (value: string) => {
     setUrl(value)
+    
     if (value.length > 0) {
       const suggestions = [
         ...history,
@@ -264,6 +317,41 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setShowSuggestions(false)
   }
 
+  // Metadata functions
+  const fetchMetadata = async (urlOverride?: string) => {
+    const targetUrl = urlOverride || currentSite
+    if (!targetUrl) {
+      return
+    }
+    setMetadataLoading(true)
+    setMetadataError(null)
+    
+    try {
+      const response = await fetch(`/api/metadata?url=${encodeURIComponent(targetUrl)}`)
+      const data = await response.json()
+      
+      if (data.success && data.data) {
+        setMetadata(data.data)
+      } else {
+        setMetadataError(data.error || 'Failed to extract metadata')
+        setMetadata(null)
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      setMetadataError(errorMessage)
+      setMetadata(null)
+    } finally {
+      setMetadataLoading(false)
+    }
+  }
+
+  const clearMetadata = () => {
+    setMetadata(null)
+    setMetadataError(null)
+    setMetadataLoading(false)
+  }
+
+
   const value: WebsiteViewerContextType = {
     url,
     setUrl,
@@ -285,7 +373,16 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     globalZoom,
     setGlobalZoomStepIndex: updateGlobalZoom,
     globalZoomStepIndex,
-    zoomSteps
+    zoomSteps,
+    metadata,
+    metadataLoading,
+    metadataError,
+    fetchMetadata,
+    clearMetadata,
+    updateViewIframeStatus,
+    clearSite,
+    selectedTab,
+    setSelectedTab
   }
 
   return (
