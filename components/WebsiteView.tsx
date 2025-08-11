@@ -146,40 +146,48 @@ export default function WebsiteView ({
     return () => window.removeEventListener('resize', updateScale)
   }, [view.type, displayDimensions, globalZoom])
 
-  // Monitor real iframe loading status
+  // Monitor real iframe loading status - initial load only, no resets on tab switches
   useEffect(() => {
     const iframe = iframeRef.current
     if (!iframe) return
     
+    let isInitialLoad = true
+    
     const handleLoad = () => {
-      
-      // Simple check: if we can read the iframe's title and it's a browser error, it's blocked
-      setTimeout(() => {
-        try {
-          const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
-          if (iframeDoc) {
-            const title = iframeDoc.title || ''
-            // Browser error pages have specific titles
-            if (title.includes('This site can\'t be reached') || 
-                title.includes('refused to connect') ||
-                iframeDoc.body?.innerText?.includes('ERR_CONNECTION_REFUSED')) {
-              setRealIframeStatus('error')
+      // Only process the very first load event, ignore subsequent ones from tab switching
+      if (isInitialLoad && realIframeStatus === 'loading') {
+        isInitialLoad = false
+        // Simple check: if we can read the iframe's title and it's a browser error, it's blocked
+        setTimeout(() => {
+          try {
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
+            if (iframeDoc) {
+              const title = iframeDoc.title || ''
+              // Browser error pages have specific titles
+              if (title.includes('This site can\'t be reached') || 
+                  title.includes('refused to connect') ||
+                  iframeDoc.body?.innerText?.includes('ERR_CONNECTION_REFUSED')) {
+                setRealIframeStatus('error')
+              } else {
+                setRealIframeStatus('loaded')
+              }
             } else {
+              // Can't read = cross-origin = probably worked
               setRealIframeStatus('loaded')
             }
-          } else {
-            // Can't read = cross-origin = probably worked
+          } catch {
+            // Can't access = cross-origin = probably worked  
             setRealIframeStatus('loaded')
           }
-        } catch {
-          // Can't access = cross-origin = probably worked  
-          setRealIframeStatus('loaded')
-        }
-      }, 500)
+        }, 500)
+      }
     }
     
     const handleError = () => {
-      setRealIframeStatus('error')
+      if (isInitialLoad) {
+        setRealIframeStatus('error')
+        isInitialLoad = false
+      }
     }
     
     iframe.addEventListener('load', handleLoad)
@@ -189,7 +197,7 @@ export default function WebsiteView ({
       iframe.removeEventListener('load', handleLoad)
       iframe.removeEventListener('error', handleError)
     }
-  }, [view.url])
+  }, [view.url]) // Remove realIframeStatus dependency to prevent re-running
 
   // Refresh iframe on refresh key
   useEffect(() => {
