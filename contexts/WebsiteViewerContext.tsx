@@ -4,138 +4,9 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { toast } from 'sonner'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
-import { WebsiteMetadata, LighthouseReport } from '@/types/metadata'
+import { WebsiteMetadata } from '@/types/metadata'
 import { IframeStatus, IframeDetectionResult, iframeDetectionService } from '@/services/IframeDetectionService'
 
-// Function to sanitize Lighthouse data and remove circular references
-function sanitizeLighthouseData(data: any): LighthouseReport {
-  // More aggressive sanitization to completely prevent circular references
-  const sanitize = (obj: any, depth = 0, maxDepth = 10): any => {
-    // Prevent infinite recursion
-    if (depth > maxDepth) {
-      return '[Max Depth Exceeded]'
-    }
-    
-    // Handle primitives
-    if (obj === null || obj === undefined) {
-      return obj
-    }
-    
-    if (typeof obj !== 'object') {
-      return obj
-    }
-    
-    // Check for DOM elements, React elements, or other problematic objects
-    if (obj instanceof Element || 
-        obj instanceof Node || 
-        obj instanceof HTMLElement ||
-        obj.constructor?.name?.includes('HTML') ||
-        obj.constructor?.name?.includes('Element') ||
-        obj.constructor?.name?.includes('Node') ||
-        obj.constructor?.name?.includes('Fiber') ||
-        obj._reactInternalFiber ||
-        obj._reactFiber ||
-        obj.stateNode ||
-        obj.type?.$$typeof ||
-        obj.$$typeof) {
-      return '[DOM/React Element Removed]'
-    }
-    
-    // Handle arrays
-    if (Array.isArray(obj)) {
-      return obj.slice(0, 50).map(item => sanitize(item, depth + 1, maxDepth))
-    }
-    
-    // Handle objects
-    const sanitized: any = {}
-    const entries = Object.entries(obj).slice(0, 100) // Limit object size
-    
-    for (const [key, value] of entries) {
-      // Skip problematic keys more aggressively
-      if (key.startsWith('_') || 
-          key.includes('fiber') || 
-          key.includes('Fiber') ||
-          key.includes('react') ||
-          key.includes('React') ||
-          key.includes('node') ||
-          key.includes('Node') ||
-          key.includes('element') ||
-          key.includes('Element') ||
-          key.includes('dom') ||
-          key.includes('DOM') ||
-          key.includes('$$') ||
-          key === 'stateNode' ||
-          key === 'type' ||
-          key === 'key' ||
-          key === 'ref') {
-        continue
-      }
-      
-      // For details field, be extra cautious
-      if (key === 'details') {
-        if (value && typeof value === 'object' && !Array.isArray(value)) {
-          const simpleDetails: any = {}
-          // Only keep very basic properties for details
-          const allowedDetailKeys = ['type', 'headings', 'items', 'summary', 'overallSavingsMs', 'overallSavingsBytes']
-          
-          for (const [detailKey, detailValue] of Object.entries(value)) {
-            if (allowedDetailKeys.includes(detailKey) && 
-                (typeof detailValue === 'string' || 
-                 typeof detailValue === 'number' || 
-                 typeof detailValue === 'boolean' ||
-                 detailValue === null)) {
-              simpleDetails[detailKey] = detailValue
-            }
-          }
-          sanitized[key] = simpleDetails
-        } else {
-          sanitized[key] = null // Remove complex details entirely
-        }
-      } else {
-        try {
-          sanitized[key] = sanitize(value, depth + 1, maxDepth)
-        } catch (error) {
-          // If sanitization fails for any property, skip it
-          console.warn(`Skipping property ${key} due to sanitization error:`, error)
-          continue
-        }
-      }
-    }
-    
-    return sanitized
-  }
-  
-  try {
-    return sanitize(data) as LighthouseReport
-  } catch (error) {
-    console.error('Sanitization failed completely, returning minimal report:', error)
-    // Return a minimal safe report if all else fails
-    return {
-      requestedUrl: data?.requestedUrl || 'unknown',
-      finalUrl: data?.finalUrl || 'unknown',
-      fetchTime: new Date().toISOString(),
-      gatherMode: 'navigation',
-      lighthouseVersion: '12.0.0',
-      userAgent: 'sanitized',
-      environment: {
-        networkUserAgent: 'sanitized',
-        hostUserAgent: 'sanitized',
-        benchmarkIndex: 1000,
-      },
-      configSettings: {
-        emulatedFormFactor: 'desktop',
-        locale: 'en-US',
-        onlyCategories: ['performance'],
-      },
-      scores: data?.scores || {},
-      coreWebVitals: data?.coreWebVitals || {},
-      audits: [],
-      opportunities: [],
-      diagnostics: [],
-      timing: { total: 0 },
-    } as LighthouseReport
-  }
-}
 
 export type ViewType = 'desktop' | 'tablet' | 'mobileLarge' | 'mobile'
 export type TabType = 'viewports' | 'seo' | 'social' | 'technical'
@@ -233,13 +104,6 @@ interface WebsiteViewerContextType {
   metadataError: string | null
   fetchMetadata: (url?: string) => Promise<void>
   clearMetadata: () => void
-  // Performance analysis functionality
-  lighthouseReports: Record<ViewType, LighthouseReport | null>
-  lighthouseLoading: boolean
-  lighthouseError: string | null
-  fetchLighthouseReport: (viewport?: ViewType, url?: string) => Promise<void>
-  fetchAllLighthouseReports: (url?: string) => Promise<void>
-  clearLighthouseReports: () => void
   // Iframe preview functionality
   updateViewIframeStatus: (id: number, status: IframeStatus, result?: IframeDetectionResult) => void
   // Navigation
@@ -270,15 +134,6 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   const [metadataLoading, setMetadataLoading] = useState(false)
   const [metadataError, setMetadataError] = useState<string | null>(null)
 
-  // Performance analysis state
-  const [lighthouseReports, setLighthouseReports] = useState<Record<ViewType, LighthouseReport | null>>({
-    desktop: null,
-    tablet: null,
-    mobileLarge: null,
-    mobile: null
-  })
-  const [lighthouseLoading, setLighthouseLoading] = useState(false)
-  const [lighthouseError, setLighthouseError] = useState<string | null>(null)
 
   const { favorites } = useFavorites()
   const { history, addToHistory } = useHistory()
@@ -420,7 +275,6 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setCurrentSite(null)
     setUrl('')
     clearMetadata()
-    clearLighthouseReports()
     // Clear URL params
     window.history.pushState({}, '', window.location.pathname)
     toast.success('Returned to homepage')
@@ -504,173 +358,6 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setMetadataLoading(false)
   }
 
-  // Performance analysis functions
-  const fetchLighthouseReport = async (viewport: ViewType = 'desktop', urlOverride?: string) => {
-    const targetUrl = urlOverride || currentSite
-    if (!targetUrl) return
-
-    // Clear any potentially contaminated state before starting
-    setLighthouseReports(prev => {
-      const cleanState: Record<ViewType, LighthouseReport | null> = {
-        desktop: null,
-        tablet: null,
-        mobileLarge: null,
-        mobile: null
-      }
-      
-      // Only keep data from other viewports if they're clean
-      for (const [key, value] of Object.entries(prev)) {
-        if (key !== viewport && value !== null) {
-          try {
-            cleanState[key as ViewType] = JSON.parse(JSON.stringify(value))
-          } catch (e) {
-            console.warn(`Removing contaminated data for ${key}:`, e)
-            cleanState[key as ViewType] = null
-          }
-        }
-      }
-      
-      return cleanState
-    })
-
-    setLighthouseLoading(true)
-    setLighthouseError(null)
-    
-    try {
-      const response = await fetch(`/api/lighthouse?url=${encodeURIComponent(targetUrl)}&viewport=${viewport}`)
-      const data = await response.json()
-      
-      if (data.success && data.data) {
-        try {
-          const sanitizedData = sanitizeLighthouseData(data.data)
-          // Additional JSON stringify test to catch any remaining circular references
-          const serializedString = JSON.stringify(sanitizedData)
-          // Parse it back to ensure completely clean data
-          const finalCleanData = JSON.parse(serializedString)
-          
-          setLighthouseReports(prev => {
-            // Create completely new object to avoid spreading potentially contaminated state
-            const newState: Record<ViewType, LighthouseReport | null> = {
-              desktop: null,
-              tablet: null,
-              mobileLarge: null,
-              mobile: null
-            }
-            
-            // Copy only the clean data from previous state
-            for (const [key, value] of Object.entries(prev)) {
-              if (key !== viewport && value !== null) {
-                try {
-                  // Double-sanitize existing data
-                  newState[key as ViewType] = JSON.parse(JSON.stringify(value))
-                } catch (e) {
-                  console.warn(`Skipping contaminated data for ${key}:`, e)
-                  newState[key as ViewType] = null
-                }
-              }
-            }
-            
-            // Set the new clean data
-            newState[viewport] = finalCleanData
-            
-            return newState
-          })
-          toast.success(`${viewport} Lighthouse analysis completed`)
-        } catch (serializationError) {
-          console.error('Serialization test failed for lighthouse data:', serializationError)
-          setLighthouseError(`Failed to process ${viewport} Lighthouse data`)
-          toast.error(`Failed to process ${viewport} viewport data`)
-        }
-      } else {
-        setLighthouseError(data.error || 'Failed to run Lighthouse analysis')
-        toast.error(`Failed to analyze ${viewport} viewport`)
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      setLighthouseError(errorMessage)
-      toast.error('Failed to run Lighthouse analysis')
-    } finally {
-      setLighthouseLoading(false)
-    }
-  }
-
-  const fetchAllLighthouseReports = async (urlOverride?: string) => {
-    const targetUrl = urlOverride || currentSite
-    if (!targetUrl) return
-
-    // Completely clear state before batch analysis
-    setLighthouseReports({
-      desktop: null,
-      tablet: null,
-      mobileLarge: null,
-      mobile: null
-    })
-
-    setLighthouseLoading(true)
-    setLighthouseError(null)
-    
-    try {
-      const response = await fetch('/api/lighthouse', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: targetUrl,
-          viewports: ['desktop', 'tablet', 'mobileLarge', 'mobile']
-        })
-      })
-      
-      const data = await response.json()
-      
-      if (data.success && data.data) {
-        try {
-          const newReports: Record<ViewType, LighthouseReport | null> = {
-            desktop: data.data.desktop ? sanitizeLighthouseData(data.data.desktop) : null,
-            tablet: data.data.tablet ? sanitizeLighthouseData(data.data.tablet) : null,
-            mobileLarge: data.data.mobileLarge ? sanitizeLighthouseData(data.data.mobileLarge) : null,
-            mobile: data.data.mobile ? sanitizeLighthouseData(data.data.mobile) : null
-          }
-          
-          // Test serialization of all reports to catch any circular references
-          const serializedString = JSON.stringify(newReports)
-          // Parse it back to ensure completely clean data
-          const finalCleanReports = JSON.parse(serializedString)
-          
-          // Completely replace state instead of merging
-          setLighthouseReports(() => finalCleanReports)
-          
-          const successCount = Object.values(finalCleanReports).filter(report => report !== null).length
-          toast.success(`Lighthouse analysis completed for ${successCount} viewport${successCount !== 1 ? 's' : ''}`)
-        } catch (serializationError) {
-          console.error('Serialization test failed for batch lighthouse data:', serializationError)
-          setLighthouseError('Failed to process Lighthouse batch data')
-          toast.error('Failed to process Lighthouse batch data')
-          return
-        }
-      } else {
-        setLighthouseError(data.error || 'Failed to run Lighthouse analysis')
-        toast.error('Failed to run Lighthouse analysis')
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      setLighthouseError(errorMessage)
-      toast.error('Failed to run Lighthouse analysis')
-    } finally {
-      setLighthouseLoading(false)
-    }
-  }
-
-  const clearLighthouseReports = () => {
-    setLighthouseReports({
-      desktop: null,
-      tablet: null,
-      mobileLarge: null,
-      mobile: null
-    })
-    setLighthouseError(null)
-    setLighthouseLoading(false)
-  }
 
   const value: WebsiteViewerContextType = {
     url,
@@ -699,12 +386,6 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     metadataError,
     fetchMetadata,
     clearMetadata,
-    lighthouseReports,
-    lighthouseLoading,
-    lighthouseError,
-    fetchLighthouseReport,
-    fetchAllLighthouseReports,
-    clearLighthouseReports,
     updateViewIframeStatus,
     clearSite,
     selectedTab,

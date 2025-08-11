@@ -7,10 +7,9 @@ import AnalysisSection from './sections/AnalysisSection'
 import SEOSection from './metadata/SEOSection'
 import SocialPreview from './metadata/SocialPreview'
 import TechnicalSection from './metadata/TechnicalSection'
-// import PerformanceAnalysisSection from './sections/PerformanceAnalysisSection'
 
 export default function SectionContainer() {
-  const { currentSite, metadataLoading, fetchMetadata, metadata, selectedTab } = useWebsiteViewer() // lighthouseLoading
+  const { currentSite, metadataLoading, fetchMetadata, metadata, selectedTab } = useWebsiteViewer()
 
 
   // Removed automatic tab switching - let users stay on their chosen tab
@@ -59,8 +58,6 @@ export default function SectionContainer() {
             <TechnicalSection metadata={metadata} />
           </div>
         )
-      // case 'performance':
-      //   return <PerformanceAnalysisSection expanded={true} onToggle={() => {}} />
       default:
         return <ViewportsSection expanded={true} onToggle={() => {}} />
     }
