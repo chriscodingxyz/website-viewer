@@ -9,11 +9,12 @@ interface DetectionMethodResult {
   success?: boolean
   error?: string
   details?: string
+  message?: string
   accessible?: boolean
   blocked?: boolean
   reason?: string
   headers?: Record<string, unknown>
-  status?: string
+  status?: IframeStatus
   iframe?: HTMLIFrameElement
   retryError?: string
 }
