@@ -15,23 +15,59 @@ This project does not currently have a test suite configured.
 
 ## Architecture
 
-This is a **Website Viewer** application built with Next.js 14 that allows users to view websites in different device viewport sizes (desktop, tablet, large mobile, mobile). The app uses the App Router with TypeScript.
+This is a **Website Viewer** application built with Next.js 14 that allows users to view websites in different device viewport sizes and analyze their metadata, SEO, and technical details. The app uses the App Router with TypeScript and features a comprehensive analysis system.
 
 ### Key Components Structure
 
 **Main Application Flow:**
-- `app/page.tsx` → `WebsiteViewer` → `WebsiteView` (for each viewport)
-- Layout wraps everything with theme, favorites, and history providers
+- `app/page.tsx` → `WebsiteViewer` → Tabbed interface with `ViewportsSection` and `AnalysisSection`
+- Layout wraps everything with multiple context providers (Theme, Favorites, History, WebsiteViewer)
 
 **Core Components:**
-- `WebsiteViewer` - Main interface with URL input and view management
-- `WebsiteView` - Individual iframe containers with viewport-specific sizing
-- `Header`/`Footer` - Layout components with theme toggle
+- `WebsiteViewer` - Main interface with URL input and global controls
+- `WebsiteView` - Individual iframe containers with viewport-specific sizing and smart blocking detection
+- `ViewportsSection` - Container for all viewport displays
+- `AnalysisSection` - Container for metadata analysis and SEO tools
+- `Header`/`Footer` - Layout components with branding
+- `SectionContainer` - Reusable container with consistent styling
 
 **Context Providers:**
+- `WebsiteViewerContext` - **Primary state manager** for URL, views, zoom, metadata, and iframe detection
 - `FavoritesContext` - Manages favorite URLs with localStorage persistence
-- `HistoryContext` - Tracks recently viewed URLs (max 10 items)
+- `HistoryContext` - Tracks recently viewed URLs (max 10 items)  
 - `ThemeProvider` - Dark/light mode using next-themes
+
+**Analysis Components (`components/metadata/`):**
+- `MetadataPanel` - Main collapsible panel with tabs for different analysis types
+- `OverviewDashboard` - Quick overview of key metrics and status
+- `SEOSection` - SEO analysis with title, description, keywords, etc.
+- `SocialPreview` - Open Graph and Twitter card previews
+- `TechnicalSection` - Technical metadata, headers, analytics detection
+- `PerformanceSection` - Performance metrics and recommendations
+
+### API Routes
+
+**Server-side data fetching:**
+- `/api/metadata` - Comprehensive website metadata extraction using Cheerio and Axios
+- `/api/og-check` - Open Graph and social media validation
+
+### Services Layer
+
+**IframeDetectionService (`services/IframeDetectionService.ts`):**
+- Smart detection of iframe blocking using multiple methods
+- Preflight checks, iframe load monitoring, and fallback handling
+- Status tracking: `'ready' | 'loading' | 'loaded' | 'blocked' | 'error' | 'timeout'`
+- Confidence levels and detailed error reporting
+
+### Type System
+
+**Comprehensive TypeScript definitions (`types/metadata.ts`):**
+- `WebsiteMetadata` - Complete metadata structure with Zod validation
+- `SEOMetadata` - Title, description, keywords, robots, etc.
+- `OpenGraphSchema` - Full OG tag support
+- `TwitterCardSchema` - Twitter card metadata
+- `TechnicalInfo` - Server headers, analytics, performance data
+- `SitemapInfo` - Sitemap discovery and validation
 
 ### Viewport Configuration
 
@@ -45,37 +81,60 @@ Views are automatically scaled to fit container width while maintaining aspect r
 
 ### State Management
 
-- **Favorites**: Stored in localStorage, includes default localhost URLs
-- **History**: Recent URLs (max 10), stored in localStorage
-- **Views**: Component state array with unique IDs for each viewport instance
+**WebsiteViewerContext manages:**
+- **Current URL** and validation
+- **Views array** with iframe status and detection results
+- **Global zoom** controls with predefined steps
+- **Metadata** loading, caching, and error states
+- **Tab state** (viewports vs analysis)
+
+**Persisted state:**
+- **Favorites**: Stored in localStorage with default localhost URLs
+- **History**: Recent URLs (max 10) with localStorage persistence
 
 ### UI Framework
 
 Uses **shadcn/ui** components with:
 - Radix UI primitives for accessible components
 - Tailwind CSS for styling with custom CSS variables
-- Phosphor Icons for the footer social icons
+- Phosphor Icons for footer social icons
 - Lucide React for UI icons
 - Sonner for toast notifications
+- Inter font for modern, clean typography
 
 ### Styling Notes
 
-- Uses IBM Plex Mono font for monospace aesthetic
+- **Inter font** for clean, modern aesthetic (switched from IBM Plex Mono)
 - 16px input font size to prevent mobile zoom
-- Custom CSS animation for URL input highlighting
+- **Accordion-based design** for collapsible sections
+- **Tabbed interface** for organized content sections
+- **Compact design** with efficient space usage
 - Responsive design with mobile-first approach
-- Minimalistic design with subtle colors and reduced visual clutter
-- Clean header without shadow, using backdrop blur for modern look
+- Clean header without shadow, using backdrop blur
+- Consistent card-based layout with subtle shadows
 
-### URL Handling
+### URL Handling & Smart Detection
 
 - Automatic protocol detection (adds https:// for regular domains, http:// for localhost)
-- Validation for both standard URLs and localhost development servers
-- URL formatting and validation in `WebsiteViewer.tsx:39-71`
+- **Smart iframe blocking detection** with multiple fallback methods
+- **Metadata fetching** with comprehensive error handling
+- URL validation for standard URLs and localhost development servers
+- **Retry mechanisms** for failed requests
 
 ### User Interaction
 
-- **Enter key**: Loads all viewport types (desktop, tablet, mobileLarge, mobile) at once
-- **URL suggestions**: Shows recent history, favorites, and common dev ports
-- **Responsive UI**: Optimized for both desktop and mobile usage
-- **Minimalistic controls**: Clean interface with subtle hover states
+**Enhanced Interface:**
+- **Tabbed navigation** between Viewports and Analysis sections
+- **Global zoom controls** with toast feedback
+- **Collapsible metadata panels** with export/copy functionality
+- **Smart URL suggestions** with history, favorites, and dev ports
+- **Real-time iframe status** with visual indicators
+- **Responsive tabbed layout** optimized for desktop and mobile
+- **One-click metadata actions** (copy, export, refresh)
+
+### Analytics & Monitoring
+
+- **Google Analytics 4** integration with privacy-focused configuration
+- **Performance tracking** for metadata fetching
+- **Error monitoring** for iframe detection and API calls
+- **User interaction tracking** with anonymized data
