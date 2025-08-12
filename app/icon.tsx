@@ -1,37 +1,18 @@
-import { ImageResponse } from 'next/og'
+import fs from 'fs'
+import path from 'path'
 
-export const runtime = 'edge'
-
-export const size = {
-  width: 32,
-  height: 32,
-}
-
-export const contentType = 'image/png'
+export const runtime = 'nodejs'
+export const size = { width: 32, height: 32 }
+export const contentType = 'image/svg+xml'
 
 export default function Icon() {
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          fontSize: 24,
-          background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          borderRadius: '20%',
-          fontWeight: 'bold',
-          fontFamily: 'system-ui, sans-serif'
-        }}
-      >
-        WV
-      </div>
-    ),
-    {
-      ...size,
-    }
-  )
+  const iconPath = path.join(process.cwd(), 'public', 'icon.svg')
+  const iconSvg = fs.readFileSync(iconPath, 'utf8')
+  
+  return new Response(iconSvg, {
+    headers: {
+      'Content-Type': 'image/svg+xml',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    },
+  })
 }

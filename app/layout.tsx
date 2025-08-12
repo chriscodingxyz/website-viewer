@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     siteName: 'Website Viewer',
     images: [
       {
-        url: '/opengraph-image.png',
+        url: `${baseUrl}/og-image.png`,
         width: 1200,
         height: 630,
         alt: 'Website Viewer - View sites in multiple device sizes',
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Website Viewer | Layout Lab',
     description: 'View websites in different device sizes - desktop, tablet, and mobile viewports all at once.',
-    images: ['/opengraph-image.png'],
+    images: [`${baseUrl}/og-image.png`],
     creator: '@layoutlab',
   },
   robots: {
@@ -69,23 +69,9 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
-    apple: '/apple-touch-icon.png',
-    other: [
-      {
-        rel: 'icon',
-        type: 'image/png',
-        sizes: '32x32',
-        url: '/favicon-32x32.png',
-      },
-      {
-        rel: 'icon',
-        type: 'image/png',
-        sizes: '16x16',
-        url: '/favicon-16x16.png',
-      }
-    ]
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/apple-icon'
   },
   manifest: '/manifest.json',
   category: 'technology',

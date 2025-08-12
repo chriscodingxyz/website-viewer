@@ -1,39 +1,18 @@
-import { ImageResponse } from 'next/og'
+import fs from 'fs'
+import path from 'path'
 
-export const runtime = 'edge'
-
-export const size = {
-  width: 180,
-  height: 180,
-}
-
-export const contentType = 'image/png'
+export const runtime = 'nodejs'
+export const size = { width: 180, height: 180 }
+export const contentType = 'image/svg+xml'
 
 export default function AppleIcon() {
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          fontSize: 72,
-          background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          borderRadius: '22.5%',
-          fontWeight: 'bold',
-          fontFamily: 'system-ui, sans-serif',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-        }}
-      >
-        WV
-      </div>
-    ),
-    {
-      ...size,
-    }
-  )
+  const iconPath = path.join(process.cwd(), 'public', 'icon.svg')
+  const iconSvg = fs.readFileSync(iconPath, 'utf8')
+  
+  return new Response(iconSvg, {
+    headers: {
+      'Content-Type': 'image/svg+xml',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    },
+  })
 }
