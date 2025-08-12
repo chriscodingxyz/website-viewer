@@ -153,6 +153,25 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // Use metadata API to determine iframe status (the right way!)
+  useEffect(() => {
+    if (metadata && views.length > 0) {
+      const xFrameOptions = metadata.headers?.xFrameOptions
+      
+      // If X-Frame-Options blocks iframe embedding, mark all views as error
+      if (xFrameOptions === 'DENY' || xFrameOptions === 'SAMEORIGIN') {
+        setViews(prevViews => 
+          prevViews.map(view => ({ ...view, iframeStatus: 'error' as IframeStatus }))
+        )
+      } else {
+        // No blocking headers, mark all views as loaded
+        setViews(prevViews => 
+          prevViews.map(view => ({ ...view, iframeStatus: 'loaded' as IframeStatus }))
+        )
+      }
+    }
+  }, [metadata])
+
   // Update URL parameters when URL input changes
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -190,12 +209,12 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   }
 
   const loadSiteInternal = async (formattedUrl: string) => {
-    // Just create views as loaded - no more broken detection
+    // Create views as loading - let onLoad/onError events determine actual status
     const newViews = [
-      { id: nextId, url: formattedUrl, type: 'desktop' as ViewType, iframeStatus: 'loaded' as IframeStatus },
-      { id: nextId + 1, url: formattedUrl, type: 'tablet' as ViewType, iframeStatus: 'loaded' as IframeStatus },
-      { id: nextId + 2, url: formattedUrl, type: 'mobileLarge' as ViewType, iframeStatus: 'loaded' as IframeStatus },
-      { id: nextId + 3, url: formattedUrl, type: 'mobile' as ViewType, iframeStatus: 'loaded' as IframeStatus }
+      { id: nextId, url: formattedUrl, type: 'desktop' as ViewType, iframeStatus: 'loading' as IframeStatus },
+      { id: nextId + 1, url: formattedUrl, type: 'tablet' as ViewType, iframeStatus: 'loading' as IframeStatus },
+      { id: nextId + 2, url: formattedUrl, type: 'mobileLarge' as ViewType, iframeStatus: 'loading' as IframeStatus },
+      { id: nextId + 3, url: formattedUrl, type: 'mobile' as ViewType, iframeStatus: 'loading' as IframeStatus }
     ]
     
     setViews(newViews)

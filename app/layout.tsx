@@ -16,7 +16,7 @@ const inter = Inter({
   variable: '--font-inter'
 })
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://website-viewer.vercel.app'
+const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://layoutlab.vercel.app'
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -24,38 +24,49 @@ export const metadata: Metadata = {
     default: 'Website Viewer | Layout Lab',
     template: '%s | Website Viewer'
   },
-  description: 'View websites in different device sizes - desktop, tablet, and mobile viewports all at once. Perfect for developers and designers testing responsive layouts.',
-  keywords: ['website viewer', 'responsive design', 'mobile testing', 'viewport testing', 'web development', 'layout testing', 'device simulator'],
+  description:
+    'View websites in different device sizes - desktop, tablet, and mobile viewports all at once. Perfect for developers and designers testing responsive layouts.',
+  keywords: [
+    'website viewer',
+    'responsive design',
+    'mobile testing',
+    'viewport testing',
+    'web development',
+    'layout testing',
+    'device simulator'
+  ],
   authors: [{ name: 'Layout Lab' }],
   creator: 'Layout Lab',
   publisher: 'Layout Lab',
   formatDetection: {
     email: false,
     address: false,
-    telephone: false,
+    telephone: false
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: baseUrl,
     title: 'Website Viewer | Layout Lab',
-    description: 'View websites in different device sizes - desktop, tablet, and mobile viewports all at once. Perfect for developers and designers testing responsive layouts.',
+    description:
+      'View websites in different device sizes - desktop, tablet, and mobile viewports all at once. Perfect for developers and designers testing responsive layouts.',
     siteName: 'Website Viewer',
     images: [
       {
-        url: `${baseUrl}/og-image.png`,
+        url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Website Viewer - View sites in multiple device sizes',
+        alt: 'Website Viewer - View sites in multiple device sizes'
       }
-    ],
+    ]
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Website Viewer | Layout Lab',
-    description: 'View websites in different device sizes - desktop, tablet, and mobile viewports all at once.',
-    images: [`${baseUrl}/og-image.png`],
-    creator: '@layoutlab',
+    description:
+      'View websites in different device sizes - desktop, tablet, and mobile viewports all at once.',
+    images: ['/og-image.png'],
+    creator: '@layoutlab'
   },
   robots: {
     index: true,
@@ -65,8 +76,8 @@ export const metadata: Metadata = {
       follow: true,
       'max-video-preview': -1,
       'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
+      'max-snippet': -1
+    }
   },
   icons: {
     icon: '/icon.svg',
@@ -96,15 +107,17 @@ export default function RootLayout ({
 
   return (
     <html lang='en' suppressHydrationWarning>
-      <body className={`${inter.variable} min-h-screen flex flex-col font-inter`}>
+      <body
+        className={`${inter.variable} min-h-screen flex flex-col font-inter`}
+      >
         {/* Google Analytics 4 */}
         {GA_MEASUREMENT_ID && (
           <>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-              strategy="afterInteractive"
+              strategy='afterInteractive'
             />
-            <Script id="google-analytics" strategy="afterInteractive">
+            <Script id='google-analytics' strategy='afterInteractive'>
               {`
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
@@ -121,7 +134,7 @@ export default function RootLayout ({
             </Script>
           </>
         )}
-        
+
         <Toaster richColors />
         <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
           <FavoritesProvider>
