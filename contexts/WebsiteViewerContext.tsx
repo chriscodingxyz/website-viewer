@@ -163,11 +163,15 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
         setViews(prevViews => 
           prevViews.map(view => ({ ...view, iframeStatus: 'error' as IframeStatus }))
         )
+        // Auto-switch to SEO tab when viewports are blocked
+        setSelectedTab('seo')
+        toast.info('Viewports blocked by website - switched to SEO analysis')
       } else {
         // No blocking headers, mark all views as loaded
         setViews(prevViews => 
           prevViews.map(view => ({ ...view, iframeStatus: 'loaded' as IframeStatus }))
         )
+        toast.success('Viewports loaded successfully')
       }
     }
   }, [metadata])
@@ -223,6 +227,9 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     addToHistory(formattedUrl)
     setUrl(formattedUrl)
     
+    // Reset to viewports tab when loading a new site
+    setSelectedTab('viewports')
+    
     // Automatically start metadata extraction in the background
     fetchMetadata(formattedUrl)
   }
@@ -255,7 +262,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     if (formattedUrl) {
       loadSiteInternal(formattedUrl)
       updateUrlParams()
-      toast.success('Site loaded in all viewports')
+      toast.success('Site loaded - analyzing...')
     } else {
       toast.error('Please enter a valid URL')
     }

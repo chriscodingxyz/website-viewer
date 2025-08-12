@@ -89,7 +89,7 @@ export default function WebsiteViewer () {
                     Website Viewer
                   </h1>
                   <p className='text-muted-foreground text-sm'>
-                    View websites across different device sizes
+                    Add your localhost URL, staging, or production site above to view across devices, analyze SEO, and check social media previews
                   </p>
                 </div>
                 <div className='text-sm text-muted-foreground p-3 bg-muted/80 rounded-lg'>
