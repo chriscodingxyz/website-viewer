@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
 
@@ -15,9 +16,89 @@ const inter = Inter({
   variable: '--font-inter'
 })
 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://website-viewer.vercel.app'
+
 export const metadata: Metadata = {
-  title: 'Website Viewer | Layout Lab',
-  description: 'View websites in different device sizes'
+  metadataBase: new URL(baseUrl),
+  title: {
+    default: 'Website Viewer | Layout Lab',
+    template: '%s | Website Viewer'
+  },
+  description: 'View websites in different device sizes - desktop, tablet, and mobile viewports all at once. Perfect for developers and designers testing responsive layouts.',
+  keywords: ['website viewer', 'responsive design', 'mobile testing', 'viewport testing', 'web development', 'layout testing', 'device simulator'],
+  authors: [{ name: 'Layout Lab' }],
+  creator: 'Layout Lab',
+  publisher: 'Layout Lab',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: baseUrl,
+    title: 'Website Viewer | Layout Lab',
+    description: 'View websites in different device sizes - desktop, tablet, and mobile viewports all at once. Perfect for developers and designers testing responsive layouts.',
+    siteName: 'Website Viewer',
+    images: [
+      {
+        url: '/opengraph-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Website Viewer - View sites in multiple device sizes',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Website Viewer | Layout Lab',
+    description: 'View websites in different device sizes - desktop, tablet, and mobile viewports all at once.',
+    images: ['/opengraph-image.png'],
+    creator: '@layoutlab',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon-16x16.png',
+    apple: '/apple-touch-icon.png',
+    other: [
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '32x32',
+        url: '/favicon-32x32.png',
+      },
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '16x16',
+        url: '/favicon-16x16.png',
+      }
+    ]
+  },
+  manifest: '/manifest.json',
+  category: 'technology',
+  classification: 'Web Development Tool',
+  other: {
+    'mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+    'apple-mobile-web-app-title': 'Website Viewer',
+    'application-name': 'Website Viewer',
+    'msapplication-TileColor': '#000000',
+    'theme-color': '#000000'
+  }
 }
 
 export default function RootLayout ({
@@ -25,9 +106,36 @@ export default function RootLayout ({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+
   return (
     <html lang='en' suppressHydrationWarning>
       <body className={`${inter.variable} min-h-screen flex flex-col font-inter`}>
+        {/* Google Analytics 4 */}
+        {GA_MEASUREMENT_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+
+                gtag('config', '${GA_MEASUREMENT_ID}', {
+                  page_title: document.title,
+                  page_location: window.location.href,
+                  anonymize_ip: true,
+                  allow_google_signals: false,
+                  allow_ad_personalization_signals: false
+                });
+              `}
+            </Script>
+          </>
+        )}
+        
         <Toaster richColors />
         <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
           <FavoritesProvider>

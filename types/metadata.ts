@@ -117,6 +117,12 @@ export const ResponseHeadersSchema = z.object({
   contentSecurityPolicy: z.string().optional(),
   strictTransportSecurity: z.string().optional(),
   xContentTypeOptions: z.string().optional(),
+  xXssProtection: z.string().optional(),
+  referrerPolicy: z.string().optional(),
+  permissionsPolicy: z.string().optional(),
+  crossOriginEmbedderPolicy: z.string().optional(),
+  crossOriginOpenerPolicy: z.string().optional(),
+  crossOriginResourcePolicy: z.string().optional(),
 })
 
 // Structured data (JSON-LD)

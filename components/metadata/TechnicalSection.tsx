@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
-import { Badge } from '@/components/ui/badge'
 import {
   Accordion,
   AccordionContent,
@@ -35,8 +34,11 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
     )
   }
 
-  const { technical, headers, icons, structuredData, performance } =
+  const { technical, headers, structuredData, performance } =
     metadata
+
+  // Ensure headers object exists to prevent rendering issues
+  const safeHeaders = headers || {}
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 Bytes'
@@ -47,13 +49,11 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
   }
 
   const SimpleListItem = ({
-    icon,
     label,
     value,
     status,
     customStatusText
   }: {
-    icon: string
     label: string
     value?: string | boolean
     status: 'good' | 'warning' | 'missing' | 'error'
@@ -144,9 +144,15 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
 
   const getIssueCount = () => {
     let issues = 0
+    // HTTPS check
     if (!metadata.url.startsWith('https://')) issues++
+    // Viewport check
     if (!metadata.seo.viewport) issues++
-    if (!headers?.contentSecurityPolicy) issues++
+    // Essential security headers checks
+    if (!safeHeaders.contentSecurityPolicy) issues++
+    if (!safeHeaders.xFrameOptions) issues++
+    if (!safeHeaders.xContentTypeOptions) issues++
+    if (!safeHeaders.strictTransportSecurity) issues++
     return issues
   }
 
@@ -177,7 +183,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
 
       {/* Technical Analysis */}
       <div className='max-w-2xl mx-auto'>
-        <Accordion type="multiple" className="w-full space-y-4" defaultValue={["performance", "security"]}>
+        <Accordion type="multiple" className="w-full space-y-4" defaultValue={["performance", "security", "configuration"]}>
 
 
           {/* Performance Section */}
@@ -192,7 +198,6 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
               <div className='space-y-4'>
             {performance?.contentLength && (
               <SimpleListItem
-                icon='📏'
                 label='Page Size'
                 value={formatBytes(performance.contentLength)}
                 status={
@@ -213,7 +218,6 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
             )}
             {performance?.loadTime && (
               <SimpleListItem
-                icon='⚡'
                 label='Load Time'
                 value={`${performance.loadTime}ms`}
                 status={
@@ -246,38 +250,28 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
               <div className='space-y-4'>
-            {headers?.server && (
-              <SimpleListItem
-                icon='🖥️'
-                label='Server'
-                value={headers.server}
-                status='good'
-                customStatusText='Good'
-              />
-            )}
-
-            {headers?.contentEncoding && (
-              <SimpleListItem
-                icon='🗜️'
-                label='Compression'
-                value={headers.contentEncoding}
-                status='good'
-                customStatusText='Enabled'
-              />
-            )}
-
-            {headers?.cacheControl && (
-              <SimpleListItem
-                icon='💾'
-                label='Cache Control'
-                value={headers.cacheControl}
-                status='good'
-                customStatusText='Configured'
-              />
-            )}
+            <SimpleListItem
+              label='Server'
+              value={safeHeaders.server}
+              status={safeHeaders.server ? 'good' : 'warning'}
+              customStatusText={safeHeaders.server ? 'Good' : 'Missing'}
+            />
 
             <SimpleListItem
-              icon='🔒'
+              label='Compression'
+              value={safeHeaders.contentEncoding}
+              status={safeHeaders.contentEncoding ? 'good' : 'warning'}
+              customStatusText={safeHeaders.contentEncoding ? 'Enabled' : 'Not Enabled'}
+            />
+
+            <SimpleListItem
+              label='Cache Control'
+              value={safeHeaders.cacheControl}
+              status={safeHeaders.cacheControl ? 'good' : 'warning'}
+              customStatusText={safeHeaders.cacheControl ? 'Configured' : 'Not Configured'}
+            />
+
+            <SimpleListItem
               label='HTTPS'
               value={
                 metadata.url.startsWith('https://') ? 'Secure' : 'Insecure'
@@ -285,21 +279,6 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
               status={getSecurityStatus()}
             />
 
-            {headers?.contentSecurityPolicy ? (
-              <SimpleListItem
-                icon='🛡️'
-                label='Content Security Policy'
-                value='Configured'
-                status='good'
-              />
-            ) : (
-              <SimpleListItem
-                icon='🛡️'
-                label='Content Security Policy'
-                value={undefined}
-                status='warning'
-              />
-            )}
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -315,15 +294,41 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
             <AccordionContent className="px-4 pb-4">
               <div className='space-y-4'>
             <SimpleListItem
-              icon='📱'
               label='Mobile Responsive'
               value={metadata.seo.viewport}
               status={metadata.seo.viewport ? 'good' : 'warning'}
             />
 
+            <SimpleListItem
+              label='Content Security Policy'
+              value={safeHeaders.contentSecurityPolicy ? 'Configured' : undefined}
+              status={safeHeaders.contentSecurityPolicy ? 'good' : 'warning'}
+              customStatusText={safeHeaders.contentSecurityPolicy ? 'Configured' : 'Missing'}
+            />
+
+            <SimpleListItem
+              label='X-Frame-Options'
+              value={safeHeaders.xFrameOptions}
+              status={safeHeaders.xFrameOptions ? 'good' : 'warning'}
+              customStatusText={safeHeaders.xFrameOptions ? 'Configured' : 'Missing'}
+            />
+
+            <SimpleListItem
+              label='X-Content-Type-Options'
+              value={safeHeaders.xContentTypeOptions}
+              status={safeHeaders.xContentTypeOptions ? 'good' : 'warning'}
+              customStatusText={safeHeaders.xContentTypeOptions ? 'Configured' : 'Missing'}
+            />
+
+            <SimpleListItem
+              label='HSTS (Strict-Transport-Security)'
+              value={safeHeaders.strictTransportSecurity ? 'Enabled' : undefined}
+              status={safeHeaders.strictTransportSecurity ? 'good' : 'warning'}
+              customStatusText={safeHeaders.strictTransportSecurity ? 'Enabled' : 'Missing'}
+            />
+
             {technical?.themeColor && (
               <SimpleListItem
-                icon='🎨'
                 label='Theme Color'
                 value={technical.themeColor}
                 status='good'
@@ -429,36 +434,8 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
               </div>
             </div>
 
-            {headers?.xFrameOptions && (
-              <SimpleListItem
-                icon='🔐'
-                label='X-Frame-Options'
-                value={headers.xFrameOptions}
-                status='good'
-              />
-            )}
-
-            {headers?.xContentTypeOptions && (
-              <SimpleListItem
-                icon='🛡️'
-                label='X-Content-Type-Options'
-                value={headers.xContentTypeOptions}
-                status='good'
-              />
-            )}
-
-            {headers?.strictTransportSecurity && (
-              <SimpleListItem
-                icon='🔒'
-                label='HSTS'
-                value='Enabled'
-                status='good'
-              />
-            )}
-
             {technical?.charset && (
               <SimpleListItem
-                icon='📝'
                 label='Character Encoding'
                 value={technical.charset}
                 status='good'
@@ -467,7 +444,6 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
 
             {technical?.doctype && (
               <SimpleListItem
-                icon='📄'
                 label='Document Type'
                 value={technical.doctype}
                 status='good'
@@ -475,7 +451,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
             )}
 
             {/* HTTP Headers Details */}
-            {Object.keys(headers || {}).length > 0 && (
+            {Object.keys(safeHeaders).length > 0 && (
               <div className='bg-card/30 border border-border/50 rounded-lg p-4 hover:bg-card/50 transition-colors'>
                 <div className='flex items-start gap-3'>
                   <div className='flex-shrink-0 text-blue-600'>
@@ -489,7 +465,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                         </h4>
                       </div>
                       <div className='ml-3 flex-shrink-0 analysis-badge-success'>
-                        {Object.keys(headers || {}).length} headers
+                        {Object.keys(safeHeaders).length} headers
                       </div>
                     </div>
 
@@ -500,7 +476,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                         </summary>
                         <div className='mt-3 bg-background/50 rounded p-2'>
                           <pre className='text-xs text-muted-foreground overflow-x-auto whitespace-pre-wrap max-h-40 overflow-y-auto font-mono'>
-                            {Object.entries(headers || {})
+                            {Object.entries(safeHeaders)
                               .map(([key, value]) => `${key}: ${value}`)
                               .join('\n')}
                           </pre>
