@@ -9,7 +9,7 @@ import { IframeStatus, IframeDetectionResult, iframeDetectionService } from '@/s
 
 
 export type ViewType = 'desktop' | 'tablet' | 'mobileLarge' | 'mobile'
-export type TabType = 'viewports' | 'seo' | 'social' | 'technical'
+export type TabType = 'viewports' | 'security' | 'seo' | 'social' | 'technical'
 
 export interface View {
   id: number

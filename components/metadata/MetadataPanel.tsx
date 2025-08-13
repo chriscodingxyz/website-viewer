@@ -16,13 +16,15 @@ import {
   Globe,
   Loader2,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Shield
 } from 'lucide-react'
 import { toast } from 'sonner'
 import SEOSection from './SEOSection'
 import SocialPreview from './SocialPreview'
 import TechnicalSection from './TechnicalSection'
 import PerformanceSection from './PerformanceSection'
+import SecuritySection from './SecuritySection'
 
 interface MetadataPanelProps {
   metadata: WebsiteMetadata | null
@@ -193,42 +195,54 @@ export default function MetadataPanel({
             </Card>
           )}
 
-          {metadata && !loading && (
-            <Tabs defaultValue="seo" className="w-full">
-              <TabsList className="grid w-full grid-cols-6">
-                <TabsTrigger value="seo" className="flex items-center gap-1 text-xs">
+          {url && !loading && (
+            <Tabs defaultValue="security" className="w-full">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="security" className="flex items-center gap-1 text-xs">
+                  <Shield className="h-3 w-3" />
+                  Security
+                </TabsTrigger>
+                <TabsTrigger value="seo" className="flex items-center gap-1 text-xs" disabled={!metadata}>
                   <Search className="h-3 w-3" />
                   SEO
                 </TabsTrigger>
-                <TabsTrigger value="social" className="flex items-center gap-1 text-xs">
+                <TabsTrigger value="social" className="flex items-center gap-1 text-xs" disabled={!metadata}>
                   <Share2 className="h-3 w-3" />
                   Social
                 </TabsTrigger>
-                <TabsTrigger value="technical" className="flex items-center gap-1 text-xs">
+                <TabsTrigger value="technical" className="flex items-center gap-1 text-xs" disabled={!metadata}>
                   <Globe className="h-3 w-3" />
                   Technical
                 </TabsTrigger>
-                <TabsTrigger value="performance" className="flex items-center gap-1 text-xs">
+                <TabsTrigger value="performance" className="flex items-center gap-1 text-xs" disabled={!metadata}>
                   <CheckCircle className="h-3 w-3" />
                   Performance
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="seo">
-                <SEOSection metadata={metadata} />
+              <TabsContent value="security">
+                <SecuritySection url={url} />
               </TabsContent>
 
-              <TabsContent value="social">
-                <SocialPreview metadata={metadata} />
-              </TabsContent>
+              {metadata && (
+                <>
+                  <TabsContent value="seo">
+                    <SEOSection metadata={metadata} />
+                  </TabsContent>
 
-              <TabsContent value="technical">
-                <TechnicalSection metadata={metadata} />
-              </TabsContent>
+                  <TabsContent value="social">
+                    <SocialPreview metadata={metadata} />
+                  </TabsContent>
 
-              <TabsContent value="performance">
-                <PerformanceSection metadata={metadata} />
-              </TabsContent>
+                  <TabsContent value="technical">
+                    <TechnicalSection metadata={metadata} />
+                  </TabsContent>
+
+                  <TabsContent value="performance">
+                    <PerformanceSection metadata={metadata} />
+                  </TabsContent>
+                </>
+              )}
 
             </Tabs>
           )}

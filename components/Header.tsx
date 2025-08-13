@@ -35,7 +35,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
-type TabType = 'viewports' | 'seo' | 'social' | 'technical'
+type TabType = 'viewports' | 'security' | 'seo' | 'social' | 'technical'
 
 interface Tab {
   id: TabType
@@ -77,6 +77,12 @@ export function Header () {
       id: 'viewports',
       label: 'Viewports',
       color: 'bg-blue-500 text-white',
+      variant: 'default'
+    },
+    {
+      id: 'security',
+      label: 'Security',
+      color: 'bg-red-500 text-white',
       variant: 'default'
     },
     {

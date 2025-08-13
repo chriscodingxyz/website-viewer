@@ -7,6 +7,7 @@ import AnalysisSection from './sections/AnalysisSection'
 import SEOSection from './metadata/SEOSection'
 import SocialPreview from './metadata/SocialPreview'
 import TechnicalSection from './metadata/TechnicalSection'
+import SecuritySection from './metadata/SecuritySection'
 
 export default function SectionContainer() {
   const { currentSite, metadata, selectedTab } = useWebsiteViewer()
@@ -42,6 +43,11 @@ export default function SectionContainer() {
       <div className="w-full relative">
         <div className={selectedTab === 'viewports' ? 'block' : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'} style={selectedTab !== 'viewports' ? {height: '1px'} : {}}>
           <ViewportsSection expanded={true} onToggle={() => {}} />
+        </div>
+        <div className={selectedTab === 'security' ? 'block' : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'} style={selectedTab !== 'security' ? {height: '1px'} : {}}>
+          <div className="w-full py-6 px-6">
+            <SecuritySection url={currentSite} />
+          </div>
         </div>
         <div className={selectedTab === 'seo' ? 'block' : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'} style={selectedTab !== 'seo' ? {height: '1px'} : {}}>
           <div className="w-full py-6 px-6">
