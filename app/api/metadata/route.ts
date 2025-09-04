@@ -19,6 +19,15 @@ async function checkUrlAccessible (
       headers: {
         'User-Agent':
           'Mozilla/5.0 (compatible; WebsiteViewer/1.0; +https://example.com/bot)'
+      },
+      // Handle SSL certificate issues gracefully
+      httpsAgent: new (require('https').Agent)({
+        rejectUnauthorized: false,
+        requestCert: false,
+        agent: false
+      }),
+      validateStatus: function (status) {
+        return status >= 200 && status < 400;
       }
     })
 
@@ -89,6 +98,15 @@ async function extractSitemapInfo (
         headers: {
           'User-Agent':
             'Mozilla/5.0 (compatible; WebsiteViewer/1.0; +https://example.com/bot)'
+        },
+        // Handle SSL certificate issues gracefully
+        httpsAgent: new (require('https').Agent)({
+          rejectUnauthorized: false,
+          requestCert: false,
+          agent: false
+        }),
+        validateStatus: function (status) {
+          return status >= 200 && status < 400;
         }
       })
 
@@ -353,7 +371,7 @@ export async function GET (request: NextRequest) {
     // Validate and normalize URL
     const targetUrl = new URL(url)
 
-    // Make HTTP request with proper headers
+    // Make HTTP request with proper headers and SSL handling
     const startTime = Date.now()
     const response = await axios.get(targetUrl.toString(), {
       timeout: 10000,
@@ -365,6 +383,17 @@ export async function GET (request: NextRequest) {
         'Accept-Language': 'en-US,en;q=0.5',
         'Accept-Encoding': 'gzip, deflate',
         Connection: 'keep-alive'
+      },
+      // Handle SSL certificate issues gracefully
+      httpsAgent: new (require('https').Agent)({
+        rejectUnauthorized: false, // Accept self-signed certificates
+        requestCert: false,
+        agent: false
+      }),
+      // Allow redirects and validate status codes broadly
+      maxRedirects: 5,
+      validateStatus: function (status) {
+        return status >= 200 && status < 400; // Accept 2xx and 3xx status codes
       }
     })
     const loadTime = Date.now() - startTime

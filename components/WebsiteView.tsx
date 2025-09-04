@@ -475,10 +475,28 @@ export default function WebsiteView ({
             border: 'none'
           }}
           title={`View ${view.id}`}
+          onLoad={() => {
+            setRealIframeStatus('loaded')
+            updateViewIframeStatus(view.id, 'loaded')
+          }}
+          onError={() => {
+            setRealIframeStatus('error')
+            updateViewIframeStatus(view.id, 'error')
+          }}
         />
         
         {/* Loading/Error Overlay */}
-        {/* Removed loading overlay - let iframe load quietly */}
+        {realIframeStatus === 'loading' && (
+          <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
+            <div className="text-center max-w-xs">
+              <div className="mx-auto mb-4">
+                <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              </div>
+              <p className="text-sm text-gray-700 mb-2 font-medium">Loading Website</p>
+              <p className="text-xs text-gray-500">Please wait...</p>
+            </div>
+          </div>
+        )}
         
         {realIframeStatus === 'error' && (
           <div className="absolute inset-0 bg-red-50 flex items-center justify-center">

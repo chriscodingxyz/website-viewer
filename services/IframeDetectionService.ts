@@ -25,6 +25,7 @@ export interface IframeDetectionResult {
   reason?: string
   confidence: 'low' | 'medium' | 'high'
   detectionTime: number
+  recommendProxy?: boolean
   methods: {
     preflight?: DetectionMethodResult
     iframeLoad?: DetectionMethodResult
@@ -76,6 +77,7 @@ class IframeDetectionService {
             result.status = 'blocked'
             result.reason = 'explicit-headers'
             result.confidence = 'high'
+            result.recommendProxy = true
             result.detectionTime = performance.now() - startTime
             // Blocked by headers
             return result
@@ -105,6 +107,7 @@ class IframeDetectionService {
               result.status = 'blocked'
               result.reason = result.methods.contentVerification.reason
               result.confidence = 'high'
+              result.recommendProxy = true
             } else {
               result.status = 'loaded'
               result.confidence = 'high'
@@ -124,15 +127,18 @@ class IframeDetectionService {
               result.status = 'blocked'
               result.reason = 'timeout-known-blocked'
               result.confidence = 'high'
+              result.recommendProxy = true
             } else {
               result.status = 'timeout'
               result.reason = 'loading-timeout'
               result.confidence = 'low'  // Low confidence - could be slow loading
+              result.recommendProxy = true // Recommend proxy for timeouts
             }
           } else if (loadStatus === 'error') {
             result.status = 'error'
             result.reason = 'loading-error'  
             result.confidence = 'medium'
+            result.recommendProxy = true // Recommend proxy for errors
           } else {
             // Ensure loadStatus is a valid IframeStatus, fallback to 'error' if not
             const validStatus: IframeStatus = (loadStatus && ['ready', 'loading', 'loaded', 'blocked', 'error', 'timeout'].includes(loadStatus)) 
@@ -407,7 +413,17 @@ class IframeDetectionService {
         
         // General Sites Known for Strict Policies
         'reddit.com', 'quora.com', 'medium.com', 'substack.com',
-        'notion.so', 'airtable.com', 'figma.com', 'canva.com'
+        'notion.so', 'airtable.com', 'figma.com', 'canva.com',
+        
+        // Sites we've tested that need proxy mode
+        'bicestermotion.com',
+        'radicalmotorsport.com',
+        
+        // Common Next.js/Vercel hosted sites that typically block iframes
+        'vercel.app',
+        'netlify.app',
+        'vercel.com',
+        'netlify.com'
       ]
 
       return blockedDomains.some(domain => 
@@ -462,6 +478,45 @@ class IframeDetectionService {
     
     // For other cases, return original result or run fresh detection
     return previousResult || this.detectIframeStatus(url, container, opts)
+  }
+
+  // Check if URL should default to proxy mode
+  shouldUseProxyByDefault(url: string): boolean {
+    try {
+      const hostname = new URL(url).hostname.toLowerCase()
+      
+      // Use direct iframe for localhost and safe local development
+      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.local')) {
+        return false
+      }
+      
+      // Only use proxy by default for known problematic domains
+      if (this.isDomainKnownToBlock(url)) {
+        return true
+      }
+      
+      // Default to direct iframe for all other domains - let them try first
+      // Only fall back to proxy if they actually fail to load
+      return false
+      
+    } catch {
+      // Invalid URL, default to proxy mode for safety
+      return true
+    }
+  }
+
+  // Get recommended viewing mode based on detection results
+  getRecommendedMode(result: IframeDetectionResult): 'direct' | 'proxy' {
+    if (result.recommendProxy) {
+      return 'proxy'
+    }
+    
+    // Also recommend proxy for known blocked domains
+    if (this.isDomainKnownToBlock(result.url)) {
+      return 'proxy'
+    }
+    
+    return 'direct'
   }
 
   // Get user-friendly message for different blocking scenarios

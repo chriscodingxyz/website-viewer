@@ -192,87 +192,23 @@ export default function ViewportsSection ({
               </div>
             </div>
           ) : (
-            (() => {
-              // Simple logic: check if any iframe loaded successfully
-              const anyLoaded = views.some(v => v.iframeStatus === 'loaded')
-              const allDenied =
-                views.length > 0 && views.every(v => v.iframeStatus === 'error')
-
-              // If all denied, don't show viewports - break out of container for true centering
-              if (allDenied) {
-                return (
-                  <div className='fixed inset-0 top-24 flex items-center justify-center'>
-                    <div className='text-center max-w-md mx-auto p-8 bg-card/70 backdrop-blur-sm border border-red-200/50 rounded-2xl shadow-xl'>
-                      <XCircle className='h-16 w-16 mx-auto text-red-500 mb-6' />
-                      <h3 className='text-2xl font-bold mb-4 text-red-600'>
-                        Content Blocked
-                      </h3>
-                      <p className='text-muted-foreground mb-4 leading-relaxed'>
-                        This website uses{' '}
-                        <code className='px-2 py-1 bg-muted rounded text-sm font-mono'>
-                          X-Frame-Options
-                        </code>{' '}
-                        security header to prevent iframe embedding, so you
-                        can&apos;t view it in different viewports at once.
-                      </p>
-                      <p className='text-sm text-muted-foreground mb-4 leading-relaxed bg-blue-50/50 dark:bg-blue-950/30 p-3 rounded-lg border border-blue-200/30'>
-                        <strong>Good security practice!</strong> Consider
-                        disabling this header for development/staging
-                        environments to enable responsive testing across
-                        desktop, tablet, and mobile viewports simultaneously.
-                      </p>
-                      <p className='text-sm text-muted-foreground mb-6 leading-relaxed bg-amber-50/50 dark:bg-amber-950/30 p-3 rounded-lg border border-amber-200/30'>
-                        <strong>Still useful!</strong> Check out the <strong>SEO</strong>, <strong>Social Media</strong>, and <strong>Technical</strong> tabs above for detailed website analysis, metadata extraction, and performance insights.
-                      </p>
-                      <Button
-                        onClick={openSiteInNewTab}
-                        variant='outline'
-                        className='gap-2 shadow-sm'
-                      >
-                        <ExternalLink className='h-4 w-4' />
-                        Open in New Tab
-                      </Button>
-                    </div>
-                  </div>
-                )
-              }
-
-              // If any loaded, show all viewports
-              if (anyLoaded) {
-                return (
-                  <div className='w-full'>
-                    <div className='flex flex-wrap gap-6 justify-center items-start px-4'>
-                      {views.map((view, index) => (
-                        <WebsiteView
-                          key={view.id}
-                          view={view}
-                          refreshKey={refreshKey}
-                          globalZoom={globalZoom}
-                          onRemove={() => removeView(view.id)}
-                          onTypeChange={type => changeViewType(view.id, type)}
-                          onDuplicate={duplicateView}
-                          index={index}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )
-              }
-
-              // Still loading, show loading - centered like blocked content
-              return (
-                <div className='fixed inset-0 top-24 flex items-center justify-center'>
-                  <div className='text-center max-w-md mx-auto p-8 bg-card/70 backdrop-blur-sm border border-border/50 rounded-2xl shadow-xl'>
-                    <Loader2 className='h-16 w-16 mx-auto text-blue-500 mb-6 animate-spin' />
-                    <h3 className='text-2xl font-bold mb-4'>Loading Website</h3>
-                    <p className='text-muted-foreground leading-relaxed'>
-                      Checking if content can be displayed across different
-                      viewports...
-                    </p>
-                  </div>
-                </div>
-              )
-            })()
+            <div className='w-full'>
+              {/* All Viewports - Display simultaneously */}
+              <div className='flex flex-wrap gap-4 justify-center items-start'>
+                {views.map((view, index) => (
+                  <WebsiteView
+                    key={view.id}
+                    view={view}
+                    refreshKey={refreshKey}
+                    globalZoom={globalZoom}
+                    onRemove={() => removeView(view.id)}
+                    onTypeChange={type => changeViewType(view.id, type)}
+                    onDuplicate={duplicateView}
+                    index={index}
+                  />
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </div>

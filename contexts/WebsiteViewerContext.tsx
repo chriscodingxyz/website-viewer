@@ -18,6 +18,8 @@ export interface View {
   refreshKey?: number
   iframeStatus: IframeStatus
   iframeResult?: IframeDetectionResult
+  loadingDelay?: number // Delay in ms before starting to load iframe
+  shouldLoad?: boolean // Whether iframe should start loading
 }
 
 const isValidUrl = (url: string): boolean => {
@@ -154,6 +156,8 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   }, [])
 
   // Use metadata API to determine iframe status (the right way!)
+  // TEMPORARILY COMMENTED OUT - Testing proxy fallback system
+  /*
   useEffect(() => {
     if (metadata && views.length > 0) {
       const xFrameOptions = metadata.headers?.xFrameOptions
@@ -175,6 +179,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
       }
     }
   }, [metadata])
+  */
 
   // Update URL parameters when URL input changes
   useEffect(() => {
@@ -212,22 +217,43 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setTimeout(() => setIsInputHighlighted(false), 1000)
   }
 
+
   const loadSiteInternal = async (formattedUrl: string) => {
-    // Create views as loading - let onLoad/onError events determine actual status
+    // Create all 4 viewports for comprehensive device testing
     const newViews = [
-      { id: nextId, url: formattedUrl, type: 'desktop' as ViewType, iframeStatus: 'loading' as IframeStatus },
-      { id: nextId + 1, url: formattedUrl, type: 'tablet' as ViewType, iframeStatus: 'loading' as IframeStatus },
-      { id: nextId + 2, url: formattedUrl, type: 'mobileLarge' as ViewType, iframeStatus: 'loading' as IframeStatus },
-      { id: nextId + 3, url: formattedUrl, type: 'mobile' as ViewType, iframeStatus: 'loading' as IframeStatus }
+      { 
+        id: nextId, 
+        url: formattedUrl, 
+        type: 'desktop' as ViewType, 
+        iframeStatus: 'loading' as IframeStatus
+      },
+      { 
+        id: nextId + 1, 
+        url: formattedUrl, 
+        type: 'tablet' as ViewType, 
+        iframeStatus: 'loading' as IframeStatus
+      },
+      { 
+        id: nextId + 2, 
+        url: formattedUrl, 
+        type: 'mobileLarge' as ViewType, 
+        iframeStatus: 'loading' as IframeStatus
+      },
+      { 
+        id: nextId + 3, 
+        url: formattedUrl, 
+        type: 'mobile' as ViewType, 
+        iframeStatus: 'loading' as IframeStatus
+      }
     ]
     
     setViews(newViews)
     setCurrentSite(formattedUrl)
-    setNextId(nextId + 4)
+    setNextId(nextId + 4) // Increment by 4 for all viewports
     addToHistory(formattedUrl)
     setUrl(formattedUrl)
     
-    // Reset to viewports tab when loading a new site
+    // Reset to viewports tab
     setSelectedTab('viewports')
     
     // Automatically start metadata extraction in the background
@@ -277,7 +303,11 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   }
 
   const duplicateView = (view: View) => {
-    setViews(prevViews => [{ ...view, id: nextId }, ...prevViews])
+    const newView = { 
+      ...view, 
+      id: nextId
+    }
+    setViews(prevViews => [newView, ...prevViews])
     setNextId(nextId + 1)
     toast.success(`New ${view.type} view added`)
   }

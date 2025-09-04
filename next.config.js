@@ -9,15 +9,71 @@ const nextConfig = {
       },
       {
         protocol: 'http', 
-        hostname: '**', // Allow all HTTP domains (for localhost testing)
+        hostname: 'localhost', // Allow localhost specifically
+      },
+      {
+        protocol: 'http', 
+        hostname: '127.0.0.1', // Allow localhost IP
+      },
+      {
+        protocol: 'http',
+        hostname: '**', // Allow all HTTP domains for development
       }
     ],
+    unoptimized: process.env.NODE_ENV === 'development', // Disable optimization in dev
   },
   // Modern security headers for 2025
   async headers() {
     return [
+      // Proxy API routes - Permissive headers for embedded content
       {
-        source: '/(.*)',
+        source: '/api/proxy-html',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src *",
+              "script-src * 'unsafe-eval' 'unsafe-inline'",
+              "style-src * 'unsafe-inline'",
+              "img-src * data: blob:",
+              "font-src *",
+              "connect-src *",
+              "frame-src *",
+              "media-src *",
+              "object-src *",
+              "base-uri *",
+              "form-action *"
+            ].join('; '),
+          },
+          // NO X-Frame-Options here - allows iframe embedding
+        ],
+      },
+      // Asset proxy routes - Permissive headers for assets
+      {
+        source: '/api/proxy-asset',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'cross-origin',
+          },
+          // NO frame-blocking headers for assets
+        ],
+      },
+      // All other routes - secure headers
+      {
+        source: '/((?!api/proxy-html|api/proxy-asset).*)',
         headers: [
           {
             key: 'X-Frame-Options',

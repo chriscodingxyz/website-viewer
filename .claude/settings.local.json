@@ -7,6 +7,7 @@
       "WebFetch(domain:localhost)",
       "Bash(curl:*)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   }
 }
