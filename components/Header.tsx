@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
   Globe,
@@ -64,11 +65,14 @@ export function Header () {
     clearSite,
     fetchMetadata,
     selectedTab,
-    setSelectedTab
+    setSelectedTab,
+    isInitialLoad
   } = useWebsiteViewer()
 
   const { favorites } = useFavorites()
   const { history } = useHistory()
+  const router = useRouter()
+  const pathname = usePathname()
 
   const [open, setOpen] = useState(false)
 
@@ -122,6 +126,23 @@ export function Header () {
     loadSite(selectedValue)
   }
 
+  // Function to handle tab navigation with URL updates
+  const handleTabClick = (tabId: TabType) => {
+    setSelectedTab(tabId)
+
+    // Update URL to match the section
+    const searchParams = new URLSearchParams(window.location.search)
+    const siteParam = searchParams.get('site')
+    const newPath = `/${tabId}${siteParam ? `?site=${siteParam}` : ''}`
+
+    router.push(newPath)
+
+    // If clicking on SEO, Social, or Technical tabs, trigger metadata extraction
+    if ((tabId === 'seo' || tabId === 'social' || tabId === 'technical') && currentSite) {
+      fetchMetadata()
+    }
+  }
+
   return (
     <header className='fixed top-0 left-0 right-0 z-50 bg-background border-b border-border'>
       <div className='py-4 px-3'>
@@ -132,7 +153,10 @@ export function Header () {
               <Button
                 variant='outline'
                 size='sm'
-                onClick={clearSite}
+                onClick={() => {
+                  clearSite()
+                  router.push('/')
+                }}
                 className=' h-12 w-12 p-0 border-2 border-border/50 hover:border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-card/90 hover:bg-card rounded-2xl'
                 title='Return to homepage'
               >
@@ -282,7 +306,7 @@ export function Header () {
       </div>
 
       {/* Tab Navigation Badges - Right under the input */}
-      {currentSite && (
+      {currentSite && !isInitialLoad && (
         <div className='w-full px-6 pt-0 pb-2 bg-background'>
           <div className='flex flex-wrap gap-2 justify-center'>
             {tabs.map(tab => (
@@ -294,18 +318,7 @@ export function Header () {
                     ? 'bg-foreground text-background border-foreground/20 shadow-lg'
                     : 'bg-background text-foreground border-border/50 hover:border-border/80 hover:bg-card/50'
                 )}
-                onClick={() => {
-                  setSelectedTab(tab.id)
-                  // If clicking on SEO, Social, or Technical tabs, trigger metadata extraction
-                  if (
-                    (tab.id === 'seo' ||
-                      tab.id === 'social' ||
-                      tab.id === 'technical') &&
-                    currentSite
-                  ) {
-                    fetchMetadata()
-                  }
-                }}
+                onClick={() => handleTabClick(tab.id)}
               >
                 {tab.label}
               </Badge>

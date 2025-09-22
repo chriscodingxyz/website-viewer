@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react'
 import { toast } from 'sonner'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
@@ -113,6 +113,8 @@ interface WebsiteViewerContextType {
   // Tab management
   selectedTab: TabType
   setSelectedTab: (tab: TabType) => void
+  // Loading state
+  isInitialLoad: boolean
 }
 
 const WebsiteViewerContext = createContext<
@@ -128,13 +130,28 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
   
-  // Tab state
-  const [selectedTab, setSelectedTab] = useState<TabType>('viewports')
-  
+  // Tab state - determine initial tab from URL
+  const getInitialTab = (): TabType => {
+    if (typeof window === 'undefined') return 'viewports'
+
+    const path = window.location.pathname
+    if (path === '/seo') return 'seo'
+    if (path === '/social') return 'social'
+    if (path === '/technical') return 'technical'
+    if (path === '/viewports') return 'viewports'
+    return 'viewports' // default
+  }
+
+  const [selectedTab, setSelectedTab] = useState<TabType>(getInitialTab)
+
+  // Track if we've done the initial redirect for this site
+  const hasRedirected = useRef(false)
+
   // Metadata state
   const [metadata, setMetadata] = useState<WebsiteMetadata | null>(null)
   const [metadataLoading, setMetadataLoading] = useState(false)
   const [metadataError, setMetadataError] = useState<string | null>(null)
+  const [isInitialLoad, setIsInitialLoad] = useState(false)
 
 
   const { favorites } = useFavorites()
@@ -144,7 +161,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const siteParam = urlParams.get('site')
-    
+
     if (siteParam) {
       // Auto-add protocol based on domain
       const fullUrl = addProtocolFromDomain(siteParam)
@@ -155,31 +172,52 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Use metadata API to determine iframe status (the right way!)
-  // TEMPORARILY COMMENTED OUT - Testing proxy fallback system
-  /*
+  // Use metadata API to determine iframe status and auto-switch tabs
   useEffect(() => {
     if (metadata && views.length > 0) {
       const xFrameOptions = metadata.headers?.xFrameOptions
-      
-      // If X-Frame-Options blocks iframe embedding, mark all views as error
-      if (xFrameOptions === 'DENY' || xFrameOptions === 'SAMEORIGIN') {
-        setViews(prevViews => 
-          prevViews.map(view => ({ ...view, iframeStatus: 'error' as IframeStatus }))
+      const url = new URL(metadata.url)
+
+      // Allow iframes for local/staging environments (likely user's own sites)
+      const isLocalOrStaging =
+        url.hostname === 'localhost' ||
+        url.hostname === '127.0.0.1' ||
+        url.hostname.includes('staging') ||
+        url.hostname.includes('dev') ||
+        url.hostname.includes('test') ||
+        url.hostname.endsWith('.local')
+
+      // If X-Frame-Options blocks iframe embedding and it's not a local/staging site
+      if ((xFrameOptions === 'DENY' || xFrameOptions === 'SAMEORIGIN') && !isLocalOrStaging) {
+        setViews(prevViews =>
+          prevViews.map(view => ({
+            ...view,
+            iframeStatus: 'blocked' as IframeStatus,
+            shouldLoad: false
+          }))
         )
-        // Auto-switch to SEO tab when viewports are blocked
-        setSelectedTab('seo')
-        toast.info('Viewports blocked by website - switched to SEO analysis')
+        // Only auto-switch to social tab if currently on viewports tab AND we haven't redirected yet
+        if (selectedTab === 'viewports' && !hasRedirected.current) {
+          hasRedirected.current = true
+          setSelectedTab('social')
+          // Update URL to match the new tab
+          const searchParams = new URLSearchParams(window.location.search)
+          const siteParam = searchParams.get('site')
+          const newPath = `/social${siteParam ? `?site=${siteParam}` : ''}`
+          window.history.pushState({}, '', newPath)
+          toast.info('Viewports blocked by website - switched to social preview')
+        }
       } else {
-        // No blocking headers, mark all views as loaded
-        setViews(prevViews => 
-          prevViews.map(view => ({ ...view, iframeStatus: 'loaded' as IframeStatus }))
+        // No blocking headers or local/staging site, allow iframes to load
+        setViews(prevViews =>
+          prevViews.map(view => ({
+            ...view,
+            shouldLoad: true
+          }))
         )
-        toast.success('Viewports loaded successfully')
       }
     }
   }, [metadata])
-  */
 
   // Update URL parameters when URL input changes
   useEffect(() => {
@@ -220,30 +258,35 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
   const loadSiteInternal = async (formattedUrl: string) => {
     // Create all 4 viewports for comprehensive device testing
+    // Start with shouldLoad: false to wait for X-Frame-Options check
     const newViews = [
-      { 
-        id: nextId, 
-        url: formattedUrl, 
-        type: 'desktop' as ViewType, 
-        iframeStatus: 'loading' as IframeStatus
+      {
+        id: nextId,
+        url: formattedUrl,
+        type: 'desktop' as ViewType,
+        iframeStatus: 'loading' as IframeStatus,
+        shouldLoad: false
       },
-      { 
-        id: nextId + 1, 
-        url: formattedUrl, 
-        type: 'tablet' as ViewType, 
-        iframeStatus: 'loading' as IframeStatus
+      {
+        id: nextId + 1,
+        url: formattedUrl,
+        type: 'tablet' as ViewType,
+        iframeStatus: 'loading' as IframeStatus,
+        shouldLoad: false
       },
-      { 
-        id: nextId + 2, 
-        url: formattedUrl, 
-        type: 'mobileLarge' as ViewType, 
-        iframeStatus: 'loading' as IframeStatus
+      {
+        id: nextId + 2,
+        url: formattedUrl,
+        type: 'mobileLarge' as ViewType,
+        iframeStatus: 'loading' as IframeStatus,
+        shouldLoad: false
       },
-      { 
-        id: nextId + 3, 
-        url: formattedUrl, 
-        type: 'mobile' as ViewType, 
-        iframeStatus: 'loading' as IframeStatus
+      {
+        id: nextId + 3,
+        url: formattedUrl,
+        type: 'mobile' as ViewType,
+        iframeStatus: 'loading' as IframeStatus,
+        shouldLoad: false
       }
     ]
     
@@ -252,10 +295,13 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setNextId(nextId + 4) // Increment by 4 for all viewports
     addToHistory(formattedUrl)
     setUrl(formattedUrl)
-    
-    // Reset to viewports tab
-    setSelectedTab('viewports')
-    
+
+    // Reset redirect tracking for new site
+    hasRedirected.current = false
+    setIsInitialLoad(true)
+
+    // Don't force reset to viewports - respect current URL/tab
+
     // Automatically start metadata extraction in the background
     fetchMetadata(formattedUrl)
   }
@@ -398,6 +444,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
       setMetadata(null)
     } finally {
       setMetadataLoading(false)
+      setIsInitialLoad(false)
     }
   }
 
@@ -438,7 +485,8 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     updateViewIframeStatus,
     clearSite,
     selectedTab,
-    setSelectedTab
+    setSelectedTab,
+    isInitialLoad
   }
 
   return (

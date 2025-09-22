@@ -35,7 +35,8 @@ export default function ViewportsSection ({
     globalZoom,
     globalZoomStepIndex,
     setGlobalZoomStepIndex,
-    zoomSteps
+    zoomSteps,
+    metadataLoading
   } = useWebsiteViewer()
 
   const getStatus = () => {
@@ -189,6 +190,38 @@ export default function ViewportsSection ({
                 <p className='text-muted-foreground'>
                   Enter a website URL to view in different device sizes
                 </p>
+              </div>
+            </div>
+          ) : metadataLoading && views.length > 0 ? (
+            // Show single loading state while checking X-Frame-Options
+            <div className='w-full'>
+              <div className='flex justify-center items-center py-16'>
+                <div className='text-center max-w-md'>
+                  <div className='mx-auto mb-6'>
+                    <div className='w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto'></div>
+                  </div>
+                  <p className='text-lg text-gray-700 mb-3 font-medium'>Analyzing Website</p>
+                  <p className='text-sm text-gray-500'>Extracting metadata, SEO data, social previews, and technical information...</p>
+                </div>
+              </div>
+            </div>
+          ) : views.length > 0 && views.every(v => v.iframeStatus === 'blocked') ? (
+            // Show informational message when all viewports are blocked
+            <div className='w-full'>
+              <div className='flex justify-center items-center py-16'>
+                <div className='text-center max-w-lg'>
+                  <div className='mx-auto mb-6 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center'>
+                    <CheckCircle className='w-8 h-8 text-green-600' />
+                  </div>
+                  <h3 className='text-xl font-semibold text-gray-900 mb-3'>X-Frame-Options Configured</h3>
+                  <p className='text-gray-600 mb-4 leading-relaxed'>
+                    This website has <code className='bg-gray-100 px-2 py-1 rounded text-sm'>X-Frame-Options: DENY</code> configured,
+                    which prevents iframe embedding. This is a good security practice that protects against clickjacking attacks.
+                  </p>
+                  <div className='bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800'>
+                    <strong>Important:</strong> Only the website owner can remove X-Frame-Options. If this is YOUR website, you can modify the server configuration. Otherwise, viewport previews are impossible due to security restrictions.
+                  </div>
+                </div>
               </div>
             </div>
           ) : (

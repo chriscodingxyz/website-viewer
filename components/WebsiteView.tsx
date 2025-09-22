@@ -466,7 +466,7 @@ export default function WebsiteView ({
       >
         <iframe
           ref={iframeRef}
-          src={view.url}
+          src={view.shouldLoad ? view.url : undefined}
           style={{
             width: `${actualDimensions[view.type].width}px`,
             height: `${actualDimensions[view.type].height}px`,
@@ -555,7 +555,7 @@ export default function WebsiteView ({
             </DialogHeader>
             <div className="relative bg-white overflow-hidden">
               <iframe
-                src={view.url}
+                src={view.shouldLoad ? view.url : undefined}
                 style={{
                   width: `${actualDimensions[view.type].width * enlargeDialogScale}px`,
                   height: `${actualDimensions[view.type].height * enlargeDialogScale}px`,
