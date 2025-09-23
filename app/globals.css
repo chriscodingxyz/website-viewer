@@ -8,13 +8,6 @@
   --background-end-rgb: 255, 255, 255;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
-}
 
 @layer utilities {
   .text-balance {
@@ -29,23 +22,44 @@
 
 /* Custom animations and transitions */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes pulse-subtle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200px 0; }
-  100% { background-position: calc(200px + 100%) 0; }
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
 }
 
 .animate-fade-in {
@@ -61,7 +75,12 @@
 }
 
 .shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
   background-size: 200px 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -73,7 +92,7 @@
 
 .hover-lift:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 /* Device type color themes */
@@ -99,12 +118,20 @@
 
 .device-border {
   border: 2px solid rgb(var(--device-color) / 0.2);
-  background: linear-gradient(145deg, rgb(var(--device-color) / 0.05), transparent);
+  background: linear-gradient(
+    145deg,
+    rgb(var(--device-color) / 0.05),
+    transparent
+  );
 }
 
 .device-border:hover {
   border-color: rgb(var(--device-color) / 0.4);
-  background: linear-gradient(145deg, rgb(var(--device-color) / 0.1), transparent);
+  background: linear-gradient(
+    145deg,
+    rgb(var(--device-color) / 0.1),
+    transparent
+  );
 }
 
 @layer base {
@@ -136,30 +163,31 @@
     --radius: 0.5rem;
   }
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 10% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
   }
 }
 
@@ -174,7 +202,8 @@
 
 /* Analysis section typography utilities */
 .analysis-font {
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Roboto', sans-serif;
 }
 
 .analysis-text-sm {
@@ -200,15 +229,15 @@
 }
 
 .analysis-badge-success {
-  @apply analysis-badge bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800/30;
+  @apply analysis-badge bg-emerald-50 text-emerald-700 border-emerald-200;
 }
 
 .analysis-badge-warning {
-  @apply analysis-badge bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800/30;
+  @apply analysis-badge bg-amber-50 text-amber-700 border-amber-200;
 }
 
 .analysis-badge-error {
-  @apply analysis-badge bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800/30;
+  @apply analysis-badge bg-red-50 text-red-700 border-red-200;
 }
 
 .responsive-text-sm {
@@ -248,4 +277,118 @@
     padding-right: 0.5rem;
     padding-bottom: 0.75rem;
   }
+}
+
+/* Sharp design system utilities */
+.section-divider {
+  @apply border-b border-border/30 pb-4 mb-6;
+}
+
+.section-title {
+  @apply text-2xl font-bold text-foreground flex items-center gap-3;
+}
+
+.section-subtitle {
+  @apply text-muted-foreground mt-2;
+}
+
+.status-card {
+  @apply border-l-4 p-4 space-y-2;
+}
+
+.status-card-good {
+  @apply status-card border-l-emerald-500 bg-emerald-50;
+}
+
+.status-card-warning {
+  @apply status-card border-l-amber-500 bg-amber-50;
+}
+
+.status-card-error {
+  @apply status-card border-l-red-500 bg-red-50;
+}
+
+.status-card-info {
+  @apply status-card border-l-blue-500 bg-blue-50;
+}
+
+.status-card-neutral {
+  @apply status-card border-l-gray-300 bg-gray-50;
+}
+
+/* Enhanced visual hierarchy */
+.dashboard-grid {
+  @apply grid gap-6;
+}
+
+.dashboard-grid-2 {
+  @apply dashboard-grid md:grid-cols-2;
+}
+
+.dashboard-grid-3 {
+  @apply dashboard-grid lg:grid-cols-3;
+}
+
+.metric-display {
+  @apply text-3xl font-bold;
+}
+
+.metric-label {
+  @apply text-sm text-muted-foreground;
+}
+
+/* Sharp border utilities */
+.border-sharp {
+  @apply border-2 border-zinc-200;
+}
+
+.border-sharp-accent {
+  @apply border-2 border-blue-200;
+}
+
+/* Typography scale for better hierarchy */
+.text-display {
+  @apply text-4xl font-black tracking-tight;
+}
+
+.text-section-title {
+  @apply text-2xl font-bold tracking-tight;
+}
+
+.text-subsection-title {
+  @apply text-lg font-semibold;
+}
+
+/* Icon sizing utilities */
+.icon-lg {
+  @apply h-7 w-7;
+}
+
+.icon-md {
+  @apply h-6 w-6;
+}
+
+.icon-sm {
+  @apply h-5 w-5;
+}
+
+.icon-xs {
+  @apply h-4 w-4;
+}
+
+/* Gradient backgrounds for sections */
+.gradient-blue {
+  @apply bg-gradient-to-r from-blue-50 to-indigo-50;
+}
+
+.gradient-green {
+  @apply bg-gradient-to-r from-green-50 to-emerald-50;
+}
+
+.gradient-purple {
+  @apply bg-gradient-to-r from-purple-50 to-violet-50;
+}
+
+.gradient-orange {
+  @apply bg-gradient-to-r from-orange-50 to-red-50;
 }

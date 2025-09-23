@@ -107,7 +107,7 @@ export default function RootLayout ({
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
   return (
-    <html lang='en' suppressHydrationWarning>
+    <html lang='en'>
       <body
         className={`${inter.variable} min-h-screen flex flex-col font-inter`}
       >
@@ -137,7 +137,7 @@ export default function RootLayout ({
         )}
 
         <Toaster richColors />
-        <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
+        <ThemeProvider attribute='class' defaultTheme='light' enableSystem={false} forcedTheme='light'>
           <FavoritesProvider>
             <HistoryProvider>
               <WebsiteViewerProvider>
