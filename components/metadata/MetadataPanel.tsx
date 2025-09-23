@@ -6,13 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { 
-  ChevronDown, 
-  ChevronUp, 
-  Copy, 
-  Download, 
-  Search, 
-  Share2, 
+import {
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Search,
+  Share2,
   Globe,
   Loader2,
   AlertCircle,
@@ -23,6 +22,7 @@ import SEOSection from './SEOSection'
 import SocialPreview from './SocialPreview'
 import TechnicalSection from './TechnicalSection'
 import PerformanceSection from './PerformanceSection'
+import ExportButton from '@/components/export/ExportButton'
 
 interface MetadataPanelProps {
   metadata: WebsiteMetadata | null
@@ -52,19 +52,6 @@ export default function MetadataPanel({
     }
   }
 
-  const exportMetadata = () => {
-    if (!metadata) return
-    
-    const dataStr = JSON.stringify(metadata, null, 2)
-    const dataBlob = new Blob([dataStr], { type: 'application/json' })
-    const url = URL.createObjectURL(dataBlob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `metadata-${new Date().toISOString().split('T')[0]}.json`
-    link.click()
-    URL.revokeObjectURL(url)
-    toast.success('Metadata exported successfully')
-  }
 
   const getStatusIcon = () => {
     if (loading) return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
@@ -130,17 +117,9 @@ export default function MetadataPanel({
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          exportMetadata()
-                        }}
-                        title="Export metadata"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <ExportButton metadata={metadata} />
+                      </div>
                     </div>
                   )}
                   {isOpen ? (

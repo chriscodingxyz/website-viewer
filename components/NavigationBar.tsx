@@ -14,6 +14,7 @@ import {
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb'
 import ShareableLink from '@/components/ShareableLink'
+import ExportButton from '@/components/export/ExportButton'
 import { Home, Globe, Eye, Share2, Settings, BarChart3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -39,7 +40,8 @@ export default function NavigationBar() {
     selectedTab,
     setSelectedTab,
     fetchMetadata,
-    isInitialLoad
+    isInitialLoad,
+    metadata
   } = useWebsiteViewer()
 
   const router = useRouter()
@@ -130,12 +132,22 @@ export default function NavigationBar() {
             </div>
           )}
 
-          {/* Right: Share button */}
-          <ShareableLink
-            currentUrl={currentSite}
-            section={selectedTab}
-            domainName={getDomainName(currentSite)}
-          />
+          {/* Right: Export and Share buttons */}
+          <div className="flex items-center gap-2">
+            {metadata && (
+              <ExportButton
+                metadata={metadata}
+                variant="outline"
+                size="sm"
+                showLabel={false}
+              />
+            )}
+            <ShareableLink
+              currentUrl={currentSite}
+              section={selectedTab}
+              domainName={getDomainName(currentSite)}
+            />
+          </div>
         </div>
       </div>
     </div>
