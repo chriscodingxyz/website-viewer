@@ -567,6 +567,19 @@ export async function GET (request: NextRequest) {
   } catch (error) {
     console.error('Metadata extraction error:', error)
 
+    // Check if this is a 401 authentication error
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as any
+      if (axiosError.response?.status === 401) {
+        const apiResponse: MetadataAPIResponse = {
+          success: false,
+          error: 'Authentication required',
+          status: 401
+        }
+        return NextResponse.json(apiResponse, { status: 200 }) // Return 200 so frontend can handle it
+      }
+    }
+
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error occurred'
 

@@ -6,6 +6,7 @@ import { Globe, ZoomIn, ZoomOut } from 'lucide-react'
 import { toast } from 'sonner'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import SectionContainer from './SectionContainer'
+import NavigationBar from './NavigationBar'
 
 export default function WebsiteViewer () {
   
@@ -78,7 +79,7 @@ export default function WebsiteViewer () {
       `}</style>
 
       {/* Main Content Area */}
-      <div className='pt-24 min-h-screen'>
+      <div className='min-h-screen'>
         {!currentSite && (
           <div className='flex items-center justify-center min-h-[calc(100vh-6rem)]'>
             <div className='text-center'>
@@ -105,7 +106,12 @@ export default function WebsiteViewer () {
         )}
 
         {/* Section Layout Content */}
-        {currentSite && <SectionContainer />}
+        {currentSite && (
+          <>
+            <NavigationBar />
+            <SectionContainer />
+          </>
+        )}
       </div>
     </div>
   )

@@ -12,7 +12,10 @@ import {
   Zap,
   ZoomIn,
   ZoomOut,
-  Home
+  Home,
+  Lock,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
@@ -32,18 +35,9 @@ import {
   CommandSeparator
 } from '@/components/ui/command'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
-type TabType = 'viewports' | 'seo' | 'social' | 'technical'
-
-interface Tab {
-  id: TabType
-  label: string
-  color: string
-  variant: 'default' | 'secondary' | 'destructive' | 'outline'
-}
 
 export function Header () {
   const {
@@ -64,9 +58,14 @@ export function Header () {
     zoomSteps,
     clearSite,
     fetchMetadata,
-    selectedTab,
-    setSelectedTab,
-    isInitialLoad
+    isInitialLoad,
+    username,
+    password,
+    showAuthFields,
+    setUsername,
+    setPassword,
+    setShowAuthFields,
+    clearCredentials
   } = useWebsiteViewer()
 
   const { favorites } = useFavorites()
@@ -75,33 +74,6 @@ export function Header () {
   const pathname = usePathname()
 
   const [open, setOpen] = useState(false)
-
-  const tabs: Tab[] = [
-    {
-      id: 'viewports',
-      label: 'Viewports',
-      color: 'bg-blue-500 text-white',
-      variant: 'default'
-    },
-    {
-      id: 'seo',
-      label: 'SEO',
-      color: 'bg-green-500 text-white',
-      variant: 'secondary'
-    },
-    {
-      id: 'social',
-      label: 'Social Media',
-      color: 'bg-purple-500 text-white',
-      variant: 'outline'
-    },
-    {
-      id: 'technical',
-      label: 'Technical',
-      color: 'bg-orange-500 text-white',
-      variant: 'secondary'
-    }
-  ]
 
   // Add keyboard shortcut handler (Command+K or Ctrl+K)
   useEffect(() => {
@@ -126,25 +98,9 @@ export function Header () {
     loadSite(selectedValue)
   }
 
-  // Function to handle tab navigation with URL updates
-  const handleTabClick = (tabId: TabType) => {
-    setSelectedTab(tabId)
-
-    // Update URL to match the section
-    const searchParams = new URLSearchParams(window.location.search)
-    const siteParam = searchParams.get('site')
-    const newPath = `/${tabId}${siteParam ? `?site=${siteParam}` : ''}`
-
-    router.push(newPath)
-
-    // If clicking on SEO, Social, or Technical tabs, trigger metadata extraction
-    if ((tabId === 'seo' || tabId === 'social' || tabId === 'technical') && currentSite) {
-      fetchMetadata()
-    }
-  }
 
   return (
-    <header className='fixed top-0 left-0 right-0 z-50 bg-background border-b border-border'>
+    <header className='bg-background border-b border-border'>
       <div className='py-4 px-3'>
         <div className='mx-auto'>
           <div className='flex gap-1 flex-row items-center'>
@@ -285,6 +241,8 @@ export function Header () {
                 </PopoverContent>
               </Popover>
             </div>
+
+
             <div className='flex gap-2'>
               <Button
                 size='sm'
@@ -304,28 +262,6 @@ export function Header () {
           </div>
         </div>
       </div>
-
-      {/* Tab Navigation Badges - Right under the input */}
-      {currentSite && !isInitialLoad && (
-        <div className='w-full px-6 pt-0 pb-2 bg-background'>
-          <div className='flex flex-wrap gap-2 justify-center'>
-            {tabs.map(tab => (
-              <Badge
-                key={tab.id}
-                className={cn(
-                  'cursor-pointer transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg rounded-md px-2.5 py-0.5 text-xs font-semibold border',
-                  selectedTab === tab.id
-                    ? 'bg-foreground text-background border-foreground/20 shadow-lg'
-                    : 'bg-background text-foreground border-border/50 hover:border-border/80 hover:bg-card/50'
-                )}
-                onClick={() => handleTabClick(tab.id)}
-              >
-                {tab.label}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
     </header>
   )
 }

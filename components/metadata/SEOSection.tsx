@@ -251,28 +251,9 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
   }
 
   return (
-    <div className='w-full space-y-10'>
-      {/* Header */}
-      <div className='flex items-center justify-end'>
-        <div className='flex items-center gap-3'>
-          {getScoreIcon(seoScore.percentage)}
-          <div className='text-right'>
-            <div
-              className={`text-2xl font-bold ${getScoreColor(
-                seoScore.percentage
-              )}`}
-            >
-              {seoScore.percentage}%
-            </div>
-            <div className='text-sm text-gray-500'>
-              {seoScore.score}/{seoScore.maxScore} optimized
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* SEO Analysis */}
-      <div className='max-w-2xl mx-auto'>
+    <div className='w-full space-y-6'>
+        {/* SEO Analysis */}
+        <div className='max-w-2xl mx-auto'>
         <Accordion type="multiple" className="w-full space-y-4" defaultValue={["meta-tags", "favicons"]}>
           {/* Meta Tags */}
           <AccordionItem value="meta-tags" className="border border-border/50 rounded-lg bg-card/30">
@@ -748,7 +729,7 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
             </AccordionItem>
           )}
         </Accordion>
-      </div>
+        </div>
     </div>
   )
 }

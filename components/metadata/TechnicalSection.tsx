@@ -18,6 +18,7 @@ import {
   Info,
   BarChart3
 } from 'lucide-react'
+import SiteDiscovery from '@/components/SiteDiscovery'
 
 interface TechnicalSectionProps {
   metadata?: WebsiteMetadata | null
@@ -495,6 +496,9 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
           </AccordionItem>
         </Accordion>
       </div>
+
+      {/* Site Discovery */}
+      <SiteDiscovery metadata={metadata} />
     </div>
   )
 }

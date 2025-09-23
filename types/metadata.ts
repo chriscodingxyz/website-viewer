@@ -167,6 +167,7 @@ export const MetadataAPIResponseSchema = z.object({
   success: z.boolean(),
   data: WebsiteMetadataSchema.optional(),
   error: z.string().optional(),
+  status: z.number().optional(),
 })
 
 export type MetadataAPIResponse = z.infer<typeof MetadataAPIResponseSchema>

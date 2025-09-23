@@ -31,11 +31,14 @@ const isValidUrl = (url: string): boolean => {
   }
 }
 
-const formatUrl = (inputUrl: string): string | null => {
+const formatUrl = (inputUrl: string, username?: string, password?: string): string | null => {
   if (!inputUrl || inputUrl.trim() === '') return null
-  
+
   let formattedUrl = inputUrl.trim()
-  
+
+  // Check if URL already has credentials to avoid duplication
+  const hasCredentials = formattedUrl.includes('@') && (formattedUrl.includes('http://') || formattedUrl.includes('https://'))
+
   // Add protocol if missing
   if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
     // Use http:// for localhost, https:// for everything else
@@ -45,7 +48,20 @@ const formatUrl = (inputUrl: string): string | null => {
       formattedUrl = `https://${formattedUrl}`
     }
   }
-  
+
+  // Add credentials if provided and not already present
+  if (username && password && !hasCredentials) {
+    try {
+      const url = new URL(formattedUrl)
+      url.username = username
+      url.password = password
+      formattedUrl = url.toString()
+    } catch (error) {
+      console.error('Error adding credentials to URL:', error)
+      return null
+    }
+  }
+
   return isValidUrl(formattedUrl) ? formattedUrl : null
 }
 
@@ -115,6 +131,18 @@ interface WebsiteViewerContextType {
   setSelectedTab: (tab: TabType) => void
   // Loading state
   isInitialLoad: boolean
+  // Authentication
+  username: string
+  password: string
+  showAuthFields: boolean
+  showAuthDialog: boolean
+  authDialogUrl: string
+  setUsername: (username: string) => void
+  setPassword: (password: string) => void
+  setShowAuthFields: (show: boolean) => void
+  setShowAuthDialog: (show: boolean) => void
+  setAuthDialogUrl: (url: string) => void
+  clearCredentials: () => void
 }
 
 const WebsiteViewerContext = createContext<
@@ -129,6 +157,13 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   const [isInputHighlighted, setIsInputHighlighted] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
+
+  // Authentication state
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [showAuthFields, setShowAuthFields] = useState(false)
+  const [showAuthDialog, setShowAuthDialog] = useState(false)
+  const [authDialogUrl, setAuthDialogUrl] = useState('')
   
   // Tab state - determine initial tab from URL
   const getInitialTab = (): TabType => {
@@ -225,7 +260,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
       const urlParams = new URLSearchParams(window.location.search)
       
       if (url && url.trim()) {
-        const formattedUrl = formatUrl(url)
+        const formattedUrl = formatUrl(url, username, password)
         if (formattedUrl) {
           const cleanDomain = stripUrlForParams(formattedUrl)
           urlParams.set('site', cleanDomain)
@@ -308,10 +343,10 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
   const updateUrlParams = () => {
     const urlParams = new URLSearchParams(window.location.search)
-    
+
     // Update site param based on current URL input
     if (url && url.trim()) {
-      const formattedUrl = formatUrl(url)
+      const formattedUrl = formatUrl(url, username, password)
       if (formattedUrl) {
         const cleanDomain = stripUrlForParams(formattedUrl)
         urlParams.set('site', cleanDomain)
@@ -321,7 +356,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     } else {
       urlParams.delete('site')
     }
-    
+
     // Construct the final URL
     const paramString = urlParams.toString()
     const finalUrl = paramString ? `${window.location.pathname}?${paramString}` : window.location.pathname
@@ -330,7 +365,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
   const loadSite = (urlOverride?: string) => {
     const urlToUse = urlOverride || url
-    const formattedUrl = formatUrl(urlToUse)
+    const formattedUrl = formatUrl(urlToUse, username, password)
     if (formattedUrl) {
       loadSiteInternal(formattedUrl)
       updateUrlParams()
@@ -380,9 +415,18 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setCurrentSite(null)
     setUrl('')
     clearMetadata()
+    clearCredentials()
     // Clear URL params
     window.history.pushState({}, '', window.location.pathname)
     toast.success('Returned to homepage')
+  }
+
+  const clearCredentials = () => {
+    setUsername('')
+    setPassword('')
+    setShowAuthFields(false)
+    setShowAuthDialog(false)
+    setAuthDialogUrl('')
   }
 
   const handleUrlChange = (value: string) => {
@@ -427,14 +471,20 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     }
     setMetadataLoading(true)
     setMetadataError(null)
-    
+
     try {
       const response = await fetch(`/api/metadata?url=${encodeURIComponent(targetUrl)}`)
       const data = await response.json()
-      
+
       if (data.success && data.data) {
         setMetadata(data.data)
       } else {
+        // Check if this is a 401 authentication error
+        if (data.status === 401 && !username && !password) {
+          setAuthDialogUrl(targetUrl)
+          setShowAuthDialog(true)
+          return
+        }
         setMetadataError(data.error || 'Failed to extract metadata')
         setMetadata(null)
       }
@@ -467,7 +517,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     handleUrlChange,
     handleKeyDown,
     selectSuggestion,
-    formatUrl,
+    formatUrl: (url) => formatUrl(url, username, password),
     loadSite,
     setUrlWithHighlight,
     removeView,
@@ -486,7 +536,18 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     clearSite,
     selectedTab,
     setSelectedTab,
-    isInitialLoad
+    isInitialLoad,
+    username,
+    password,
+    showAuthFields,
+    showAuthDialog,
+    authDialogUrl,
+    setUsername,
+    setPassword,
+    setShowAuthFields,
+    setShowAuthDialog,
+    setAuthDialogUrl,
+    clearCredentials
   }
 
   return (
