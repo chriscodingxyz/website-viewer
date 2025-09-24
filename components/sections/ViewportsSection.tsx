@@ -6,14 +6,19 @@ import {
   Monitor,
   Loader2,
   CheckCircle,
-  ZoomIn,
-  ZoomOut,
   XCircle,
   ExternalLink
 } from 'lucide-react'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import WebsiteView from '../WebsiteView'
 import { toast } from 'sonner'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface ViewportsSectionProps {
   expanded: boolean
@@ -126,6 +131,40 @@ export default function ViewportsSection ({
 
   return (
     <div className='w-full pb-8'>
+      {/* Zoom Control - Show when viewports are loaded */}
+      {views.length > 0 && (
+        <div className='flex justify-center py-3 border-b border-border/20'>
+          <div className='flex items-center gap-2'>
+            <span className='text-sm text-muted-foreground'>Zoom:</span>
+            <Select
+              value={Math.round(globalZoom * 100).toString()}
+              onValueChange={(value) => {
+                const percentage = parseInt(value)
+                const newIndex = zoomSteps.findIndex(step => Math.round(step * 100) === percentage)
+                if (newIndex !== -1) {
+                  setGlobalZoomStepIndex(newIndex)
+                  toast.success(`Zoom: ${percentage}%`)
+                }
+              }}
+            >
+              <SelectTrigger className="w-20 h-9 text-xs border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {zoomSteps.map((step, index) => {
+                  const percentage = Math.round(step * 100)
+                  return (
+                    <SelectItem key={index} value={percentage.toString()}>
+                      {percentage}%
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
       {/* Content - Always visible */}
       <div className='w-full py-4 relative'>
         <div className='w-full'>

@@ -32,13 +32,6 @@ import {
   CommandList,
   CommandSeparator
 } from '@/components/ui/command'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -248,35 +241,6 @@ export function Header () {
 
 
             <div className='flex gap-1'>
-              {/* Zoom Control - Show when site is loaded */}
-              {currentSite && (
-                <Select
-                  value={Math.round(globalZoom * 100).toString()}
-                  onValueChange={(value) => {
-                    const percentage = parseInt(value)
-                    const newIndex = zoomSteps.findIndex(step => Math.round(step * 100) === percentage)
-                    if (newIndex !== -1) {
-                      setGlobalZoomStepIndex(newIndex)
-                      toast.success(`Zoom: ${percentage}%`)
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-20 h-9 text-xs border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {zoomSteps.map((step, index) => {
-                      const percentage = Math.round(step * 100)
-                      return (
-                        <SelectItem key={index} value={percentage.toString()}>
-                          {percentage}%
-                        </SelectItem>
-                      )
-                    })}
-                  </SelectContent>
-                </Select>
-              )}
-
               <Button
                 size='sm'
                 disabled={!formatUrl(url)}

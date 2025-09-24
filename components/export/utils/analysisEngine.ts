@@ -159,9 +159,7 @@ function generateRecommendations(metadata: WebsiteMetadata, environment: Environ
   if (!metadata.seo.canonical) {
     recommendations.push('Add canonical URL to prevent duplicate content issues')
   }
-  if (!metadata.structured
-
-|| metadata.structuredData.length === 0) {
+  if (!metadata.structuredData || metadata.structuredData.length === 0) {
     recommendations.push('Add structured data (JSON-LD) for rich search results')
   }
 

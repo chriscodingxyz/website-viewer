@@ -1,3 +1,4 @@
+import React from 'react'
 import { pdf } from '@react-pdf/renderer'
 import { WebsiteAnalysisReport } from '../pdf/WebsiteAnalysisReport'
 import { WebsiteMetadata } from '@/types/metadata'
@@ -23,11 +24,13 @@ export async function generatePDFReport(
     })
 
     // Create the PDF document using React PDF
-    const doc = WebsiteAnalysisReport({
-      metadata,
-      config,
-      generatedAt,
-    })
+    const doc = (
+      <WebsiteAnalysisReport
+        metadata={metadata}
+        config={config}
+        generatedAt={generatedAt}
+      />
+    )
 
     // Generate the PDF blob
     const pdfBlob = await pdf(doc).toBlob()
@@ -96,11 +99,13 @@ export async function generatePDFPreview(
     minute: '2-digit',
   })
 
-  const doc = WebsiteAnalysisReport({
-    metadata,
-    config,
-    generatedAt,
-  })
+  const doc = (
+    <WebsiteAnalysisReport
+      metadata={metadata}
+      config={config}
+      generatedAt={generatedAt}
+    />
+  )
 
   return await pdf(doc).toBlob()
 }

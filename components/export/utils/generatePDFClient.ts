@@ -169,7 +169,7 @@ export async function generatePDFClientSide(
         paddingTop: 8,
       },
       environmentBadge: {
-        display: 'inline-block',
+        display: 'flex',
         padding: '2 6',
         backgroundColor: '#e5e7eb',
         borderRadius: 3,
