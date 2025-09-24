@@ -110,9 +110,9 @@ export default function NavigationBar() {
 
   return (
     <div className="bg-background border-b border-border">
-      <div className="py-1.5 px-4">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-3">
+      <div className="py-1.5 px-2 sm:px-4">
+        <div className="max-w-[1400px] mx-auto px-2 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-2 sm:gap-3">
           {/* Left: Just tabs */}
           {!isInitialLoad && (
             <div className="flex items-center gap-1 overflow-x-auto">
@@ -120,7 +120,7 @@ export default function NavigationBar() {
                 <button
                   key={tab.id}
                   className={cn(
-                    'px-2.5 py-1 text-xs rounded-md transition-all duration-200 shrink-0',
+                    'px-2 sm:px-2.5 py-1 text-xs rounded-md transition-all duration-200 shrink-0',
                     selectedTab === tab.id
                       ? 'bg-foreground text-background'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
@@ -133,22 +133,22 @@ export default function NavigationBar() {
             </div>
           )}
 
-          {/* Right: Export and Share buttons */}
-          <div className="flex items-center gap-2">
-            {metadata && (
+          {/* Right: Export and Share buttons - Only show when metadata is loaded */}
+          {metadata && (
+            <div className="flex items-center gap-1 sm:gap-2">
               <ExportButton
                 metadata={metadata}
                 variant="outline"
                 size="sm"
                 showLabel={false}
               />
-            )}
-            <ShareableLink
-              currentUrl={currentSite}
-              section={selectedTab}
-              domainName={getDomainName(currentSite)}
-            />
-          </div>
+              <ShareableLink
+                currentUrl={currentSite}
+                section={selectedTab}
+                domainName={getDomainName(currentSite)}
+              />
+            </div>
+          )}
           </div>
         </div>
       </div>

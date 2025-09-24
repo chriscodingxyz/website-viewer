@@ -37,51 +37,55 @@ export default function SectionContainer () {
 
   return (
     <div className='w-full'>
-      <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
-        {/* Tab Content - Keep all tabs mounted but show/hide with absolute positioning to avoid display:none issues */}
-        <div className='w-full relative'>
-          <div
-            className={
-              selectedTab === 'viewports'
-                ? 'block'
-                : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'
-            }
-            style={selectedTab !== 'viewports' ? { height: '1px' } : {}}
-          >
-            <ViewportsSection expanded={true} onToggle={() => {}} />
-          </div>
-          <div
-            className={
-              selectedTab === 'seo'
-                ? 'block'
-                : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'
-            }
-            style={selectedTab !== 'seo' ? { height: '1px' } : {}}
-          >
+      {/* Tab Content - Keep all tabs mounted but show/hide with absolute positioning to avoid display:none issues */}
+      <div className='w-full relative'>
+        <div
+          className={
+            selectedTab === 'viewports'
+              ? 'block'
+              : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'
+          }
+          style={selectedTab !== 'viewports' ? { height: '1px' } : {}}
+        >
+          <ViewportsSection expanded={true} onToggle={() => {}} />
+        </div>
+        <div
+          className={
+            selectedTab === 'seo'
+              ? 'block'
+              : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'
+          }
+          style={selectedTab !== 'seo' ? { height: '1px' } : {}}
+        >
+          <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
             <div className='w-full py-4'>
               <SEOSection metadata={metadata} />
             </div>
           </div>
-          <div
-            className={
-              selectedTab === 'social'
-                ? 'block'
-                : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'
-            }
-            style={selectedTab !== 'social' ? { height: '1px' } : {}}
-          >
+        </div>
+        <div
+          className={
+            selectedTab === 'social'
+              ? 'block'
+              : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'
+          }
+          style={selectedTab !== 'social' ? { height: '1px' } : {}}
+        >
+          <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
             <div className='w-full py-4'>
               <SocialPreview metadata={metadata} />
             </div>
           </div>
-          <div
-            className={
-              selectedTab === 'technical'
-                ? 'block'
-                : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'
-            }
-            style={selectedTab !== 'technical' ? { height: '1px' } : {}}
-          >
+        </div>
+        <div
+          className={
+            selectedTab === 'technical'
+              ? 'block'
+              : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'
+          }
+          style={selectedTab !== 'technical' ? { height: '1px' } : {}}
+        >
+          <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
             <div className='w-full py-4'>
               <TechnicalSection metadata={metadata} />
             </div>

@@ -51,7 +51,7 @@ export default function ExportButton({
       <>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant={variant} size={size} title="Export options">
+            <Button variant={variant} size={size} className="w-9 h-9 p-0" title="Export options">
               <FileDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

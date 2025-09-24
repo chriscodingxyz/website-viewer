@@ -82,10 +82,9 @@ export default function ShareableLink({ currentUrl, section, domainName }: Share
         <Button
           variant="outline"
           size="sm"
-          className="gap-2"
+          className="w-9 h-9 p-0"
         >
           <Share2 className="h-4 w-4" />
-          Share
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-96 p-4" align="end">

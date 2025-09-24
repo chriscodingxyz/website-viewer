@@ -10,8 +10,6 @@ import {
   Star,
   Clock,
   Zap,
-  ZoomIn,
-  ZoomOut,
   Home,
   Lock,
   Eye,
@@ -34,6 +32,13 @@ import {
   CommandList,
   CommandSeparator
 } from '@/components/ui/command'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -101,9 +106,9 @@ export function Header () {
 
   return (
     <header className='bg-background border-b border-border'>
-      <div className='py-2 px-4'>
-        <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='flex gap-2 flex-row items-center'>
+      <div className='py-2 px-2 sm:px-4'>
+        <div className='max-w-[1400px] mx-auto px-2 sm:px-6 lg:px-8'>
+          <div className='flex gap-1 sm:gap-2 flex-row items-center'>
             {/* Home Button - Only show when site is loaded */}
             {currentSite && (
               <Button
@@ -243,50 +248,33 @@ export function Header () {
 
 
             <div className='flex gap-1'>
-              {/* Zoom Controls - Show when site is loaded */}
+              {/* Zoom Control - Show when site is loaded */}
               {currentSite && (
-                <>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => {
-                      const newIndex = Math.max(globalZoomStepIndex - 1, 2)
+                <Select
+                  value={Math.round(globalZoom * 100).toString()}
+                  onValueChange={(value) => {
+                    const percentage = parseInt(value)
+                    const newIndex = zoomSteps.findIndex(step => Math.round(step * 100) === percentage)
+                    if (newIndex !== -1) {
                       setGlobalZoomStepIndex(newIndex)
-                      toast.success(`Zoom: ${Math.round(zoomSteps[newIndex] * 100)}%`)
-                    }}
-                    disabled={globalZoomStepIndex === 2}
-                    className='h-9 w-9 p-0 border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md disabled:opacity-30'
-                    title='Zoom out (Min: 100%)'
-                  >
-                    <ZoomOut className='w-3 h-3' />
-                  </Button>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => {
-                      setGlobalZoomStepIndex(2)
-                      toast.success('Zoom reset to 100%')
-                    }}
-                    className='h-9 px-2 border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md text-xs font-medium tabular-nums'
-                    title='Click to reset zoom to 100%'
-                  >
-                    {Math.round(globalZoom * 100)}%
-                  </Button>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => {
-                      const newIndex = Math.min(globalZoomStepIndex + 1, zoomSteps.length - 1)
-                      setGlobalZoomStepIndex(newIndex)
-                      toast.success(`Zoom: ${Math.round(zoomSteps[newIndex] * 100)}%`)
-                    }}
-                    disabled={globalZoomStepIndex === zoomSteps.length - 1}
-                    className='h-9 w-9 p-0 border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md disabled:opacity-30'
-                    title='Zoom in (Max: 200%)'
-                  >
-                    <ZoomIn className='w-3 h-3' />
-                  </Button>
-                </>
+                      toast.success(`Zoom: ${percentage}%`)
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-20 h-9 text-xs border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {zoomSteps.map((step, index) => {
+                      const percentage = Math.round(step * 100)
+                      return (
+                        <SelectItem key={index} value={percentage.toString()}>
+                          {percentage}%
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
               )}
 
               <Button
