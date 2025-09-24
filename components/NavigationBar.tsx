@@ -110,8 +110,9 @@ export default function NavigationBar() {
 
   return (
     <div className="bg-background border-b border-border">
-      <div className="px-4 sm:px-6 py-3">
-        <div className="flex items-center justify-between gap-4">
+      <div className="py-1.5 px-4">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-3">
           {/* Left: Just tabs */}
           {!isInitialLoad && (
             <div className="flex items-center gap-1 overflow-x-auto">
@@ -119,7 +120,7 @@ export default function NavigationBar() {
                 <button
                   key={tab.id}
                   className={cn(
-                    'px-3 py-1.5 text-sm rounded-md transition-all duration-200 shrink-0',
+                    'px-2.5 py-1 text-xs rounded-md transition-all duration-200 shrink-0',
                     selectedTab === tab.id
                       ? 'bg-foreground text-background'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
@@ -147,6 +148,7 @@ export default function NavigationBar() {
               section={selectedTab}
               domainName={getDomainName(currentSite)}
             />
+          </div>
           </div>
         </div>
       </div>

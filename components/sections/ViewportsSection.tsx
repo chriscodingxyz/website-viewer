@@ -110,24 +110,6 @@ export default function ViewportsSection ({
 
   const status = getStatus()
 
-  // Zoom control functions
-  const globalZoomIn = () => {
-    const newIndex = Math.min(globalZoomStepIndex + 1, zoomSteps.length - 1)
-    setGlobalZoomStepIndex(newIndex)
-    toast.success(`Zoom: ${Math.round(zoomSteps[newIndex] * 100)}%`)
-  }
-
-  const globalZoomOut = () => {
-    const newIndex = Math.max(globalZoomStepIndex - 1, 2)
-    setGlobalZoomStepIndex(newIndex)
-    toast.success(`Zoom: ${Math.round(zoomSteps[newIndex] * 100)}%`)
-  }
-
-  const resetGlobalZoom = () => {
-    setGlobalZoomStepIndex(2)
-    toast.success('Zoom reset to 100%')
-  }
-
   const openSiteInNewTab = () => {
     if (currentSite) {
       window.open(currentSite, '_blank', 'noopener,noreferrer')
@@ -143,44 +125,9 @@ export default function ViewportsSection ({
   }
 
   return (
-    <div className='w-full pb-60'>
-      {/* Zoom Controls - Positioned Bottom Right */}
-      {views.length > 0 && (
-        <div className='fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-40 pointer-events-none'>
-          <div className='flex items-center gap-1 px-3 py-2 bg-background/95 backdrop-blur-sm border border-border/60 rounded-lg shadow-lg pointer-events-auto'>
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={globalZoomOut}
-              disabled={globalZoomStepIndex === 2}
-              title='Zoom out (Min: 100%)'
-              className='h-6 w-6 p-0 rounded-full hover:bg-accent disabled:opacity-30'
-            >
-              <ZoomOut className='h-3 w-3' />
-            </Button>
-            <span
-              className='text-sm font-medium min-w-[2.5rem] text-center tabular-nums cursor-pointer hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-accent'
-              onClick={resetGlobalZoom}
-              title='Click to reset zoom to 100%'
-            >
-              {Math.round(globalZoom * 100)}%
-            </span>
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={globalZoomIn}
-              disabled={globalZoomStepIndex === zoomSteps.length - 1}
-              title='Zoom in (Max: 200%)'
-              className='h-6 w-6 p-0 rounded-full hover:bg-accent disabled:opacity-30'
-            >
-              <ZoomIn className='h-3 w-3' />
-            </Button>
-          </div>
-        </div>
-      )}
-
+    <div className='w-full pb-8'>
       {/* Content - Always visible */}
-      <div className='w-full py-6 px-6 relative'>
+      <div className='w-full py-4 relative'>
         <div className='w-full'>
           {views.length === 0 ? (
             <div className='flex items-center justify-center h-48'>
@@ -227,7 +174,7 @@ export default function ViewportsSection ({
           ) : (
             <div className='w-full'>
               {/* All Viewports - Display simultaneously */}
-              <div className='flex flex-wrap gap-4 justify-center items-start'>
+              <div className='flex flex-wrap gap-6 justify-center items-start'>
                 {views.map((view, index) => (
                   <WebsiteView
                     key={view.id}

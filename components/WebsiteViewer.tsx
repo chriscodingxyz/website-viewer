@@ -54,36 +54,13 @@ export default function WebsiteViewer () {
 
   return (
     <div>
-      <style jsx global>{`
-        html {
-          scroll-behavior: smooth;
-        }
-        
-        @keyframes highlightInput {
-          0% {
-            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7), 0 8px 25px rgba(0,0,0,0.1);
-            transform: scale(1);
-          }
-          50% {
-            box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2), 0 12px 35px rgba(59, 130, 246, 0.3);
-            transform: scale(1.02);
-          }
-          100% {
-            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0), 0 8px 25px rgba(0,0,0,0.1);
-            transform: scale(1);
-          }
-        }
-        .highlight-input {
-          animation: highlightInput 1s ease-out;
-        }
-      `}</style>
-
       {/* Main Content Area */}
       <div className='min-h-screen'>
         {!currentSite && (
           <div className='flex items-center justify-center min-h-[calc(100vh-6rem)]'>
-            <div className='text-center'>
-              <div className='max-w-md mx-auto p-6 bg-card/70 backdrop-blur-sm rounded-2xl border shadow-lg'>
+            <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
+              <div className='text-center'>
+                <div className='max-w-md mx-auto p-6 bg-card/70 backdrop-blur-sm rounded-2xl border shadow-lg'>
                 <div className='mb-4'>
                   <Globe className='h-12 w-12 mx-auto text-primary mb-3' />
                   <h1 className='text-xl font-semibold text-foreground mb-2'>
@@ -99,6 +76,7 @@ export default function WebsiteViewer () {
                     ⌘K
                   </kbd>{' '}
                   to get started
+                </div>
                 </div>
               </div>
             </div>

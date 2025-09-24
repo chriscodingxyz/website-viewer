@@ -101,9 +101,9 @@ export function Header () {
 
   return (
     <header className='bg-background border-b border-border'>
-      <div className='py-4 px-3'>
-        <div className='mx-auto'>
-          <div className='flex gap-1 flex-row items-center'>
+      <div className='py-2 px-4'>
+        <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
+          <div className='flex gap-2 flex-row items-center'>
             {/* Home Button - Only show when site is loaded */}
             {currentSite && (
               <Button
@@ -113,10 +113,9 @@ export function Header () {
                   clearSite()
                   router.push('/')
                 }}
-                className=' h-12 w-12 p-0 border-2 border-border/50 hover:border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-card/90 hover:bg-card rounded-2xl'
+                className='h-9 w-9 p-0 border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md'
                 title='Return to homepage'
               >
-                {/* <Home className='w-5 h-5' /> */}
                 🧿
               </Button>
             )}
@@ -128,7 +127,7 @@ export function Header () {
                     role='combobox'
                     aria-expanded={open}
                     className={cn(
-                      'w-full justify-between text-[16px] h-12 px-4 py-2 border-2 border-border/50 hover:border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] bg-card/90 hover:bg-card rounded-2xl',
+                      'w-full justify-between text-[16px] h-9 px-3 border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md',
                       isInputHighlighted && 'highlight-input'
                     )}
                   >
@@ -243,20 +242,66 @@ export function Header () {
             </div>
 
 
-            <div className='flex gap-2'>
+            <div className='flex gap-1'>
+              {/* Zoom Controls - Show when site is loaded */}
+              {currentSite && (
+                <>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => {
+                      const newIndex = Math.max(globalZoomStepIndex - 1, 2)
+                      setGlobalZoomStepIndex(newIndex)
+                      toast.success(`Zoom: ${Math.round(zoomSteps[newIndex] * 100)}%`)
+                    }}
+                    disabled={globalZoomStepIndex === 2}
+                    className='h-9 w-9 p-0 border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md disabled:opacity-30'
+                    title='Zoom out (Min: 100%)'
+                  >
+                    <ZoomOut className='w-3 h-3' />
+                  </Button>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => {
+                      setGlobalZoomStepIndex(2)
+                      toast.success('Zoom reset to 100%')
+                    }}
+                    className='h-9 px-2 border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md text-xs font-medium tabular-nums'
+                    title='Click to reset zoom to 100%'
+                  >
+                    {Math.round(globalZoom * 100)}%
+                  </Button>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => {
+                      const newIndex = Math.min(globalZoomStepIndex + 1, zoomSteps.length - 1)
+                      setGlobalZoomStepIndex(newIndex)
+                      toast.success(`Zoom: ${Math.round(zoomSteps[newIndex] * 100)}%`)
+                    }}
+                    disabled={globalZoomStepIndex === zoomSteps.length - 1}
+                    className='h-9 w-9 p-0 border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md disabled:opacity-30'
+                    title='Zoom in (Max: 200%)'
+                  >
+                    <ZoomIn className='w-3 h-3' />
+                  </Button>
+                </>
+              )}
+
               <Button
                 size='sm'
                 disabled={!formatUrl(url)}
                 onClick={() => loadSite()}
                 className={cn(
-                  'h-12 px-4 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-40 disabled:transform-none rounded-2xl',
+                  'h-9 px-3 transition-all duration-200 disabled:opacity-40 rounded-md',
                   formatUrl(url)
                     ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
                     : 'bg-muted hover:bg-muted/80 text-muted-foreground'
                 )}
                 title='Load website in all viewports'
               >
-                <Globe className='w-5 h-5' />
+                <Globe className='w-3 h-3' />
               </Button>
             </div>
           </div>
