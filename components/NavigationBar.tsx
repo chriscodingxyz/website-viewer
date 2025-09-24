@@ -93,11 +93,13 @@ export default function NavigationBar() {
     setSelectedTab(tabId)
 
     // Update URL to match the section
-    const searchParams = new URLSearchParams(window.location.search)
-    const siteParam = searchParams.get('site')
-    const newPath = `/${tabId}${siteParam ? `?site=${siteParam}` : ''}`
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search)
+      const siteParam = searchParams.get('site')
+      const newPath = `/${tabId}${siteParam ? `?site=${siteParam}` : ''}`
 
-    router.push(newPath)
+      router.push(newPath)
+    }
 
     // If clicking on SEO, Social, or Technical tabs, trigger metadata extraction
     if ((tabId === 'seo' || tabId === 'social' || tabId === 'technical') && currentSite) {

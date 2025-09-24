@@ -53,12 +53,17 @@ const sectionConfig = {
 export default function ShareableLink({ currentUrl, section, domainName }: ShareableLinkProps) {
   const [copied, setCopied] = useState(false)
   const [open, setOpen] = useState(false)
+  const [shareableUrl, setShareableUrl] = useState('')
 
   const config = sectionConfig[section]
   const IconComponent = config.icon
 
-  // Generate the shareable URL
-  const shareableUrl = `${window.location.origin}/${section}?site=${encodeURIComponent(domainName)}`
+  // Generate the shareable URL on the client side
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setShareableUrl(`${window.location.origin}/${section}?site=${encodeURIComponent(domainName)}`)
+    }
+  }, [section, domainName])
 
   const handleCopy = async () => {
     try {

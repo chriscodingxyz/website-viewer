@@ -194,6 +194,8 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
   // Load site from URL params on mount
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const urlParams = new URLSearchParams(window.location.search)
     const siteParam = urlParams.get('site')
 
@@ -232,7 +234,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
           }))
         )
         // Only auto-switch to social tab if currently on viewports tab AND we haven't redirected yet
-        if (selectedTab === 'viewports' && !hasRedirected.current) {
+        if (selectedTab === 'viewports' && !hasRedirected.current && typeof window !== 'undefined') {
           hasRedirected.current = true
           setSelectedTab('social')
           // Update URL to match the new tab
@@ -244,10 +246,11 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
         }
       } else {
         // No blocking headers or local/staging site, allow iframes to load
+        // Only set shouldLoad to true if it's currently false to prevent unnecessary rerenders
         setViews(prevViews =>
           prevViews.map(view => ({
             ...view,
-            shouldLoad: true
+            shouldLoad: view.shouldLoad !== false ? view.shouldLoad : true
           }))
         )
       }
@@ -256,9 +259,11 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
   // Update URL parameters when URL input changes
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const timeoutId = setTimeout(() => {
       const urlParams = new URLSearchParams(window.location.search)
-      
+
       if (url && url.trim()) {
         const formattedUrl = formatUrl(url, username, password)
         if (formattedUrl) {
@@ -270,7 +275,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
       } else {
         urlParams.delete('site')
       }
-      
+
       const paramString = urlParams.toString()
       const finalUrl = paramString ? `${window.location.pathname}?${paramString}` : window.location.pathname
       window.history.pushState({}, '', finalUrl)
@@ -342,6 +347,8 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   }
 
   const updateUrlParams = () => {
+    if (typeof window === 'undefined') return
+
     const urlParams = new URLSearchParams(window.location.search)
 
     // Update site param based on current URL input
@@ -417,7 +424,9 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     clearMetadata()
     clearCredentials()
     // Clear URL params
-    window.history.pushState({}, '', window.location.pathname)
+    if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', window.location.pathname)
+    }
     toast.success('Returned to homepage')
   }
 
