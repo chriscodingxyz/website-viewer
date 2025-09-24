@@ -166,7 +166,7 @@ export default function ViewportsSection ({
       )}
 
       {/* Content - Always visible */}
-      <div className='w-full py-4 relative'>
+      <div className='w-full py-4 px-4 relative'>
         <div className='w-full'>
           {views.length === 0 ? (
             <div className='flex items-center justify-center h-48'>
