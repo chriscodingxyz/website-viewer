@@ -37,8 +37,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import ShareableLink from '@/components/ShareableLink'
-import ExportButton from '@/components/export/ExportButton'
+// import ShareableLink from '@/components/ShareableLink'
+// import ExportButton from '@/components/export/ExportButton'
 
 
 function Header () {
@@ -330,7 +330,7 @@ function Header () {
             )}
 
             {/* Desktop Export and Share buttons - Only show on desktop when metadata is loaded */}
-            {currentSite && metadata && (
+            {/* {currentSite && metadata && (
               <div className="hidden md:flex items-center gap-1 sm:gap-2">
                 <ExportButton
                   metadata={metadata}
@@ -344,7 +344,7 @@ function Header () {
                   domainName={getDomainName(currentSite)}
                 />
               </div>
-            )}
+            )} */}
 
             {/* Mobile Hamburger Menu - Show when site is loaded on small screens */}
             {currentSite && !isInitialLoad && (
@@ -388,7 +388,7 @@ function Header () {
                 </div>
 
                 {/* Export and Share Actions - Only show when metadata is available */}
-                {metadata && (
+                {/* {metadata && (
                   <div className='border-t border-border pt-3'>
                     <h3 className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1'>Actions</h3>
                     <div className='flex gap-2'>
@@ -411,7 +411,7 @@ function Header () {
                       </div>
                     </div>
                   </div>
-                )}
+                )} */}
               </div>
             </div>
           )}
