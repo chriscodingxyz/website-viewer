@@ -41,7 +41,7 @@ import ShareableLink from '@/components/ShareableLink'
 import ExportButton from '@/components/export/ExportButton'
 
 
-export function Header () {
+function Header () {
   const {
     url,
     handleUrlChange,
@@ -420,3 +420,5 @@ export function Header () {
     </header>
   )
 }
+
+export default Header

@@ -4,8 +4,7 @@ import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
 
 import { Inter } from 'next/font/google'
-import Footer from '@/components/Footer'
-import { Header } from '@/components/Header'
+import Header from '@/components/Header'
 import AuthDialogWrapper from '@/components/AuthDialogWrapper'
 import { Toaster } from 'sonner'
 import { FavoritesProvider } from '@/contexts/FavoritesContext'
@@ -143,7 +142,6 @@ export default function RootLayout ({
               <WebsiteViewerProvider>
                 <Header />
                 <main className='flex-1'>{children}</main>
-                <Footer />
                 <AuthDialogWrapper />
               </WebsiteViewerProvider>
             </HistoryProvider>
