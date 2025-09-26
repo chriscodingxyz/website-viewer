@@ -137,57 +137,99 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --foreground: 224 14% 16%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 224 14% 16%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
+    --popover-foreground: 224 14% 16%;
+    --primary: 224 24% 12%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
+    --secondary: 224 6% 96%;
+    --secondary-foreground: 224 12% 20%;
+    --muted: 224 6% 97%;
+    --muted-foreground: 224 8% 44%;
+    --accent: 224 6% 96%;
+    --accent-foreground: 224 12% 20%;
+    --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
+    --border: 224 6% 92%;
+    --input: 224 6% 92%;
+    --ring: 224 24% 12%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --radius: 0.25rem;
+
+    /* Professional status colors - subtle and minimal */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --success-muted: 142 33% 95%;
+    --warning: 32 95% 44%;
+    --warning-foreground: 0 0% 98%;
+    --warning-muted: 32 78% 95%;
+    --error: 0 65% 55%;
+    --error-foreground: 0 0% 98%;
+    --error-muted: 0 56% 95%;
+    --info: 210 79% 46%;
+    --info-foreground: 0 0% 98%;
+    --info-muted: 210 65% 95%;
+
+    /* Professional shadow system */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
   .dark {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
+    --background: 224 14% 4%;
+    --foreground: 0 0% 98%;
+    --card: 224 14% 6%;
+    --card-foreground: 0 0% 98%;
+    --popover: 224 14% 6%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 224 24% 12%;
+    --secondary: 224 10% 10%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 224 10% 10%;
+    --muted-foreground: 224 8% 60%;
+    --accent: 224 10% 10%;
+    --accent-foreground: 0 0% 90%;
+    --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
+    --border: 224 10% 14%;
+    --input: 224 10% 14%;
+    --ring: 0 0% 98%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --radius: 0.25rem;
+
+    /* Professional status colors - dark mode */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --success-muted: 142 33% 8%;
+    --warning: 32 95% 44%;
+    --warning-foreground: 0 0% 98%;
+    --warning-muted: 32 78% 8%;
+    --error: 0 65% 55%;
+    --error-foreground: 0 0% 98%;
+    --error-muted: 0 56% 8%;
+    --info: 210 79% 46%;
+    --info-foreground: 0 0% 98%;
+    --info-muted: 210 65% 8%;
+
+    /* Professional shadow system - dark mode */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
   }
 }
 
@@ -292,28 +334,154 @@
   @apply text-muted-foreground mt-2;
 }
 
-.status-card {
-  @apply border-l-4 p-4 space-y-2;
+/* Modern professional card system */
+.pro-card {
+  @apply bg-card border border-border rounded-sm p-4 space-y-3;
 }
 
-.status-card-good {
-  @apply status-card border-l-emerald-500 bg-emerald-50;
+.pro-card-hover {
+  @apply pro-card transition-all duration-200 hover:border-muted-foreground/20;
 }
 
-.status-card-warning {
-  @apply status-card border-l-amber-500 bg-amber-50;
+/* Subtle status indicators */
+.status-indicator {
+  @apply flex items-start gap-3 p-4 bg-card border border-border rounded-sm;
 }
 
-.status-card-error {
-  @apply status-card border-l-red-500 bg-red-50;
+.status-indicator-success {
+  @apply status-indicator;
 }
 
-.status-card-info {
-  @apply status-card border-l-blue-500 bg-blue-50;
+.status-indicator-warning {
+  @apply status-indicator;
 }
 
-.status-card-neutral {
-  @apply status-card border-l-gray-300 bg-gray-50;
+.status-indicator-error {
+  @apply status-indicator;
+}
+
+.status-indicator-info {
+  @apply status-indicator;
+}
+
+.status-dot {
+  @apply w-2 h-2 rounded-full flex-shrink-0 mt-1;
+}
+
+.status-dot-success {
+  @apply status-dot;
+  background-color: hsl(var(--success));
+}
+
+.status-dot-warning {
+  @apply status-dot;
+  background-color: hsl(var(--warning));
+}
+
+.status-dot-error {
+  @apply status-dot;
+  background-color: hsl(var(--error));
+}
+
+.status-dot-info {
+  @apply status-dot;
+  background-color: hsl(var(--info));
+}
+
+/* Professional badge system */
+.pro-badge {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border;
+}
+
+.pro-badge-success {
+  @apply pro-badge text-green-700 bg-green-50 border-green-200;
+  background-color: hsl(var(--success-muted));
+  color: hsl(var(--success));
+}
+
+.pro-badge-warning {
+  @apply pro-badge text-amber-700 bg-amber-50 border-amber-200;
+  background-color: hsl(var(--warning-muted));
+  color: hsl(var(--warning));
+}
+
+.pro-badge-error {
+  @apply pro-badge text-red-700 bg-red-50 border-red-200;
+  background-color: hsl(var(--error-muted));
+  color: hsl(var(--error));
+}
+
+.pro-badge-info {
+  @apply pro-badge text-blue-700 bg-blue-50 border-blue-200;
+  background-color: hsl(var(--info-muted));
+  color: hsl(var(--info));
+}
+
+/* Professional section styling */
+.pro-section {
+  @apply space-y-6;
+}
+
+.pro-section-header {
+  @apply pb-4 border-b border-border;
+}
+
+.pro-section-title {
+  @apply text-xl font-semibold text-foreground flex items-center gap-3;
+}
+
+.pro-section-subtitle {
+  @apply text-sm text-muted-foreground mt-1;
+}
+
+/* Professional shadow utilities */
+.shadow-pro-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.shadow-pro {
+  box-shadow: var(--shadow);
+}
+
+.shadow-pro-md {
+  box-shadow: var(--shadow-md);
+}
+
+.shadow-pro-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+.shadow-pro-xl {
+  box-shadow: var(--shadow-xl);
+}
+
+/* Professional progress bars */
+.pro-progress-bar {
+  @apply w-full bg-muted h-2 rounded-full overflow-hidden;
+}
+
+.pro-progress-fill {
+  @apply h-full transition-all duration-300 rounded-full;
+}
+
+.pro-progress-fill-success {
+  @apply pro-progress-fill;
+  background: linear-gradient(90deg, hsl(var(--success)), hsl(var(--success) / 0.8));
+}
+
+.pro-progress-fill-warning {
+  @apply pro-progress-fill;
+  background: linear-gradient(90deg, hsl(var(--warning)), hsl(var(--warning) / 0.8));
+}
+
+.pro-progress-fill-error {
+  @apply pro-progress-fill;
+  background: linear-gradient(90deg, hsl(var(--error)), hsl(var(--error) / 0.8));
+}
+
+.pro-progress-fill-info {
+  @apply pro-progress-fill;
+  background: linear-gradient(90deg, hsl(var(--info)), hsl(var(--info) / 0.8));
 }
 
 /* Enhanced visual hierarchy */

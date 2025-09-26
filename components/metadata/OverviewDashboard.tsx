@@ -64,37 +64,58 @@ export default function OverviewDashboard({ metadata }: OverviewDashboardProps) 
   const socialScore = getSocialScore()
   const criticalIssues = getCriticalIssues()
 
-  const MetricCard = ({ icon: Icon, title, value, subtitle, color, bgColor }: {
+  const MetricCard = ({ icon: Icon, title, value, subtitle, status }: {
     icon: React.ElementType
     title: string
     value: string | number
     subtitle?: string
-    color: string
-    bgColor: string
-  }) => (
-    <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center gap-3">
-      <div className={`p-2 rounded-lg ${bgColor === 'bg-green-100' ? 'bg-green-100 dark:bg-green-900/30' : bgColor === 'bg-yellow-100' ? 'bg-yellow-100 dark:bg-yellow-900/30' : bgColor === 'bg-red-100' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-gray-100 dark:bg-gray-700'}`}>
-        <Icon className={`h-5 w-5 ${color}`} />
-      </div>
-      <div className="flex-1">
-        <div className="flex items-center gap-2">
-          <span className={`text-lg font-bold ${color}`}>{value}</span>
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</span>
+    status: 'good' | 'warning' | 'error' | 'unknown'
+  }) => {
+    const getStatusConfig = () => {
+      switch (status) {
+        case 'good':
+          return { dotClass: 'status-dot-success', badgeClass: 'pro-badge-success' }
+        case 'warning':
+          return { dotClass: 'status-dot-warning', badgeClass: 'pro-badge-warning' }
+        case 'error':
+          return { dotClass: 'status-dot-error', badgeClass: 'pro-badge-error' }
+        default:
+          return { dotClass: 'status-dot-info', badgeClass: 'pro-badge-info' }
+      }
+    }
+
+    const config = getStatusConfig()
+
+    return (
+      <div className="pro-card-hover">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-muted rounded-sm flex items-center justify-center">
+              <Icon className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div>
+              <h4 className="font-medium text-foreground">{title}</h4>
+            </div>
+          </div>
+          <div className={config.dotClass}></div>
         </div>
-        {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{subtitle}</p>}
+        <div className="flex items-center justify-between">
+          <span className="text-xl font-bold text-foreground">{value}</span>
+          {subtitle && <span className="text-xs text-muted-foreground">{subtitle}</span>}
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
-    <div className="mb-8">
+    <div className="pro-section">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center text-white">
-          <TrendingUp className="h-5 w-5" />
+        <div className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center">
+          <TrendingUp className="h-5 w-5 text-muted-foreground" />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">Website Health Overview</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Quick assessment of key performance indicators</p>
+          <h3 className="text-lg font-semibold text-foreground">Website Health Overview</h3>
+          <p className="text-sm text-muted-foreground">Quick assessment of key performance indicators</p>
         </div>
       </div>
 
@@ -105,51 +126,47 @@ export default function OverviewDashboard({ metadata }: OverviewDashboardProps) 
           title="SEO Score"
           value={`${seoScore.percentage}%`}
           subtitle={`${seoScore.score}/${seoScore.maxScore} checks`}
-          color={seoScore.percentage >= 80 ? 'text-green-700' : seoScore.percentage >= 50 ? 'text-yellow-700' : 'text-red-700'}
-          bgColor={seoScore.percentage >= 80 ? 'bg-green-100' : seoScore.percentage >= 50 ? 'bg-yellow-100' : 'bg-red-100'}
+          status={seoScore.percentage >= 80 ? 'good' : seoScore.percentage >= 50 ? 'warning' : 'error'}
         />
-        
+
         <MetricCard
           icon={Zap}
           title="Performance"
           value={performanceScore.grade}
           subtitle={performance?.loadTime ? formatDuration(performance.loadTime) : 'Not measured'}
-          color={performanceScore.color}
-          bgColor={performanceScore.bgColor}
+          status={performanceScore.grade === 'Excellent' ? 'good' : performanceScore.grade === 'Good' ? 'warning' : performanceScore.grade === 'Poor' ? 'error' : 'unknown'}
         />
-        
+
         <MetricCard
           icon={Share2}
           title="Social Ready"
           value={`${socialScore.percentage}%`}
           subtitle={`${socialScore.score}/${socialScore.maxScore} platforms`}
-          color={socialScore.percentage >= 75 ? 'text-green-700' : socialScore.percentage >= 50 ? 'text-yellow-700' : 'text-red-700'}
-          bgColor={socialScore.percentage >= 75 ? 'bg-green-100' : socialScore.percentage >= 50 ? 'bg-yellow-100' : 'bg-red-100'}
+          status={socialScore.percentage >= 75 ? 'good' : socialScore.percentage >= 50 ? 'warning' : 'error'}
         />
-        
+
         <MetricCard
           icon={criticalIssues.length === 0 ? CheckCircle : criticalIssues.length <= 2 ? AlertTriangle : XCircle}
           title="Issues"
           value={criticalIssues.length}
           subtitle={criticalIssues.length === 0 ? 'All good!' : 'Need attention'}
-          color={criticalIssues.length === 0 ? 'text-green-700' : criticalIssues.length <= 2 ? 'text-yellow-700' : 'text-red-700'}
-          bgColor={criticalIssues.length === 0 ? 'bg-green-100' : criticalIssues.length <= 2 ? 'bg-yellow-100' : 'bg-red-100'}
+          status={criticalIssues.length === 0 ? 'good' : criticalIssues.length <= 2 ? 'warning' : 'error'}
         />
       </div>
 
       {/* Critical Issues */}
       {criticalIssues.length > 0 && (
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <span className="font-semibold text-gray-800 dark:text-gray-200 text-sm">Priority Issues</span>
+        <div className="pt-4 border-t border-border">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="status-dot-warning"></div>
+            <span className="font-medium text-foreground text-sm">Priority Issues</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {criticalIssues.map((issue, index) => (
               <Badge
                 key={index}
                 variant="outline"
-                className="bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/50"
+                className="pro-badge-warning"
               >
                 {issue}
               </Badge>

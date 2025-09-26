@@ -48,98 +48,103 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
 
   const seoScore = getSEOScore()
 
-  // Status indicator component for cleaner code
+  // Modern status indicator component
   const StatusIndicator = ({ status, label, value, details }: {
     status: 'good' | 'warning' | 'error'
     label: string
     value?: string
     details?: string
   }) => {
-    const styles = {
+    const statusConfig = {
       good: {
-        icon: <CheckCircle className="h-5 w-5 text-emerald-600" />,
-        bg: "bg-emerald-50 dark:bg-emerald-950/20",
-        border: "border-l-emerald-500",
-        text: "text-emerald-800 dark:text-emerald-200"
+        dotClass: "status-dot-success",
+        badgeClass: "pro-badge-success"
       },
       warning: {
-        icon: <AlertTriangle className="h-5 w-5 text-amber-600" />,
-        bg: "bg-amber-50 dark:bg-amber-950/20",
-        border: "border-l-amber-500",
-        text: "text-amber-800 dark:text-amber-200"
+        dotClass: "status-dot-warning",
+        badgeClass: "pro-badge-warning"
       },
       error: {
-        icon: <XCircle className="h-5 w-5 text-red-600" />,
-        bg: "bg-red-50 dark:bg-red-950/20",
-        border: "border-l-red-500",
-        text: "text-red-800 dark:text-red-200"
+        dotClass: "status-dot-error",
+        badgeClass: "pro-badge-error"
       }
     }
 
-    const style = styles[status]
+    const config = statusConfig[status]
 
     return (
-      <div className={`border-l-4 ${style.border} ${style.bg} p-4 space-y-2`}>
-        <div className="flex items-center gap-3">
-          {style.icon}
-          <div className="flex-1">
-            <h4 className={`font-semibold ${style.text}`}>{label}</h4>
-            {value && (
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{value}</p>
-            )}
+      <div className="status-indicator">
+        <div className={config.dotClass}></div>
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium text-foreground">{label}</h4>
+            <span className={config.badgeClass}>
+              {status === 'good' ? '✓' : status === 'warning' ? '⚠' : '✕'}
+            </span>
           </div>
+          {value && (
+            <p className="text-sm text-foreground line-clamp-2 font-medium">{value}</p>
+          )}
+          {details && (
+            <p className="text-xs text-muted-foreground">{details}</p>
+          )}
         </div>
-        {details && (
-          <p className="text-xs text-muted-foreground ml-8">{details}</p>
-        )}
       </div>
     )
   }
 
-  // SEO Score component
-  const SEOScoreDisplay = () => (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-l-4 border-l-blue-500 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-            <TrendingUp className="h-6 w-6 text-blue-600" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-foreground">SEO Health Score</h3>
-            <p className="text-sm text-muted-foreground">Overall optimization status</p>
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="text-3xl font-bold text-blue-600">{seoScore.percentage}%</div>
-          <div className="text-sm text-muted-foreground">{seoScore.score}/{seoScore.maxScore} checks passed</div>
-        </div>
-      </div>
+  // Professional SEO Score component
+  const SEOScoreDisplay = () => {
+    const getScoreColor = () => {
+      if (seoScore.percentage >= 80) return 'pro-progress-fill-success'
+      if (seoScore.percentage >= 60) return 'pro-progress-fill-warning'
+      return 'pro-progress-fill-error'
+    }
 
-      <div className="w-full bg-gray-200 dark:bg-gray-700 h-2">
-        <div
-          className="h-2 bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-300"
-          style={{ width: `${seoScore.percentage}%` }}
-        />
+    return (
+      <div className="pro-card">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">SEO Health Score</h3>
+              <p className="text-sm text-muted-foreground">Overall optimization status</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-foreground">{seoScore.percentage}%</div>
+            <div className="text-xs text-muted-foreground">{seoScore.score}/{seoScore.maxScore} checks passed</div>
+          </div>
+        </div>
+
+        <div className="pro-progress-bar">
+          <div
+            className={getScoreColor()}
+            style={{ width: `${seoScore.percentage}%` }}
+          />
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
-    <div className="w-full space-y-8">
+    <div className="pro-section">
       {/* SEO Score Header */}
       <SEOScoreDisplay />
 
       {/* Core Meta Tags Section */}
-      <div className="space-y-6">
-        <div className="border-b border-border pb-4">
-          <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <Search className="h-7 w-7 text-blue-600" />
+      <div className="pro-section">
+        <div className="pro-section-header">
+          <h2 className="pro-section-title">
+            <Search className="h-5 w-5 text-muted-foreground" />
             Essential Meta Tags
           </h2>
-          <p className="text-muted-foreground mt-2">Core elements that affect search engine visibility</p>
+          <p className="pro-section-subtitle">Core elements that affect search engine visibility</p>
         </div>
 
-        <div className="grid gap-4">
+        <div className="space-y-4">
           <StatusIndicator
             status={seo.title && seo.title.length >= 30 && seo.title.length <= 60 ? 'good' : seo.title ? 'warning' : 'error'}
             label="Page Title"
@@ -164,13 +169,13 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
       </div>
 
       {/* Technical Configuration */}
-      <div className="space-y-6">
-        <div className="border-b border-border pb-4">
-          <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <Smartphone className="h-7 w-7 text-green-600" />
+      <div className="pro-section">
+        <div className="pro-section-header">
+          <h2 className="pro-section-title">
+            <Smartphone className="h-5 w-5 text-muted-foreground" />
             Technical Configuration
           </h2>
-          <p className="text-muted-foreground mt-2">Technical settings for optimal user experience</p>
+          <p className="pro-section-subtitle">Technical settings for optimal user experience</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
@@ -205,25 +210,21 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
       </div>
 
       {/* Visual Identity */}
-      <div className="space-y-6">
-        <div className="border-b border-border pb-4">
-          <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <Target className="h-7 w-7 text-purple-600" />
+      <div className="pro-section">
+        <div className="pro-section-header">
+          <h2 className="pro-section-title">
+            <Target className="h-5 w-5 text-muted-foreground" />
             Visual Identity
           </h2>
-          <p className="text-muted-foreground mt-2">Icons and visual elements for brand recognition</p>
+          <p className="pro-section-subtitle">Icons and visual elements for brand recognition</p>
         </div>
 
-        <div className="border-l-4 border-l-purple-500 bg-purple-50 dark:bg-purple-950/20 p-6">
+        <div className="pro-card">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              {icons && icons.length > 0 ? (
-                <CheckCircle className="h-6 w-6 text-emerald-600" />
-              ) : (
-                <XCircle className="h-6 w-6 text-red-600" />
-              )}
+              <div className={icons && icons.length > 0 ? "status-dot-success" : "status-dot-error"}></div>
               <div>
-                <h3 className="text-lg font-semibold text-foreground">Favicons & Icons</h3>
+                <h3 className="font-medium text-foreground">Favicons & Icons</h3>
                 <p className="text-sm text-muted-foreground">
                   {icons && icons.length > 0
                     ? `${icons.length} icon${icons.length === 1 ? '' : 's'} detected`
@@ -232,27 +233,30 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
                 </p>
               </div>
             </div>
+            <span className={icons && icons.length > 0 ? "pro-badge-success" : "pro-badge-error"}>
+              {icons && icons.length > 0 ? '✓' : '✕'}
+            </span>
           </div>
 
           {icons && icons.length > 0 ? (
             <div className="space-y-3">
               <div className="flex items-center gap-3 flex-wrap">
                 {icons.slice(0, 4).map((icon, index) => (
-                  <div key={index} className="flex items-center gap-2 bg-white/70 dark:bg-black/30 rounded-lg px-3 py-2 border">
+                  <div key={index} className="flex items-center gap-2 bg-muted/50 rounded-sm px-3 py-2 border border-border">
                     {icon.href && (
                       <Image
                         src={icon.href}
                         alt={`${icon.sizes || 'favicon'}`}
                         width={20}
                         height={20}
-                        className="w-5 h-5 rounded"
+                        className="w-5 h-5"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none'
                         }}
                         unoptimized
                       />
                     )}
-                    <span className="text-sm font-medium">{icon.sizes || '16x16'}</span>
+                    <span className="text-sm font-medium text-foreground">{icon.sizes || '16x16'}</span>
                   </div>
                 ))}
                 {icons.length > 4 && (
@@ -261,13 +265,13 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
                   </div>
                 )}
               </div>
-              <p className="text-sm text-emerald-700 dark:text-emerald-300">
-                Great! Icons help with brand recognition across browsers and platforms.
+              <p className="text-sm text-muted-foreground">
+                Icons help with brand recognition across browsers and platforms.
               </p>
             </div>
           ) : (
-            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/30 rounded-lg p-4">
-              <p className="text-sm text-red-700 dark:text-red-300">
+            <div className="border border-border rounded-sm p-4 bg-muted/30">
+              <p className="text-sm text-muted-foreground">
                 No favicons detected. Add favicon.ico and various icon sizes to improve brand recognition in browser tabs, bookmarks, and search results.
               </p>
             </div>
@@ -276,26 +280,25 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
       </div>
 
       {/* Analytics & Tracking */}
-      <div className="space-y-6">
-        <div className="border-b border-border pb-4">
-          <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <BarChart3 className="h-7 w-7 text-orange-600" />
+      <div className="pro-section">
+        <div className="pro-section-header">
+          <h2 className="pro-section-title">
+            <BarChart3 className="h-5 w-5 text-muted-foreground" />
             Analytics & Tracking
           </h2>
-          <p className="text-muted-foreground mt-2">Data collection tools for performance monitoring</p>
+          <p className="pro-section-subtitle">Data collection tools for performance monitoring</p>
         </div>
 
         {analytics ? (
-          <div className="border-l-4 border-l-orange-500 bg-orange-50 dark:bg-orange-950/20 p-6">
+          <div className="pro-card">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                {analytics.googleAnalytics.present || analytics.googleTagManager.present || analytics.otherAnalytics.some(a => a.detected) ? (
-                  <CheckCircle className="h-6 w-6 text-emerald-600" />
-                ) : (
-                  <XCircle className="h-6 w-6 text-red-600" />
-                )}
+                {(() => {
+                  const hasAnalytics = analytics.googleAnalytics.present || analytics.googleTagManager.present || analytics.otherAnalytics.some(a => a.detected)
+                  return <div className={hasAnalytics ? "status-dot-success" : "status-dot-error"}></div>
+                })()}
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Analytics Tools</h3>
+                  <h3 className="font-medium text-foreground">Analytics Tools</h3>
                   <p className="text-sm text-muted-foreground">
                     {(() => {
                       const totalTools = [
@@ -308,15 +311,21 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
                   </p>
                 </div>
               </div>
+              {(() => {
+                const hasAnalytics = analytics.googleAnalytics.present || analytics.googleTagManager.present || analytics.otherAnalytics.some(a => a.detected)
+                return <span className={hasAnalytics ? "pro-badge-success" : "pro-badge-error"}>
+                  {hasAnalytics ? '✓' : '✕'}
+                </span>
+              })()}
             </div>
 
             <div className="space-y-3">
               {analytics.googleAnalytics.present && (
-                <div className="flex items-center gap-3 bg-white/70 dark:bg-black/30 rounded-lg px-4 py-3 border">
-                  <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                  <span className="font-medium">Google Analytics</span>
+                <div className="flex items-center gap-3 bg-muted/50 rounded-sm px-4 py-3 border border-border">
+                  <div className="status-dot-success"></div>
+                  <span className="font-medium text-foreground">Google Analytics</span>
                   {analytics.googleAnalytics.ga4 && (
-                    <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                    <Badge variant="outline" className="pro-badge-info">
                       GA4
                     </Badge>
                   )}
@@ -324,22 +333,22 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
               )}
 
               {analytics.googleTagManager.present && (
-                <div className="flex items-center gap-3 bg-white/70 dark:bg-black/30 rounded-lg px-4 py-3 border">
-                  <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                  <span className="font-medium">Google Tag Manager</span>
+                <div className="flex items-center gap-3 bg-muted/50 rounded-sm px-4 py-3 border border-border">
+                  <div className="status-dot-success"></div>
+                  <span className="font-medium text-foreground">Google Tag Manager</span>
                 </div>
               )}
 
               {analytics.otherAnalytics.filter(tool => tool.detected).map((tool, index) => (
-                <div key={index} className="flex items-center gap-3 bg-white/70 dark:bg-black/30 rounded-lg px-4 py-3 border">
-                  <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                  <span className="font-medium">{tool.name}</span>
+                <div key={index} className="flex items-center gap-3 bg-muted/50 rounded-sm px-4 py-3 border border-border">
+                  <div className="status-dot-success"></div>
+                  <span className="font-medium text-foreground">{tool.name}</span>
                 </div>
               ))}
 
               {!analytics.googleAnalytics.present && !analytics.googleTagManager.present && analytics.otherAnalytics.filter(tool => tool.detected).length === 0 && (
-                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/30 rounded-lg p-4">
-                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                <div className="border border-border rounded-sm p-4 bg-muted/30">
+                  <p className="text-sm text-muted-foreground">
                     No analytics detected. Consider adding Google Analytics or similar tools to track SEO performance and user behavior.
                   </p>
                 </div>
@@ -347,7 +356,7 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
             </div>
           </div>
         ) : (
-          <div className="border-l-4 border-l-gray-300 bg-gray-50 dark:bg-gray-950/20 p-6">
+          <div className="pro-card">
             <p className="text-muted-foreground">Analytics data not available</p>
           </div>
         )}
@@ -355,26 +364,27 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
 
       {/* Sitemaps & Discovery */}
       {sitemap && (
-        <div className="space-y-6">
-          <div className="border-b border-border pb-4">
-            <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-              <Globe className="h-7 w-7 text-indigo-600" />
+        <div className="pro-section">
+          <div className="pro-section-header">
+            <h2 className="pro-section-title">
+              <Globe className="h-5 w-5 text-muted-foreground" />
               Search Engine Discovery
             </h2>
-            <p className="text-muted-foreground mt-2">Files that help search engines understand your site</p>
+            <p className="pro-section-subtitle">Files that help search engines understand your site</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* robots.txt */}
             {sitemap.robotsTxt && (
-              <div className="border-l-4 border-l-indigo-500 bg-indigo-50 dark:bg-indigo-950/20 p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  {sitemap.robotsTxt.accessible || sitemap.robotsTxt.hasMetaRobots ? (
-                    <CheckCircle className="h-5 w-5 text-emerald-600" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-red-600" />
-                  )}
-                  <h4 className="font-semibold text-foreground">robots.txt</h4>
+              <div className="pro-card">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={sitemap.robotsTxt.accessible || sitemap.robotsTxt.hasMetaRobots ? "status-dot-success" : "status-dot-error"}></div>
+                    <h4 className="font-medium text-foreground">robots.txt</h4>
+                  </div>
+                  <span className={sitemap.robotsTxt.accessible || sitemap.robotsTxt.hasMetaRobots ? "pro-badge-success" : "pro-badge-error"}>
+                    {sitemap.robotsTxt.accessible || sitemap.robotsTxt.hasMetaRobots ? '✓' : '✕'}
+                  </span>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">
@@ -390,28 +400,25 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
             )}
 
             {/* Sitemaps */}
-            <div className={`border-l-4 p-4 ${
-              sitemap.sitemaps.some(s => s.accessible)
-                ? 'border-l-green-500 bg-green-50 dark:bg-green-950/20'
-                : 'border-l-amber-500 bg-amber-50 dark:bg-amber-950/20'
-            }`}>
-              <div className="flex items-center gap-3 mb-3">
-                {sitemap.sitemaps.some(s => s.accessible) ? (
-                  <CheckCircle className="h-5 w-5 text-emerald-600" />
-                ) : (
-                  <XCircle className="h-5 w-5 text-red-600" />
-                )}
-                <h4 className="font-semibold text-foreground">XML Sitemaps</h4>
+            <div className="pro-card">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className={sitemap.sitemaps.some(s => s.accessible) ? "status-dot-success" : "status-dot-error"}></div>
+                  <h4 className="font-medium text-foreground">XML Sitemaps</h4>
+                </div>
+                <span className={sitemap.sitemaps.some(s => s.accessible) ? "pro-badge-success" : "pro-badge-error"}>
+                  {sitemap.sitemaps.some(s => s.accessible) ? '✓' : '✕'}
+                </span>
               </div>
               <div className="space-y-3">
                 {sitemap.sitemaps.filter(s => s.accessible).slice(0, 2).map((sitemapItem, index) => (
                   <div key={index} className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="h-3 w-3 text-emerald-500 flex-shrink-0" />
+                    <div className="status-dot-success"></div>
                     <a
                       href={sitemapItem.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 truncate flex-1 underline"
+                      className="text-foreground hover:text-primary truncate flex-1 underline decoration-muted-foreground hover:decoration-primary"
                       title={sitemapItem.url}
                     >
                       {sitemapItem.url.replace(/^https?:\/\/[^\/]+/, '')}
@@ -427,7 +434,7 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
                 )}
 
                 {sitemap.sitemaps.filter(s => s.accessible).length === 0 && (
-                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                  <p className="text-sm text-muted-foreground">
                     No accessible sitemaps found - consider adding sitemap.xml for better search engine discovery
                   </p>
                 )}

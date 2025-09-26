@@ -74,95 +74,100 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
 
   const technicalScore = getTechnicalScore()
 
-  // Status indicator component matching SEO section
+  // Modern status indicator component
   const StatusIndicator = ({ status, label, value, details }: {
     status: 'good' | 'warning' | 'error'
     label: string
     value?: string
     details?: string
   }) => {
-    const styles = {
+    const statusConfig = {
       good: {
-        icon: <CheckCircle className="h-5 w-5 text-emerald-600" />,
-        bg: "bg-emerald-50 dark:bg-emerald-950/20",
-        border: "border-l-emerald-500",
-        text: "text-emerald-800 dark:text-emerald-200"
+        dotClass: "status-dot-success",
+        badgeClass: "pro-badge-success"
       },
       warning: {
-        icon: <AlertTriangle className="h-5 w-5 text-amber-600" />,
-        bg: "bg-amber-50 dark:bg-amber-950/20",
-        border: "border-l-amber-500",
-        text: "text-amber-800 dark:text-amber-200"
+        dotClass: "status-dot-warning",
+        badgeClass: "pro-badge-warning"
       },
       error: {
-        icon: <XCircle className="h-5 w-5 text-red-600" />,
-        bg: "bg-red-50 dark:bg-red-950/20",
-        border: "border-l-red-500",
-        text: "text-red-800 dark:text-red-200"
+        dotClass: "status-dot-error",
+        badgeClass: "pro-badge-error"
       }
     }
 
-    const style = styles[status]
+    const config = statusConfig[status]
 
     return (
-      <div className={`border-l-4 ${style.border} ${style.bg} p-4 space-y-2`}>
-        <div className="flex items-center gap-3">
-          {style.icon}
-          <div className="flex-1">
-            <h4 className={`font-semibold ${style.text}`}>{label}</h4>
-            {value && (
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{value}</p>
-            )}
+      <div className="status-indicator">
+        <div className={config.dotClass}></div>
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium text-foreground">{label}</h4>
+            <span className={config.badgeClass}>
+              {status === 'good' ? '✓' : status === 'warning' ? '⚠' : '✕'}
+            </span>
           </div>
+          {value && (
+            <p className="text-sm text-foreground line-clamp-2 font-medium">{value}</p>
+          )}
+          {details && (
+            <p className="text-xs text-muted-foreground">{details}</p>
+          )}
         </div>
-        {details && (
-          <p className="text-xs text-muted-foreground ml-8">{details}</p>
-        )}
       </div>
     )
   }
 
-  // Technical Score component matching SEO section
-  const TechnicalScoreDisplay = () => (
-    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border-l-4 border-l-purple-500 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-            <Settings className="h-6 w-6 text-purple-600" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-foreground">Technical Health Score</h3>
-            <p className="text-sm text-muted-foreground">Security and configuration status</p>
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="text-3xl font-bold text-purple-600">{technicalScore.percentage}%</div>
-          <div className="text-sm text-muted-foreground">{technicalScore.score}/{technicalScore.maxScore} checks passed</div>
-        </div>
-      </div>
+  // Professional Technical Score component
+  const TechnicalScoreDisplay = () => {
+    const getScoreColor = () => {
+      if (technicalScore.percentage >= 80) return 'pro-progress-fill-success'
+      if (technicalScore.percentage >= 60) return 'pro-progress-fill-warning'
+      return 'pro-progress-fill-error'
+    }
 
-      <div className="w-full bg-gray-200 dark:bg-gray-700 h-2">
-        <div
-          className="h-2 bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300"
-          style={{ width: `${technicalScore.percentage}%` }}
-        />
+    return (
+      <div className="pro-card">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center">
+              <Settings className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Technical Health Score</h3>
+              <p className="text-sm text-muted-foreground">Security and configuration status</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-foreground">{technicalScore.percentage}%</div>
+            <div className="text-xs text-muted-foreground">{technicalScore.score}/{technicalScore.maxScore} checks passed</div>
+          </div>
+        </div>
+
+        <div className="pro-progress-bar">
+          <div
+            className={getScoreColor()}
+            style={{ width: `${technicalScore.percentage}%` }}
+          />
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
-    <div className="w-full space-y-8">
+    <div className="pro-section">
       {/* Technical Score Header */}
       <TechnicalScoreDisplay />
 
       {/* Performance Section */}
-      <div className="space-y-6">
-        <div className="border-b border-border pb-4">
-          <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <Zap className="h-7 w-7 text-blue-600" />
+      <div className="pro-section">
+        <div className="pro-section-header">
+          <h2 className="pro-section-title">
+            <Zap className="h-5 w-5 text-muted-foreground" />
             Performance Metrics
           </h2>
-          <p className="text-muted-foreground mt-2">Website speed and optimization indicators</p>
+          <p className="pro-section-subtitle">Website speed and optimization indicators</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
@@ -225,13 +230,13 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
       </div>
 
       {/* Security & Headers Section */}
-      <div className="space-y-6">
-        <div className="border-b border-border pb-4">
-          <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <Shield className="h-7 w-7 text-green-600" />
+      <div className="pro-section">
+        <div className="pro-section-header">
+          <h2 className="pro-section-title">
+            <Shield className="h-5 w-5 text-muted-foreground" />
             Security & Headers
           </h2>
-          <p className="text-muted-foreground mt-2">Security configuration and HTTP headers</p>
+          <p className="pro-section-subtitle">Security configuration and HTTP headers</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
@@ -280,13 +285,13 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
       </div>
 
       {/* Technical Configuration */}
-      <div className="space-y-6">
-        <div className="border-b border-border pb-4">
-          <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <Settings className="h-7 w-7 text-purple-600" />
+      <div className="pro-section">
+        <div className="pro-section-header">
+          <h2 className="pro-section-title">
+            <Settings className="h-5 w-5 text-muted-foreground" />
             Technical Configuration
           </h2>
-          <p className="text-muted-foreground mt-2">Core technical settings and metadata</p>
+          <p className="pro-section-subtitle">Core technical settings and metadata</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
@@ -328,26 +333,27 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
 
       {/* Structured Data */}
       {structuredData && structuredData.length > 0 && (
-        <div className="space-y-6">
-          <div className="border-b border-border pb-4">
-            <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-              <Globe className="h-7 w-7 text-indigo-600" />
+        <div className="pro-section">
+          <div className="pro-section-header">
+            <h2 className="pro-section-title">
+              <Globe className="h-5 w-5 text-muted-foreground" />
               Structured Data
             </h2>
-            <p className="text-muted-foreground mt-2">JSON-LD schemas for search engine understanding</p>
+            <p className="pro-section-subtitle">JSON-LD schemas for search engine understanding</p>
           </div>
 
-          <div className="border-l-4 border-l-indigo-500 bg-indigo-50 dark:bg-indigo-950/20 p-6">
+          <div className="pro-card">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <CheckCircle className="h-6 w-6 text-emerald-600" />
+                <div className="status-dot-success"></div>
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">JSON-LD Schemas</h3>
+                  <h3 className="font-medium text-foreground">JSON-LD Schemas</h3>
                   <p className="text-sm text-muted-foreground">
                     {structuredData.length} schema{structuredData.length === 1 ? '' : 's'} detected
                   </p>
                 </div>
               </div>
+              <span className="pro-badge-success">✓</span>
             </div>
 
             <div className="space-y-3">
@@ -355,7 +361,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                 {structuredData.slice(0, 6).map((schema, index) => (
                   <div
                     key={index}
-                    className="bg-white/70 dark:bg-black/30 rounded-lg px-3 py-2 border text-sm font-medium"
+                    className="bg-muted/50 rounded-sm px-3 py-2 border border-border text-sm font-medium text-foreground"
                   >
                     {schema.type || 'Schema'}
                   </div>
@@ -366,7 +372,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                   </div>
                 )}
               </div>
-              <p className="text-sm text-indigo-700 dark:text-indigo-300">
+              <p className="text-sm text-muted-foreground">
                 Structured data helps search engines understand your content for rich snippets and better SEO.
               </p>
             </div>
@@ -376,33 +382,34 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
 
       {/* HTTP Headers Details */}
       {Object.keys(safeHeaders).length > 0 && (
-        <div className="space-y-6">
-          <div className="border-b border-border pb-4">
-            <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-              <Server className="h-7 w-7 text-gray-600" />
+        <div className="pro-section">
+          <div className="pro-section-header">
+            <h2 className="pro-section-title">
+              <Server className="h-5 w-5 text-muted-foreground" />
               HTTP Response Headers
             </h2>
-            <p className="text-muted-foreground mt-2">Server response headers for debugging and optimization</p>
+            <p className="pro-section-subtitle">Server response headers for debugging and optimization</p>
           </div>
 
-          <div className="border-l-4 border-l-gray-500 bg-gray-50 dark:bg-gray-950/20 p-6">
+          <div className="pro-card">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <BarChart3 className="h-6 w-6 text-gray-600" />
+                <div className="status-dot-info"></div>
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Response Headers</h3>
+                  <h3 className="font-medium text-foreground">Response Headers</h3>
                   <p className="text-sm text-muted-foreground">
                     {Object.keys(safeHeaders).length} headers received
                   </p>
                 </div>
               </div>
+              <span className="pro-badge-info">i</span>
             </div>
 
-            <details className="bg-white/70 dark:bg-black/30 rounded-lg p-4 border">
-              <summary className="text-sm font-medium cursor-pointer hover:text-blue-600 dark:hover:text-blue-400">
+            <details className="bg-muted/50 rounded-sm p-4 border border-border">
+              <summary className="text-sm font-medium cursor-pointer hover:text-foreground">
                 View All HTTP Headers
               </summary>
-              <div className="mt-3 bg-muted/30 rounded p-3">
+              <div className="mt-3 bg-muted/30 rounded-sm p-3">
                 <pre className="text-xs text-muted-foreground overflow-x-auto whitespace-pre-wrap max-h-40 overflow-y-auto font-mono">
                   {Object.entries(safeHeaders)
                     .map(([key, value]) => `${key}: ${value}`)

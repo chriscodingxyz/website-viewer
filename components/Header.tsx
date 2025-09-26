@@ -13,7 +13,9 @@ import {
   Home,
   Lock,
   Eye,
-  EyeOff
+  EyeOff,
+  Menu,
+  X
 } from 'lucide-react'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
@@ -35,6 +37,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import ShareableLink from '@/components/ShareableLink'
+import ExportButton from '@/components/export/ExportButton'
 
 
 export function Header () {
@@ -63,7 +67,10 @@ export function Header () {
     setUsername,
     setPassword,
     setShowAuthFields,
-    clearCredentials
+    clearCredentials,
+    selectedTab,
+    setSelectedTab,
+    metadata
   } = useWebsiteViewer()
 
   const { favorites } = useFavorites()
@@ -72,6 +79,47 @@ export function Header () {
   const pathname = usePathname()
 
   const [open, setOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Tab configuration
+  type TabType = 'viewports' | 'seo' | 'social' | 'technical'
+
+  const tabs: { id: TabType; label: string }[] = [
+    { id: 'viewports', label: 'Viewports' },
+    { id: 'seo', label: 'SEO' },
+    { id: 'social', label: 'Social Media' },
+    { id: 'technical', label: 'Technical' }
+  ]
+
+  // Function to handle tab navigation with URL updates
+  const handleTabClick = (tabId: TabType) => {
+    setSelectedTab(tabId)
+    setMobileMenuOpen(false) // Close mobile menu when tab is selected
+
+    // Update URL to match the section
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search)
+      const siteParam = searchParams.get('site')
+      const newPath = `/${tabId}${siteParam ? `?site=${siteParam}` : ''}`
+
+      router.push(newPath)
+    }
+
+    // If clicking on SEO, Social, or Technical tabs, trigger metadata extraction
+    if ((tabId === 'seo' || tabId === 'social' || tabId === 'technical') && currentSite) {
+      fetchMetadata()
+    }
+  }
+
+  // Extract clean domain name from URL
+  const getDomainName = (url: string) => {
+    try {
+      const domain = new URL(url).hostname
+      return domain.replace('www.', '')
+    } catch {
+      return url
+    }
+  }
 
   // Add keyboard shortcut handler (Command+K or Ctrl+K)
   useEffect(() => {
@@ -117,7 +165,9 @@ export function Header () {
                 🧿
               </Button>
             )}
-            <div className='flex-grow relative'>
+
+            {/* URL Input - Extended on mobile when site is loaded */}
+            <div className={cn('relative transition-all duration-300', currentSite ? 'flex-1 md:w-64' : 'flex-grow')}>
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -195,7 +245,7 @@ export function Header () {
                                 >
                                   <Star className='mr-2 h-4 w-4 text-yellow-500 flex-shrink-0' />
                                   <span className='truncate'>{fav}</span>
-                                </CommandItem>
+                              </CommandItem>
                               ))}
                             </CommandGroup>
                           )}
@@ -239,24 +289,132 @@ export function Header () {
               </Popover>
             </div>
 
+            {/* Load Button - Only show when no site is loaded */}
+            {!currentSite && (
+              <div className='flex gap-1'>
+                <Button
+                  size='sm'
+                  disabled={!formatUrl(url)}
+                  onClick={() => loadSite()}
+                  className={cn(
+                    'h-9 px-3 transition-all duration-200 disabled:opacity-40 rounded-md',
+                    formatUrl(url)
+                      ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                      : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                  )}
+                  title='Load website in all viewports'
+                >
+                  <Globe className='w-3 h-3' />
+                </Button>
+              </div>
+            )}
 
-            <div className='flex gap-1'>
-              <Button
-                size='sm'
-                disabled={!formatUrl(url)}
-                onClick={() => loadSite()}
-                className={cn(
-                  'h-9 px-3 transition-all duration-200 disabled:opacity-40 rounded-md',
-                  formatUrl(url)
-                    ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
-                    : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                )}
-                title='Load website in all viewports'
-              >
-                <Globe className='w-3 h-3' />
-              </Button>
-            </div>
+            {/* Desktop Navigation Tabs - Show when site is loaded and screen is large enough */}
+            {currentSite && !isInitialLoad && (
+              <div className='hidden md:flex items-center gap-1 overflow-x-auto flex-1'>
+                {tabs.map(tab => (
+                  <button
+                    key={tab.id}
+                    className={cn(
+                      'px-2 sm:px-2.5 py-1 text-xs rounded-md transition-all duration-200 shrink-0',
+                      selectedTab === tab.id
+                        ? 'bg-foreground text-background'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    )}
+                    onClick={() => handleTabClick(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Desktop Export and Share buttons - Only show on desktop when metadata is loaded */}
+            {currentSite && metadata && (
+              <div className="hidden md:flex items-center gap-1 sm:gap-2">
+                <ExportButton
+                  metadata={metadata}
+                  variant="outline"
+                  size="sm"
+                  showLabel={false}
+                />
+                <ShareableLink
+                  currentUrl={currentSite}
+                  section={selectedTab}
+                  domainName={getDomainName(currentSite)}
+                />
+              </div>
+            )}
+
+            {/* Mobile Hamburger Menu - Show when site is loaded on small screens */}
+            {currentSite && !isInitialLoad && (
+              <div className='md:hidden'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className='h-9 w-9 p-0 border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md'
+                  title='Open navigation menu'
+                >
+                  {mobileMenuOpen ? <X className='h-4 w-4' /> : <Menu className='h-4 w-4' />}
+                </Button>
+              </div>
+            )}
           </div>
+
+          {/* Mobile Navigation Menu Dropdown */}
+          {currentSite && !isInitialLoad && mobileMenuOpen && (
+            <div className='md:hidden mt-3 pb-2'>
+              <div className='bg-card border border-border rounded-lg p-3 shadow-lg'>
+                {/* Navigation Tabs */}
+                <div className='mb-3'>
+                  <h3 className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1'>Navigation</h3>
+                  <div className='grid grid-cols-2 gap-2'>
+                    {tabs.map(tab => (
+                      <button
+                        key={tab.id}
+                        className={cn(
+                          'px-3 py-2.5 text-sm rounded-md transition-all duration-200 text-left font-medium',
+                          selectedTab === tab.id
+                            ? 'bg-foreground text-background'
+                            : 'text-foreground hover:bg-muted/80 border border-border/50'
+                        )}
+                        onClick={() => handleTabClick(tab.id)}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Export and Share Actions - Only show when metadata is available */}
+                {metadata && (
+                  <div className='border-t border-border pt-3'>
+                    <h3 className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1'>Actions</h3>
+                    <div className='flex gap-2'>
+                      <div className='flex-1'>
+                        <ExportButton
+                          metadata={metadata}
+                          variant="outline"
+                          size="sm"
+                          showLabel={true}
+                          className='w-full justify-start'
+                        />
+                      </div>
+                      <div className='flex-1'>
+                        <ShareableLink
+                          currentUrl={currentSite}
+                          section={selectedTab}
+                          domainName={getDomainName(currentSite)}
+                          className='w-full'
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

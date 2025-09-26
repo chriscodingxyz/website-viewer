@@ -85,10 +85,7 @@ export default function WebsiteViewer () {
 
         {/* Section Layout Content */}
         {currentSite && (
-          <>
-            <NavigationBar />
-            <SectionContainer />
-          </>
+          <SectionContainer />
         )}
       </div>
     </div>
