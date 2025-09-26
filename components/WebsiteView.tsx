@@ -157,7 +157,7 @@ export default function WebsiteView ({
       setIframeSrc(undefined)
     }
     // If iframe is already loaded, never change the src to prevent reloads
-  }, [view.shouldLoad, view.url, refreshKey, realIframeStatus])
+  }, [view.shouldLoad, view.url, refreshKey, realIframeStatus, iframeSrc])
 
   // Sync local realIframeStatus with global view.iframeStatus
   useEffect(() => {

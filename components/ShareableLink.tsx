@@ -25,6 +25,7 @@ interface ShareableLinkProps {
   currentUrl: string
   section: 'viewports' | 'seo' | 'social' | 'technical'
   domainName: string
+  className?: string
 }
 
 const sectionConfig = {
@@ -50,7 +51,7 @@ const sectionConfig = {
   }
 }
 
-export default function ShareableLink({ currentUrl, section, domainName }: ShareableLinkProps) {
+export default function ShareableLink({ currentUrl, section, domainName, className = '' }: ShareableLinkProps) {
   const [copied, setCopied] = useState(false)
   const [open, setOpen] = useState(false)
   const [shareableUrl, setShareableUrl] = useState('')
@@ -87,7 +88,7 @@ export default function ShareableLink({ currentUrl, section, domainName }: Share
         <Button
           variant="outline"
           size="sm"
-          className="w-9 h-9 p-0"
+          className={`w-9 h-9 p-0 ${className}`.trim()}
         >
           <Share2 className="h-4 w-4" />
         </Button>

@@ -20,13 +20,15 @@ interface ExportButtonProps {
   variant?: 'default' | 'outline' | 'ghost'
   size?: 'default' | 'sm' | 'lg'
   showLabel?: boolean
+  className?: string
 }
 
 export default function ExportButton({
   metadata,
   variant = 'ghost',
   size = 'sm',
-  showLabel = false
+  showLabel = false,
+  className = ''
 }: ExportButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -87,7 +89,7 @@ export default function ExportButton({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant={variant} size={size} className="gap-2">
+          <Button variant={variant} size={size} className={`gap-2 ${className}`.trim()}>
             <FileDown className="h-4 w-4" />
             {showLabel && 'Export Report'}
             <ChevronDown className="h-3 w-3" />
