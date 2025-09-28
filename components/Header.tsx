@@ -148,8 +148,8 @@ function Header () {
 
   return (
     <header className='bg-background border-b border-border'>
-      <div className='py-2 px-2 sm:px-4'>
-        <div className='max-w-[1400px] mx-auto px-2 sm:px-6 lg:px-8'>
+      <div className='py-2 px-2 sm:px-3'>
+        <div className='max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-6'>
           <div className='flex gap-1 sm:gap-2 flex-row items-center'>
             {/* Sidebar Trigger - Desktop only */}
             <SidebarTrigger className='h-9 w-9 hidden md:flex' />
@@ -315,7 +315,7 @@ function Header () {
 
           {/* Mobile Navigation Menu Dropdown */}
           {currentSite && !isInitialLoad && mobileMenuOpen && (
-            <div className='md:hidden mt-3 pb-2'>
+            <div className='md:hidden mt-2 pb-1'>
               <div className='bg-card border border-border rounded-lg p-3 shadow-lg'>
                 {/* Navigation Tabs */}
                 <div className='mb-3'>

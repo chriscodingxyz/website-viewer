@@ -130,12 +130,12 @@ export default function ViewportsSection ({
   }
 
   return (
-    <div className='w-full pb-8'>
+    <div className='w-full'>
       {/* Zoom Control - Show when viewports are loaded */}
       {views.length > 0 && (
-        <div className='flex justify-center py-3 border-b border-border/20'>
+        <div className='flex justify-center py-2 px-4 border-b border-border/20'>
           <div className='flex items-center gap-2'>
-            <span className='text-sm text-muted-foreground'>Zoom:</span>
+            <span className='text-xs text-muted-foreground'>Zoom:</span>
             <Select
               value={Math.round(globalZoom * 100).toString()}
               onValueChange={(value) => {
@@ -147,7 +147,7 @@ export default function ViewportsSection ({
                 }
               }}
             >
-              <SelectTrigger className="w-20 h-9 text-xs border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md">
+              <SelectTrigger className="w-16 h-7 text-xs border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -166,14 +166,14 @@ export default function ViewportsSection ({
       )}
 
       {/* Content - Always visible */}
-      <div className='w-full py-4 px-4 relative'>
+      <div className='w-full p-4 relative'>
         <div className='w-full'>
           {views.length === 0 ? (
-            <div className='flex items-center justify-center h-48'>
+            <div className='flex items-center justify-center h-32'>
               <div className='text-center'>
-                <Monitor className='h-12 w-12 mx-auto text-gray-400 mb-4' />
-                <h3 className='text-lg font-medium mb-2'>Ready to Load</h3>
-                <p className='text-muted-foreground'>
+                <Monitor className='h-8 w-8 mx-auto text-gray-400 mb-2' />
+                <h3 className='text-sm font-medium mb-1'>Ready to Load</h3>
+                <p className='text-xs text-muted-foreground'>
                   Enter a website URL to view in different device sizes
                 </p>
               </div>
@@ -181,30 +181,30 @@ export default function ViewportsSection ({
           ) : metadataLoading && views.length > 0 ? (
             // Show single loading state while checking X-Frame-Options
             <div className='w-full'>
-              <div className='flex justify-center items-center py-16'>
+              <div className='flex justify-center items-center py-8'>
                 <div className='text-center max-w-md'>
-                  <div className='mx-auto mb-6'>
-                    <div className='w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto'></div>
+                  <div className='mx-auto mb-3'>
+                    <div className='w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto'></div>
                   </div>
-                  <p className='text-lg text-gray-700 mb-3 font-medium'>Analyzing Website</p>
-                  <p className='text-sm text-gray-500'>Extracting metadata, SEO data, social previews, and technical information...</p>
+                  <p className='text-sm text-gray-700 mb-1 font-medium'>Analyzing Website</p>
+                  <p className='text-xs text-gray-500'>Extracting metadata, SEO data, social previews, and technical information...</p>
                 </div>
               </div>
             </div>
           ) : views.length > 0 && views.every(v => v.iframeStatus === 'blocked') ? (
             // Show informational message when all viewports are blocked
             <div className='w-full'>
-              <div className='flex justify-center items-center py-16'>
+              <div className='flex justify-center items-center py-8'>
                 <div className='text-center max-w-lg'>
-                  <div className='mx-auto mb-6 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center'>
-                    <CheckCircle className='w-8 h-8 text-green-600' />
+                  <div className='mx-auto mb-3 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center'>
+                    <CheckCircle className='w-5 h-5 text-green-600' />
                   </div>
-                  <h3 className='text-xl font-semibold text-gray-900 mb-3'>X-Frame-Options Configured</h3>
-                  <p className='text-gray-600 mb-4 leading-relaxed'>
-                    This website has <code className='bg-gray-100 px-2 py-1 rounded text-sm'>X-Frame-Options: DENY</code> configured,
+                  <h3 className='text-sm font-semibold text-gray-900 mb-2'>X-Frame-Options Configured</h3>
+                  <p className='text-xs text-gray-600 mb-3 leading-relaxed'>
+                    This website has <code className='bg-gray-100 px-1 py-0.5 rounded text-xs'>X-Frame-Options: DENY</code> configured,
                     which prevents iframe embedding. This is a good security practice that protects against clickjacking attacks.
                   </p>
-                  <div className='bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800'>
+                  <div className='bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800'>
                     <strong>Important:</strong> Only the website owner can remove X-Frame-Options. If this is YOUR website, you can modify the server configuration. Otherwise, viewport previews are impossible due to security restrictions.
                   </div>
                 </div>
@@ -213,7 +213,7 @@ export default function ViewportsSection ({
           ) : (
             <div className='w-full'>
               {/* All Viewports - Display simultaneously */}
-              <div className='flex flex-wrap gap-6 justify-center items-start'>
+              <div className='flex flex-wrap gap-4 justify-center items-start'>
                 {views.map((view, index) => (
                   <WebsiteView
                     key={view.id}

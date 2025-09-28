@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -172,11 +171,11 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
 
   const getStatusIcon = (accessible?: boolean) => {
     if (accessible === undefined) {
-      return <AlertTriangle className="h-4 w-4 text-yellow-500" />
+      return <AlertTriangle className="h-3 w-3 text-yellow-500" />
     }
     return accessible ?
-      <CheckCircle className="h-4 w-4 text-green-500" /> :
-      <XCircle className="h-4 w-4 text-red-500" />
+      <CheckCircle className="h-3 w-3 text-green-500" /> :
+      <XCircle className="h-3 w-3 text-red-500" />
   }
 
   const getSourceIcon = (source: string) => {
@@ -199,14 +198,16 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Site Discovery
-          </CardTitle>
-          <Badge variant="outline">
+    <div className="bg-card border border-border rounded-lg p-3">
+      <div className="mb-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Site Discovery</h3>
+            </div>
+          </div>
+          <Badge variant="outline" className="text-xs">
             {discoveredPages.length} pages found
           </Badge>
         </div>
@@ -216,22 +217,22 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
             placeholder="Search pages..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-8"
           />
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div>
         {loading ? (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex items-center justify-center py-6">
             <div className="text-center">
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-sm text-muted-foreground">Discovering pages...</p>
+              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <p className="text-xs text-muted-foreground">Discovering pages...</p>
             </div>
           </div>
         ) : discoveredPages.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Globe className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>No pages discovered</p>
+          <div className="text-center py-6 text-muted-foreground">
+            <Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">No pages discovered</p>
             <p className="text-xs">Try checking if the site has a sitemap.xml</p>
           </div>
         ) : (
@@ -245,20 +246,20 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
                     <div className="flex items-center gap-2">
                       {getSourceIcon(source)}
                       <span>{sourceLabels[source as keyof typeof sourceLabels]}</span>
-                      <Badge variant="outline" className="ml-auto mr-2">
+                      <Badge variant="outline" className="ml-auto mr-2 text-xs">
                         {pages.length}
                       </Badge>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <ScrollArea className="h-64">
+                    <ScrollArea className="h-48">
                       <div className="space-y-2">
                         {pages.map((page, index) => (
-                          <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div key={index} className="flex items-center justify-between p-2 border rounded-md hover:bg-muted/50">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
                               {getStatusIcon(page.accessible)}
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{page.title || 'Untitled Page'}</p>
+                                <p className="text-sm font-medium truncate">{page.title || 'Untitled Page'}</p>
                                 <p className="text-xs text-muted-foreground truncate">{page.url}</p>
                                 {page.lastModified && (
                                   <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
@@ -272,9 +273,9 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
                               variant="outline"
                               size="sm"
                               onClick={() => handleNavigateToPage(page.url)}
-                              className="shrink-0"
+                              className="shrink-0 h-7 w-7 p-0"
                             >
-                              <ExternalLink className="h-4 w-4" />
+                              <ExternalLink className="h-3 w-3" />
                             </Button>
                           </div>
                         ))}
@@ -286,7 +287,7 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
             })}
           </Accordion>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

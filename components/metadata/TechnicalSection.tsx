@@ -74,7 +74,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
 
   const technicalScore = getTechnicalScore()
 
-  // Modern status indicator component
+  // Clean status indicator component - matching sidebar style
   const StatusIndicator = ({ status, label, value, details }: {
     status: 'good' | 'warning' | 'error'
     label: string
@@ -83,33 +83,31 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
   }) => {
     const statusConfig = {
       good: {
-        dotClass: "status-dot-success",
-        badgeClass: "pro-badge-success"
+        icon: <CheckCircle className="h-4 w-4 text-green-600" />,
+        dotClass: "w-2 h-2 bg-green-500 rounded-full"
       },
       warning: {
-        dotClass: "status-dot-warning",
-        badgeClass: "pro-badge-warning"
+        icon: <AlertTriangle className="h-4 w-4 text-orange-600" />,
+        dotClass: "w-2 h-2 bg-orange-500 rounded-full"
       },
       error: {
-        dotClass: "status-dot-error",
-        badgeClass: "pro-badge-error"
+        icon: <XCircle className="h-4 w-4 text-red-600" />,
+        dotClass: "w-2 h-2 bg-red-500 rounded-full"
       }
     }
 
     const config = statusConfig[status]
 
     return (
-      <div className="status-indicator">
-        <div className={config.dotClass}></div>
-        <div className="flex-1 space-y-2">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium text-foreground">{label}</h4>
-            <span className={config.badgeClass}>
-              {status === 'good' ? '✓' : status === 'warning' ? '⚠' : '✕'}
-            </span>
+      <div className="flex items-start gap-3 p-3 bg-card border border-border rounded-lg">
+        <div className={config.dotClass} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-1">
+            <h4 className="text-sm font-medium text-foreground">{label}</h4>
+            {config.icon}
           </div>
           {value && (
-            <p className="text-sm text-foreground line-clamp-2 font-medium">{value}</p>
+            <p className="text-sm text-foreground mb-1 break-words">{value}</p>
           )}
           {details && (
             <p className="text-xs text-muted-foreground">{details}</p>
@@ -119,33 +117,33 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
     )
   }
 
-  // Professional Technical Score component
+  // Clean Technical Score component - matching sidebar style
   const TechnicalScoreDisplay = () => {
     const getScoreColor = () => {
-      if (technicalScore.percentage >= 80) return 'pro-progress-fill-success'
-      if (technicalScore.percentage >= 60) return 'pro-progress-fill-warning'
-      return 'pro-progress-fill-error'
+      if (technicalScore.percentage >= 80) return 'bg-green-500'
+      if (technicalScore.percentage >= 60) return 'bg-orange-500'
+      return 'bg-red-500'
     }
 
     return (
-      <div className="pro-card">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-muted rounded-sm flex items-center justify-center">
-              <Settings className="h-5 w-5 text-muted-foreground" />
+      <div className="bg-card border border-border rounded-lg p-4 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-muted rounded-md flex items-center justify-center">
+              <Settings className="h-4 w-4 text-muted-foreground" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Technical Health Score</h3>
-              <p className="text-sm text-muted-foreground">Security and configuration status</p>
+              <h3 className="text-sm font-semibold text-foreground">Technical Health Score</h3>
+              <p className="text-xs text-muted-foreground">Security and configuration status</p>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-foreground">{technicalScore.percentage}%</div>
+            <div className="text-xl font-bold text-foreground">{technicalScore.percentage}%</div>
             <div className="text-xs text-muted-foreground">{technicalScore.score}/{technicalScore.maxScore} checks passed</div>
           </div>
         </div>
 
-        <div className="pro-progress-bar">
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
           <div
             className={getScoreColor()}
             style={{ width: `${technicalScore.percentage}%` }}
@@ -156,21 +154,21 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
   }
 
   return (
-    <div className="pro-section">
+    <div className="space-y-4 p-4">
       {/* Technical Score Header */}
       <TechnicalScoreDisplay />
 
       {/* Performance Section */}
-      <div className="pro-section">
-        <div className="pro-section-header">
-          <h2 className="pro-section-title">
-            <Zap className="h-5 w-5 text-muted-foreground" />
-            Performance Metrics
-          </h2>
-          <p className="pro-section-subtitle">Website speed and optimization indicators</p>
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Zap className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Performance Metrics</h2>
+            <p className="text-xs text-muted-foreground">Website speed and optimization indicators</p>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-2 gap-3">
           {performance?.contentLength && (
             <StatusIndicator
               status={
@@ -230,16 +228,16 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
       </div>
 
       {/* Security & Headers Section */}
-      <div className="pro-section">
-        <div className="pro-section-header">
-          <h2 className="pro-section-title">
-            <Shield className="h-5 w-5 text-muted-foreground" />
-            Security & Headers
-          </h2>
-          <p className="pro-section-subtitle">Security configuration and HTTP headers</p>
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Shield className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Security & Headers</h2>
+            <p className="text-xs text-muted-foreground">Security configuration and HTTP headers</p>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-2 gap-3">
           <StatusIndicator
             status={metadata.url.startsWith('https://') ? 'good' : 'error'}
             label="HTTPS Security"
