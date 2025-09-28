@@ -10,6 +10,8 @@ import { Toaster } from 'sonner'
 import { FavoritesProvider } from '@/contexts/FavoritesContext'
 import { HistoryProvider } from '@/contexts/HistoryContext'
 import { WebsiteViewerProvider } from '@/contexts/WebsiteViewerContext'
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
+import WebsiteViewerSidebar from '@/components/WebsiteViewerSidebar'
 const inter = Inter({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700'],
@@ -140,9 +142,14 @@ export default function RootLayout ({
           <FavoritesProvider>
             <HistoryProvider>
               <WebsiteViewerProvider>
-                <Header />
-                <main className='flex-1'>{children}</main>
-                <AuthDialogWrapper />
+                <SidebarProvider>
+                  <WebsiteViewerSidebar />
+                  <SidebarInset>
+                    <Header />
+                    <main className='flex-1'>{children}</main>
+                  </SidebarInset>
+                  <AuthDialogWrapper />
+                </SidebarProvider>
               </WebsiteViewerProvider>
             </HistoryProvider>
           </FavoritesProvider>

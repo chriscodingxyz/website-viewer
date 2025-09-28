@@ -67,15 +67,21 @@ export default function WebsiteViewer () {
                     Website Viewer
                   </h1>
                   <p className='text-muted-foreground text-sm'>
-                    Add your localhost URL, staging, or production site above to view across devices, analyze SEO, and check social media previews
+                    View websites across devices, analyze SEO, and check social media previews
                   </p>
                 </div>
                 <div className='text-sm text-muted-foreground p-3 bg-muted/80 rounded-lg'>
-                  Click the search bar above or press{' '}
-                  <kbd className='px-2 py-1 bg-background border rounded-md text-xs font-mono shadow-sm'>
-                    ⌘K
-                  </kbd>{' '}
-                  to get started
+                  <div className='flex items-center justify-center gap-2 mb-2'>
+                    <span>Enter URL above</span>
+                    <span>•</span>
+                    <span>Use sidebar shortcuts</span>
+                    <span>•</span>
+                    <span>Press</span>
+                    <kbd className='px-2 py-1 bg-background border rounded-md text-xs font-mono shadow-sm'>
+                      ⌘K
+                    </kbd>
+                  </div>
+                  <p className='text-xs opacity-75'>Access favorites, recent sites, and dev ports from the sidebar</p>
                 </div>
                 </div>
               </div>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 import {
   Globe,
   Check,
@@ -150,6 +151,9 @@ function Header () {
       <div className='py-2 px-2 sm:px-4'>
         <div className='max-w-[1400px] mx-auto px-2 sm:px-6 lg:px-8'>
           <div className='flex gap-1 sm:gap-2 flex-row items-center'>
+            {/* Sidebar Trigger - Desktop only */}
+            <SidebarTrigger className='h-9 w-9 hidden md:flex' />
+
             {/* Home Button - Only show when site is loaded */}
             {currentSite && (
               <Button
@@ -216,72 +220,19 @@ function Header () {
                       No URL found.
                     </CommandEmpty>
                     <CommandList>
-                      {url.length > 0 ? (
-                        // Show filtered suggestions when typing
-                        filteredSuggestions.length > 0 && (
-                          <CommandGroup heading='Suggestions'>
-                            {filteredSuggestions.map((suggestion, index) => (
-                              <CommandItem
-                                key={`suggestion-${index}`}
-                                onSelect={() => onSelect(suggestion)}
-                                className='cursor-pointer flex items-center w-full'
-                              >
-                                <Zap className='mr-2 h-4 w-4 flex-shrink-0' />
-                                <span className='truncate'>{suggestion}</span>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        )
-                      ) : (
-                        // Show categorized lists when input is empty
-                        <>
-                          {favorites.length > 0 && (
-                            <CommandGroup heading='Favorites'>
-                              {favorites.map((fav, index) => (
-                                <CommandItem
-                                  key={`favorite-${index}`}
-                                  onSelect={() => onSelect(fav)}
-                                  className='cursor-pointer flex items-center w-full'
-                                >
-                                  <Star className='mr-2 h-4 w-4 text-yellow-500 flex-shrink-0' />
-                                  <span className='truncate'>{fav}</span>
-                              </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          )}
-
-                          {history.length > 0 && (
-                            <CommandGroup heading='Recent'>
-                              {history.map((item, index) => (
-                                <CommandItem
-                                  key={`history-${index}`}
-                                  onSelect={() => onSelect(item)}
-                                  className='cursor-pointer flex items-center w-full'
-                                >
-                                  <Clock className='mr-2 h-4 w-4 text-slate-400 flex-shrink-0' />
-                                  <span className='truncate'>{item}</span>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          )}
-
-                          <CommandGroup heading='Quick Start'>
-                            {[
-                              'localhost:3000',
-                              'localhost:3001',
-                              'localhost:5173'
-                            ].map((port, index) => (
-                              <CommandItem
-                                key={`port-${index}`}
-                                onSelect={() => onSelect(port)}
-                                className='cursor-pointer flex items-center w-full'
-                              >
-                                <Zap className='mr-2 h-4 w-4 flex-shrink-0' />
-                                <span className='truncate'>{port}</span>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </>
+                      {url.length > 0 && filteredSuggestions.length > 0 && (
+                        <CommandGroup heading='Suggestions'>
+                          {filteredSuggestions.map((suggestion, index) => (
+                            <CommandItem
+                              key={`suggestion-${index}`}
+                              onSelect={() => onSelect(suggestion)}
+                              className='cursor-pointer flex items-center w-full'
+                            >
+                              <Zap className='mr-2 h-4 w-4 flex-shrink-0' />
+                              <span className='truncate'>{suggestion}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
                       )}
                     </CommandList>
                   </Command>
