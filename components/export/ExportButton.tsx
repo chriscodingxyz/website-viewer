@@ -57,19 +57,23 @@ export default function ExportButton({
               <FileDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={handleProfessionalReport}>
-              <FileText className="h-4 w-4 mr-2" />
-              <div className="flex flex-col">
+          <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuItem onClick={handleProfessionalReport} className="p-3 cursor-pointer">
+              <FileText className="h-4 w-4 mr-3 text-blue-600 flex-shrink-0" />
+              <div className="flex flex-col gap-1">
                 <span className="font-medium">Professional Report</span>
-                <span className="text-xs text-muted-foreground">PDF + JSON with analysis</span>
+                <span className="text-xs text-muted-foreground leading-tight">
+                  Customizable PDF/JSON with scores, analysis & recommendations
+                </span>
               </div>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleQuickJSONExport}>
-              <Code className="h-4 w-4 mr-2" />
-              <div className="flex flex-col">
+            <DropdownMenuItem onClick={handleQuickJSONExport} className="p-3 cursor-pointer">
+              <Code className="h-4 w-4 mr-3 text-green-600 flex-shrink-0" />
+              <div className="flex flex-col gap-1">
                 <span className="font-medium">Quick JSON Export</span>
-                <span className="text-xs text-muted-foreground">Raw data for developers</span>
+                <span className="text-xs text-muted-foreground leading-tight">
+                  Raw metadata for automation & development
+                </span>
               </div>
             </DropdownMenuItem>
           </DropdownMenuContent>

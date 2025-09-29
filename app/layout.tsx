@@ -142,7 +142,7 @@ export default function RootLayout ({
           <FavoritesProvider>
             <HistoryProvider>
               <WebsiteViewerProvider>
-                <SidebarProvider>
+                <SidebarProvider defaultOpen={false}>
                   <WebsiteViewerSidebar />
                   <SidebarInset>
                     <Header />

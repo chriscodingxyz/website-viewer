@@ -86,7 +86,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({ metadata }) 
 
       {/* Security & Headers */}
       <View style={styles.marginBottom}>
-        <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1a1a1a' }}>
+        <Text style={styles.subsectionTitle}>
           Security Configuration
         </Text>
 
@@ -152,7 +152,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({ metadata }) 
       {/* Performance Metrics */}
       {performance && (
         <View style={styles.marginBottom}>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1a1a1a' }}>
+          <Text style={styles.subsectionTitle}>
             Performance Metrics
           </Text>
 
@@ -212,7 +212,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({ metadata }) 
 
       {/* Technical Configuration */}
       <View style={styles.marginBottom}>
-        <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1a1a1a' }}>
+        <Text style={styles.subsectionTitle}>
           Technical Configuration
         </Text>
 
@@ -264,7 +264,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({ metadata }) 
 
       {/* Security Recommendations */}
       <View>
-        <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1a1a1a' }}>
+        <Text style={styles.subsectionTitle}>
           Security Recommendations
         </Text>
 

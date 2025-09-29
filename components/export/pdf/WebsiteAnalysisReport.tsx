@@ -100,7 +100,7 @@ export const WebsiteAnalysisReport: React.FC<WebsiteAnalysisReportProps> = ({
 
         {/* Website Overview */}
         <View style={styles.marginBottom}>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1a1a1a' }}>
+          <Text style={styles.subsectionTitle}>
             Website Overview
           </Text>
 
@@ -156,7 +156,7 @@ export const WebsiteAnalysisReport: React.FC<WebsiteAnalysisReportProps> = ({
 
         {/* Key Recommendations */}
         <View>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1a1a1a' }}>
+          <Text style={styles.subsectionTitle}>
             Key Recommendations
           </Text>
 
@@ -227,7 +227,7 @@ export const WebsiteAnalysisReport: React.FC<WebsiteAnalysisReportProps> = ({
 
         {/* Open Graph Tags */}
         <View style={styles.marginBottom}>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1a1a1a' }}>
+          <Text style={styles.subsectionTitle}>
             Open Graph Tags (Facebook, LinkedIn)
           </Text>
 
@@ -274,7 +274,7 @@ export const WebsiteAnalysisReport: React.FC<WebsiteAnalysisReportProps> = ({
 
         {/* Twitter Card Tags */}
         <View style={styles.marginBottom}>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1a1a1a' }}>
+          <Text style={styles.subsectionTitle}>
             Twitter Card Tags
           </Text>
 
@@ -321,7 +321,7 @@ export const WebsiteAnalysisReport: React.FC<WebsiteAnalysisReportProps> = ({
 
         {/* Social Recommendations */}
         <View>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1a1a1a' }}>
+          <Text style={styles.subsectionTitle}>
             Social Media Recommendations
           </Text>
 

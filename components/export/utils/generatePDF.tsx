@@ -113,15 +113,40 @@ export async function generatePDFPreview(
 /**
  * Validate config for PDF generation
  */
-export function validatePDFConfig(config: ExportConfig): boolean {
+export function validatePDFConfig(config: ExportConfig): { valid: boolean; errors: string[] } {
+  const errors: string[] = []
+
   // Check if at least one section is included
   const hasAnySections = Object.values(config.includeSections).some(Boolean)
-
   if (!hasAnySections) {
-    throw new Error('At least one section must be included in the report')
+    errors.push('At least one section must be included in the report')
   }
 
-  return true
+  // Validate environment
+  if (!config.environment) {
+    errors.push('Environment must be specified')
+  }
+
+  // Validate custom environment if selected
+  if (config.environment === 'custom' && !config.customEnvironment?.trim()) {
+    errors.push('Custom environment name is required when "Custom" is selected')
+  }
+
+  // Validate filename if provided
+  if (config.filename) {
+    const invalidChars = /[<>:"/\\|?*]/g
+    if (invalidChars.test(config.filename)) {
+      errors.push('Filename contains invalid characters')
+    }
+    if (config.filename.length > 200) {
+      errors.push('Filename is too long (max 200 characters)')
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors
+  }
 }
 
 /**

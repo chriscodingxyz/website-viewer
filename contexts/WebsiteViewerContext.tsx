@@ -284,9 +284,9 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     return () => clearTimeout(timeoutId)
   }, [url])
 
-  // Global zoom state
-  const zoomSteps = [0.5, 0.75, 1, 1.25, 1.5, 2]
-  const [globalZoomStepIndex, setGlobalZoomStepIndex] = useState(2) // Default to 100%
+  // Global zoom state - only 100% and above
+  const zoomSteps = [1, 1.25, 1.5, 1.75, 2, 2.5, 3]
+  const [globalZoomStepIndex, setGlobalZoomStepIndex] = useState(0) // Default to 100%
   const globalZoom = zoomSteps[globalZoomStepIndex]
 
   const setUrlWithHighlight = (url: string) => {

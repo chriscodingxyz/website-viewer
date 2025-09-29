@@ -131,8 +131,8 @@ export default function ViewportsSection ({
 
   return (
     <div className='w-full'>
-      {/* Zoom Control - Show when viewports are loaded */}
-      {views.length > 0 && (
+      {/* Zoom Control - Show only when viewports are loaded (not during metadata loading) */}
+      {views.length > 0 && !metadataLoading && (
         <div className='flex justify-center py-2 px-4 border-b border-border/20'>
           <div className='flex items-center gap-2'>
             <span className='text-xs text-muted-foreground'>Zoom:</span>
@@ -147,10 +147,10 @@ export default function ViewportsSection ({
                 }
               }}
             >
-              <SelectTrigger className="w-16 h-7 text-xs border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md">
+              <SelectTrigger className="w-20 h-7 text-xs border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="w-20">
                 {zoomSteps.map((step, index) => {
                   const percentage = Math.round(step * 100)
                   return (
@@ -181,13 +181,33 @@ export default function ViewportsSection ({
           ) : metadataLoading && views.length > 0 ? (
             // Show single loading state while checking X-Frame-Options
             <div className='w-full'>
-              <div className='flex justify-center items-center py-8'>
+              <div className='flex justify-center items-center py-16'>
                 <div className='text-center max-w-md'>
-                  <div className='mx-auto mb-3'>
-                    <div className='w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto'></div>
+                  {/* Clean spinner */}
+                  <div className='mx-auto mb-8 relative w-12 h-12'>
+                    <div className='absolute inset-0 border-[3px] border-border rounded-full'></div>
+                    <div className='absolute inset-0 border-[3px] border-transparent border-t-foreground rounded-full animate-spin'></div>
                   </div>
-                  <p className='text-sm text-gray-700 mb-1 font-medium'>Analyzing Website</p>
-                  <p className='text-xs text-gray-500'>Extracting metadata, SEO data, social previews, and technical information...</p>
+
+                  <h3 className='text-base font-semibold mb-6 text-foreground'>
+                    Analyzing Website
+                  </h3>
+
+                  {/* Clean animated list */}
+                  <div className='space-y-3 text-sm text-muted-foreground'>
+                    <div className='flex items-center justify-center gap-3 opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.1s_forwards]'>
+                      <div className='w-1 h-1 rounded-full bg-foreground'></div>
+                      <span>Extracting metadata & SEO data</span>
+                    </div>
+                    <div className='flex items-center justify-center gap-3 opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.3s_forwards]'>
+                      <div className='w-1 h-1 rounded-full bg-foreground'></div>
+                      <span>Analyzing social media previews</span>
+                    </div>
+                    <div className='flex items-center justify-center gap-3 opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.5s_forwards]'>
+                      <div className='w-1 h-1 rounded-full bg-foreground'></div>
+                      <span>Checking technical information</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

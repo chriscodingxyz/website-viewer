@@ -37,16 +37,16 @@ export default function WebsiteViewer () {
   }
 
   const globalZoomOut = () => {
-    setGlobalZoomStepIndex(Math.max(globalZoomStepIndex - 1, 2))
+    setGlobalZoomStepIndex(Math.max(globalZoomStepIndex - 1, 0))
     toast.success(
       `Global zoom: ${Math.round(
-        zoomSteps[Math.max(globalZoomStepIndex - 1, 2)] * 100
+        zoomSteps[Math.max(globalZoomStepIndex - 1, 0)] * 100
       )}%`
     )
   }
 
   const resetGlobalZoom = () => {
-    setGlobalZoomStepIndex(2)
+    setGlobalZoomStepIndex(0)
     toast.success('Global zoom reset to 100%')
   }
 
@@ -58,31 +58,56 @@ export default function WebsiteViewer () {
       <div className='min-h-screen'>
         {!currentSite && (
           <div className='flex items-center justify-center min-h-[calc(100vh-6rem)]'>
-            <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
-              <div className='text-center'>
-                <div className='max-w-md mx-auto p-6 bg-card/70 backdrop-blur-sm rounded-2xl border shadow-lg'>
-                <div className='mb-4'>
-                  <Globe className='h-12 w-12 mx-auto text-primary mb-3' />
-                  <h1 className='text-xl font-semibold text-foreground mb-2'>
+            <div className='max-w-2xl mx-auto px-6'>
+              <div className='text-center space-y-8'>
+                {/* Hero Section */}
+                <div className='space-y-4'>
+                  <div className='inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 mb-2'>
+                    <Globe className='h-8 w-8 text-white' />
+                  </div>
+                  <h1 className='text-4xl font-bold tracking-tight text-foreground'>
                     Website Viewer
                   </h1>
-                  <p className='text-muted-foreground text-sm'>
-                    View websites across devices, analyze SEO, and check social media previews
+                  <p className='text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed'>
+                    View websites across multiple devices, analyze SEO performance, and preview social media cards—all in one place
                   </p>
                 </div>
-                <div className='text-sm text-muted-foreground p-3 bg-muted/80 rounded-lg'>
-                  <div className='flex items-center justify-center gap-2 mb-2'>
-                    <span>Enter URL above</span>
-                    <span>•</span>
-                    <span>Use sidebar shortcuts</span>
-                    <span>•</span>
-                    <span>Press</span>
-                    <kbd className='px-2 py-1 bg-background border rounded-md text-xs font-mono shadow-sm'>
-                      ⌘K
-                    </kbd>
+
+                {/* Feature Cards */}
+                <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 mt-12'>
+                  <div className='p-6 rounded-xl border border-border/50 bg-card/30 hover:bg-card/50 transition-all duration-200'>
+                    <div className='text-2xl mb-3'>📱</div>
+                    <h3 className='font-semibold text-sm mb-2'>Multi-Device Preview</h3>
+                    <p className='text-xs text-muted-foreground leading-relaxed'>Test responsive layouts across desktop, tablet, and mobile viewports simultaneously</p>
                   </div>
-                  <p className='text-xs opacity-75'>Access favorites, recent sites, and dev ports from the sidebar</p>
+                  <div className='p-6 rounded-xl border border-border/50 bg-card/30 hover:bg-card/50 transition-all duration-200'>
+                    <div className='text-2xl mb-3'>🔍</div>
+                    <h3 className='font-semibold text-sm mb-2'>SEO Analysis</h3>
+                    <p className='text-xs text-muted-foreground leading-relaxed'>Analyze meta tags, titles, descriptions, and optimization opportunities</p>
+                  </div>
+                  <div className='p-6 rounded-xl border border-border/50 bg-card/30 hover:bg-card/50 transition-all duration-200'>
+                    <div className='text-2xl mb-3'>💬</div>
+                    <h3 className='font-semibold text-sm mb-2'>Social Previews</h3>
+                    <p className='text-xs text-muted-foreground leading-relaxed'>Preview how your site appears on Twitter, Facebook, and LinkedIn</p>
+                  </div>
                 </div>
+
+                {/* Quick Start */}
+                <div className='mt-8 p-6 rounded-xl border border-border/40 bg-muted/20'>
+                  <h3 className='text-sm font-semibold mb-3 text-foreground'>Quick Start</h3>
+                  <div className='flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground'>
+                    <div className='flex items-center gap-2'>
+                      <kbd className='px-2 py-1.5 bg-background border border-border rounded-md font-mono text-[11px]'>⌘K</kbd>
+                      <span>Quick search</span>
+                    </div>
+                    <span className='text-border'>•</span>
+                    <div className='flex items-center gap-2'>
+                      <kbd className='px-2 py-1.5 bg-background border border-border rounded-md font-mono text-[11px]'>⌘B</kbd>
+                      <span>Toggle sidebar</span>
+                    </div>
+                    <span className='text-border'>•</span>
+                    <span>Use dev ports from sidebar for local testing</span>
+                  </div>
                 </div>
               </div>
             </div>

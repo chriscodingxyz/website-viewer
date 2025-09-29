@@ -67,7 +67,7 @@ export const SEOSection: React.FC<SEOSectionProps> = ({ metadata }) => {
 
       {/* Core Meta Tags */}
       <View style={styles.marginBottom}>
-        <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1a1a1a' }}>
+        <Text style={styles.subsectionTitle}>
           Essential Meta Tags
         </Text>
 
@@ -132,7 +132,7 @@ export const SEOSection: React.FC<SEOSectionProps> = ({ metadata }) => {
 
       {/* Technical Configuration */}
       <View style={styles.marginBottom}>
-        <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1a1a1a' }}>
+        <Text style={styles.subsectionTitle}>
           Technical Configuration
         </Text>
 
@@ -179,8 +179,8 @@ export const SEOSection: React.FC<SEOSectionProps> = ({ metadata }) => {
 
       {/* Icons & Branding */}
       <View style={styles.marginBottom}>
-        <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1a1a1a' }}>
-          Icons & Visual Identity
+        <Text style={styles.subsectionTitle}>
+          Visual Identity
         </Text>
 
         <View style={styles.listItem}>
@@ -204,7 +204,7 @@ export const SEOSection: React.FC<SEOSectionProps> = ({ metadata }) => {
 
       {/* SEO Recommendations */}
       <View>
-        <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10, color: '#1a1a1a' }}>
+        <Text style={styles.subsectionTitle}>
           Recommendations
         </Text>
 

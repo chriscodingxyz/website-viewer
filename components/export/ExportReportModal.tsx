@@ -335,41 +335,64 @@ export default function ExportReportModal({ open, onOpenChange, metadata }: Expo
             />
           </div>
 
-          {/* Environment Info */}
-          <Card className="bg-muted/30">
+          {/* Report Preview Info */}
+          <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Info className="h-4 w-4 text-blue-600 mt-1" />
-                <div className="text-sm">
-                  <p className="font-medium mb-1">Environment Detection</p>
-                  <p className="text-muted-foreground">
-                    Based on the URL, this appears to be a{' '}
-                    <span className="font-medium">{exportConfig.environment}</span> environment.
-                    Reports will include environment-specific validation and recommendations.
-                  </p>
+                <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-1 flex-shrink-0" />
+                <div className="text-sm space-y-2">
+                  <div>
+                    <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                      Environment: {exportConfig.environment === 'custom'
+                        ? (exportConfig.customEnvironment || 'Custom')
+                        : exportConfig.environment.charAt(0).toUpperCase() + exportConfig.environment.slice(1)}
+                    </p>
+                    <p className="text-blue-700 dark:text-blue-300">
+                      Reports include environment-specific validation, security checks, and tailored recommendations.
+                    </p>
+                  </div>
+                  {exportConfig.includeAnalysis && (
+                    <div className="pt-2 border-t border-blue-200 dark:border-blue-800">
+                      <p className="font-medium text-blue-900 dark:text-blue-100">
+                        ✓ Analysis Included
+                      </p>
+                      <p className="text-blue-700 dark:text-blue-300 text-xs">
+                        SEO scores, technical assessment, critical issues, warnings, and actionable recommendations
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={handleClose} disabled={isExporting}>
-            Cancel
-          </Button>
-          <Button onClick={handleExport} disabled={isExporting} className="min-w-[120px]">
-            {isExporting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Exporting...
-              </>
-            ) : (
-              <>
-                <FileDown className="h-4 w-4 mr-2" />
-                Export Report
-              </>
-            )}
-          </Button>
+        <DialogFooter className="flex-col sm:flex-row gap-2 items-center">
+          <div className="flex-1 text-xs text-muted-foreground hidden sm:block">
+            {exportConfig.format === 'both' ? 'Both files will be downloaded' : `${exportConfig.format.toUpperCase()} will be downloaded`}
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={handleClose} disabled={isExporting} className="flex-1 sm:flex-initial">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleExport}
+              disabled={isExporting || (exportConfig.environment === 'custom' && !exportConfig.customEnvironment?.trim())}
+              className="min-w-[140px] flex-1 sm:flex-initial"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Export {exportConfig.format === 'both' ? 'Reports' : exportConfig.format.toUpperCase()}
+                </>
+              )}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

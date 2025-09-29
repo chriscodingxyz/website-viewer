@@ -74,8 +74,24 @@ export function useExportReport(): UseExportReportReturn {
 
       // Validate configuration
       if (format === 'pdf' || format === 'both') {
-        validatePDFConfig(exportConfig)
+        const validation = validatePDFConfig(exportConfig)
+        if (!validation.valid) {
+          throw new Error(validation.errors.join(', '))
+        }
       }
+
+      // Validate metadata
+      if (!metadata || !metadata.url) {
+        throw new Error('Invalid metadata: URL is required')
+      }
+
+      const domain = extractDomainFromUrl(metadata.url)
+      const toastId = format === 'both' ? 'export-both' : `export-${format}`
+
+      // Show progress toast
+      toast.loading(`Generating ${format === 'both' ? 'reports' : format.toUpperCase()}...`, {
+        id: toastId
+      })
 
       if (format === 'json' || format === 'both') {
         await generateJSONReport(metadata, {
@@ -84,7 +100,7 @@ export function useExportReport(): UseExportReportReturn {
         })
 
         if (format === 'json') {
-          toast.success('JSON report exported successfully')
+          toast.success(`JSON report for ${domain} exported successfully`, { id: toastId })
         }
       }
 
@@ -93,18 +109,31 @@ export function useExportReport(): UseExportReportReturn {
         await generatePDFClientSide(metadata, exportConfig)
 
         if (format === 'pdf') {
-          toast.success('PDF report exported successfully')
+          toast.success(`PDF report for ${domain} exported successfully`, { id: toastId })
         }
       }
 
       if (format === 'both') {
-        toast.success('Reports exported successfully (JSON + PDF)')
+        toast.success(`Reports for ${domain} exported successfully (JSON + PDF)`, { id: toastId })
       }
 
     } catch (error) {
       console.error('Export failed:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Failed to export report'
-      toast.error(errorMessage)
+      let errorMessage = 'Failed to export report'
+
+      if (error instanceof Error) {
+        errorMessage = error.message
+      }
+
+      // Provide more specific error messages
+      if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        errorMessage = 'Network error: Please check your connection and try again'
+      } else if (errorMessage.includes('timeout')) {
+        errorMessage = 'Export timed out: Please try again with fewer sections'
+      }
+
+      toast.error(errorMessage, { duration: 5000 })
+      throw error // Re-throw to allow parent components to handle if needed
     } finally {
       setIsExporting(false)
     }

@@ -5,10 +5,11 @@ export const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
     backgroundColor: '#FFFFFF',
-    padding: 40,
+    padding: 50,
     fontFamily: 'Helvetica',
-    fontSize: 11,
-    lineHeight: 1.5,
+    fontSize: 10,
+    lineHeight: 1.6,
+    color: '#1f2937',
   },
 
   // Cover page styles
@@ -39,7 +40,6 @@ export const styles = StyleSheet.create({
     color: '#2563eb',
     backgroundColor: '#f0f9ff',
     padding: 12,
-    borderRadius: 8,
     marginBottom: 24,
   },
 
@@ -53,42 +53,46 @@ export const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottom: 2,
-    borderBottomColor: '#e5e7eb',
-    paddingBottom: 16,
-    marginBottom: 24,
+    alignItems: 'flex-end',
+    borderBottom: 3,
+    borderBottomColor: '#3b82f6',
+    paddingBottom: 12,
+    marginBottom: 28,
   },
 
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: '#111827',
+    letterSpacing: 0.5,
   },
 
   headerDate: {
-    fontSize: 10,
-    color: '#666666',
+    fontSize: 9,
+    color: '#6b7280',
   },
 
   // Section styles
   section: {
-    marginBottom: 24,
-    padding: 20,
-    backgroundColor: '#fafafa',
-    borderRadius: 8,
-    border: 1,
-    borderColor: '#e5e7eb',
+    marginBottom: 20,
   },
 
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 14,
+    paddingBottom: 6,
+    borderBottom: 2,
+    borderBottomColor: '#e5e7eb',
+    letterSpacing: 0.3,
+  },
+
+  subsectionTitle: {
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#1a1a1a',
-    marginBottom: 12,
-    paddingBottom: 8,
-    borderBottom: 1,
-    borderBottomColor: '#d1d5db',
+    marginBottom: 10,
   },
 
   sectionContent: {
@@ -98,32 +102,32 @@ export const styles = StyleSheet.create({
   // Score and metrics styles
   scoreContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    padding: 16,
-    backgroundColor: '#ffffff',
-    borderRadius: 6,
-    border: 1,
-    borderColor: '#e5e7eb',
+    gap: 12,
+    marginBottom: 20,
   },
 
   scoreItem: {
     flex: 1,
     alignItems: 'center',
     textAlign: 'center',
+    padding: 14,
+    backgroundColor: '#f9fafb',
+    border: 1,
+    borderColor: '#e5e7eb',
   },
 
   scoreValue: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#059669',
     marginBottom: 4,
   },
 
   scoreLabel: {
-    fontSize: 10,
-    color: '#666666',
+    fontSize: 8,
+    color: '#6b7280',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    fontWeight: 'bold',
   },
 
   // Status indicator styles
@@ -131,7 +135,6 @@ export const styles = StyleSheet.create({
     color: '#059669',
     backgroundColor: '#ecfdf5',
     padding: 6,
-    borderRadius: 4,
     fontSize: 10,
     fontWeight: 'bold',
   },
@@ -140,7 +143,6 @@ export const styles = StyleSheet.create({
     color: '#d97706',
     backgroundColor: '#fffbeb',
     padding: 6,
-    borderRadius: 4,
     fontSize: 10,
     fontWeight: 'bold',
   },
@@ -149,7 +151,6 @@ export const styles = StyleSheet.create({
     color: '#dc2626',
     backgroundColor: '#fef2f2',
     padding: 6,
-    borderRadius: 4,
     fontSize: 10,
     fontWeight: 'bold',
   },
@@ -177,35 +178,42 @@ export const styles = StyleSheet.create({
 
   // Table styles
   table: {
-    marginBottom: 16,
+    marginBottom: 14,
+    backgroundColor: '#ffffff',
+    border: 1,
+    borderColor: '#e5e7eb',
   },
 
   tableRow: {
     flexDirection: 'row',
     borderBottom: 1,
-    borderBottomColor: '#e5e7eb',
-    paddingVertical: 8,
+    borderBottomColor: '#f3f4f6',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
 
   tableHeader: {
     backgroundColor: '#f9fafb',
     paddingVertical: 10,
-    fontWeight: 'bold',
+    paddingHorizontal: 12,
+    borderBottom: 2,
+    borderBottomColor: '#e5e7eb',
   },
 
   tableCell: {
     flex: 1,
-    fontSize: 10,
+    fontSize: 9,
     color: '#374151',
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
   },
 
   tableCellHeader: {
     flex: 1,
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 'bold',
-    color: '#1a1a1a',
-    paddingHorizontal: 8,
+    color: '#111827',
+    paddingHorizontal: 6,
+    letterSpacing: 0.3,
   },
 
   // Recommendation styles
@@ -215,7 +223,6 @@ export const styles = StyleSheet.create({
     backgroundColor: '#f0f9ff',
     borderLeft: 4,
     borderLeftColor: '#2563eb',
-    borderRadius: 4,
   },
 
   recommendationTitle: {
@@ -238,7 +245,6 @@ export const styles = StyleSheet.create({
     backgroundColor: '#fef2f2',
     borderLeft: 4,
     borderLeftColor: '#dc2626',
-    borderRadius: 4,
   },
 
   criticalIssueTitle: {
@@ -298,7 +304,6 @@ export const styles = StyleSheet.create({
     backgroundColor: '#e5e7eb',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
     fontSize: 9,
     color: '#374151',
     fontWeight: 'bold',

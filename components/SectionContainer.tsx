@@ -57,8 +57,8 @@ export default function SectionContainer () {
           }
           style={selectedTab !== 'seo' ? { height: '1px' } : {}}
         >
-          <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
-            <div className='w-full py-4'>
+          <div className='max-w-[1400px] mx-auto px-6 lg:px-8'>
+            <div className='w-full py-6'>
               <SEOSection metadata={metadata} />
             </div>
           </div>
@@ -71,8 +71,8 @@ export default function SectionContainer () {
           }
           style={selectedTab !== 'social' ? { height: '1px' } : {}}
         >
-          <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
-            <div className='w-full py-4'>
+          <div className='max-w-[1400px] mx-auto px-6 lg:px-8'>
+            <div className='w-full py-6'>
               <SocialPreview metadata={metadata} />
             </div>
           </div>
@@ -85,8 +85,8 @@ export default function SectionContainer () {
           }
           style={selectedTab !== 'technical' ? { height: '1px' } : {}}
         >
-          <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8'>
-            <div className='w-full py-4'>
+          <div className='max-w-[1400px] mx-auto px-6 lg:px-8'>
+            <div className='w-full py-6'>
               <TechnicalSection metadata={metadata} />
             </div>
           </div>

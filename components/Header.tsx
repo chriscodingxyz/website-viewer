@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { SidebarTrigger } from '@/components/ui/sidebar'
 import {
   Globe,
   Check,
@@ -97,13 +96,13 @@ function Header () {
     setSelectedTab(tabId)
     setMobileMenuOpen(false) // Close mobile menu when tab is selected
 
-    // Update URL to match the section
+    // Stay on main page, don't navigate to different routes
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search)
       const siteParam = searchParams.get('site')
-      const newPath = `/${tabId}${siteParam ? `?site=${siteParam}` : ''}`
+      const newPath = `/${siteParam ? `?site=${siteParam}` : ''}`
 
-      router.push(newPath)
+      router.push(newPath, { scroll: false })
     }
 
     // If clicking on SEO, Social, or Technical tabs, trigger metadata extraction
@@ -147,13 +146,10 @@ function Header () {
 
 
   return (
-    <header className='bg-background border-b border-border'>
+    <header className='sticky top-0 z-50 bg-background border-b border-border'>
       <div className='py-2 px-2 sm:px-3'>
         <div className='max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-6'>
           <div className='flex gap-1 sm:gap-2 flex-row items-center'>
-            {/* Sidebar Trigger - Desktop only */}
-            <SidebarTrigger className='h-9 w-9 hidden md:flex' />
-
             {/* Home Button - Only show when site is loaded */}
             {currentSite && (
               <Button
@@ -260,24 +256,9 @@ function Header () {
               </div>
             )}
 
-            {/* Desktop Navigation Tabs - Show when site is loaded and screen is large enough */}
+            {/* Spacer - removed redundant desktop tabs since we have sidebar */}
             {currentSite && !isInitialLoad && (
-              <div className='hidden md:flex items-center gap-1 overflow-x-auto flex-1'>
-                {tabs.map(tab => (
-                  <button
-                    key={tab.id}
-                    className={cn(
-                      'px-2 sm:px-2.5 py-1 text-xs rounded-md transition-all duration-200 shrink-0',
-                      selectedTab === tab.id
-                        ? 'bg-foreground text-background'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                    )}
-                    onClick={() => handleTabClick(tab.id)}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+              <div className='hidden md:flex items-center gap-1 flex-1' />
             )}
 
             {/* Desktop Export and Share buttons - Only show on desktop when metadata is loaded */}

@@ -28,6 +28,8 @@ export interface ReportMetadata {
   customNotes?: string
   url: string
   userAgent: string
+  generatedTimestamp?: number
+  generatedDate?: string
 }
 
 export interface AnalysisResults {

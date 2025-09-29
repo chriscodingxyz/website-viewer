@@ -31,14 +31,25 @@ export function createEnhancedReportData(
   metadata: WebsiteMetadata,
   config: ExportConfig
 ): EnhancedReportData {
+  const now = new Date()
+
   const reportMetadata: ReportMetadata = {
-    generatedAt: new Date().toISOString(),
+    generatedAt: now.toISOString(),
     environment: config.environment,
     customEnvironment: config.customEnvironment,
-    exportVersion: '1.0.0',
+    exportVersion: '2.0.0',
     customNotes: config.notes,
     url: metadata.url,
-    userAgent: navigator.userAgent
+    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-side export',
+    generatedTimestamp: now.getTime(),
+    generatedDate: now.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    })
   }
 
   // Filter website data based on included sections
@@ -46,24 +57,25 @@ export function createEnhancedReportData(
 
   const analysis = config.includeAnalysis
     ? generateAnalysis(metadata, config.environment)
-    : {
-        seoScore: 0,
-        technicalScore: 0,
-        criticalIssues: [],
-        warnings: [],
-        recommendations: [],
-        environmentChecks: {
-          productionReady: false,
-          stagingReady: false,
-          developmentReady: false,
-          reasons: []
-        }
-      }
+    : undefined
 
   return {
     reportMetadata,
     websiteData: filteredWebsiteData,
-    analysis
+    analysis: analysis || {
+      seoScore: 0,
+      technicalScore: 0,
+      performanceScore: undefined,
+      criticalIssues: [],
+      warnings: [],
+      recommendations: [],
+      environmentChecks: {
+        productionReady: false,
+        stagingReady: false,
+        developmentReady: false,
+        reasons: ['Analysis not included in export']
+      }
+    }
   }
 }
 
