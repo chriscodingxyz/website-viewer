@@ -256,13 +256,13 @@ export default function WebsiteView ({
   const getDeviceIcon = (deviceType: ViewType) => {
     switch (deviceType) {
       case 'desktop':
-        return <Monitor className='h-4 w-4' />
+        return <Monitor className='h-3.5 w-3.5' />
       case 'tablet':
-        return <Tablet className='h-4 w-4' />
+        return <Tablet className='h-3.5 w-3.5' />
       case 'mobileLarge':
-        return <Smartphone className='h-4 w-4' />
+        return <Smartphone className='h-3.5 w-3.5' />
       case 'mobile':
-        return <Smartphone className='h-4 w-4' />
+        return <Smartphone className='h-3.5 w-3.5' />
     }
   }
 
@@ -322,7 +322,7 @@ export default function WebsiteView ({
   return (
     <div
       ref={containerRef}
-      className={`relative rounded-t-xl overflow-hidden w-full sm:w-auto hover-lift animate-fade-in device-border ${
+      className={`relative rounded-lg overflow-hidden w-full sm:w-auto hover-lift animate-fade-in bg-card border border-border/40 shadow-sm ${
         getDeviceClass(view.type)
       }`}
       style={{
@@ -333,10 +333,9 @@ export default function WebsiteView ({
       }}
     >
       <div
-        className='flex items-center justify-between p-0'
-        style={{ 
-          height: `${optionsHeight}px`,
-          background: `rgb(var(--device-color) / 0.08)`
+        className='flex items-center justify-between p-0 bg-muted/50 border-b border-border/40'
+        style={{
+          height: `${optionsHeight}px`
         }}
       >
         <div className='flex items-center gap-2'>
@@ -344,16 +343,17 @@ export default function WebsiteView ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className='flex items-center gap-2 px-3 rounded-tl-xl text-sm font-medium transition-all duration-200 hover:bg-white/10 border-0 shadow-none'
+                className='flex items-center gap-2 px-3 rounded-tl-lg text-xs font-medium transition-all duration-200 hover:bg-muted/80 border-0 shadow-none text-foreground'
                 style={{
-                  color: `rgb(var(--device-color))`,
                   height: `${optionsHeight}px`
                 }}
                 title={`Change device type (current: ${getDeviceName(
                   view.type
                 )})`}
               >
-                {getDeviceIcon(view.type)}
+                <div className='h-3.5 w-3.5 flex items-center justify-center'>
+                  {getDeviceIcon(view.type)}
+                </div>
                 <span className='truncate'>
                   {getDeviceName(view.type)}
                 </span>
@@ -383,14 +383,14 @@ export default function WebsiteView ({
           {getStatusIcon()}
         </div>
 
-        <div className='flex items-center gap-1'>
+        <div className='flex items-center gap-0.5 pr-1'>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className='text-muted-foreground hover:text-foreground p-0.5'
+                className='text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted/80 transition-colors'
                 title='More options'
               >
-                <Settings className='h-4 w-4' />
+                <Settings className='h-3.5 w-3.5' />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -457,18 +457,18 @@ export default function WebsiteView ({
           </DropdownMenu>
           <button
             onClick={() => setIsEnlargeDialogOpen(true)}
-            className='text-muted-foreground hover:text-foreground p-0.5'
+            className='text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted/80 transition-colors'
             title='Enlarge view'
           >
-            <Expand className='h-4 w-4' />
+            <Expand className='h-3.5 w-3.5' />
           </button>
           <button
             onClick={onRemove}
-            className='bg-red-500/8 hover:bg-red-500/15 text-red-600 hover:text-red-700 rounded-tr-xl w-8 flex items-center justify-center transition-all duration-200 hover:brightness-95 border-0 shadow-none'
+            className='text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-tr-lg px-2 flex items-center justify-center transition-all duration-200 border-0 shadow-none'
             style={{ height: `${optionsHeight}px` }}
             title='Remove view'
           >
-            <X className='h-4 w-4' />
+            <X className='h-3.5 w-3.5' />
           </button>
         </div>
       </div>
