@@ -130,43 +130,42 @@ export default function ViewportsSection ({
   }
 
   return (
-    <div className='w-full'>
-      {/* Zoom Control - Show only when viewports are loaded (not during metadata loading) */}
-      {views.length > 0 && !metadataLoading && (
-        <div className='flex justify-center py-2 px-4 border-b border-border/20'>
-          <div className='flex items-center gap-2'>
-            <span className='text-xs text-muted-foreground'>Zoom:</span>
-            <Select
-              value={Math.round(globalZoom * 100).toString()}
-              onValueChange={(value) => {
-                const percentage = parseInt(value)
-                const newIndex = zoomSteps.findIndex(step => Math.round(step * 100) === percentage)
-                if (newIndex !== -1) {
-                  setGlobalZoomStepIndex(newIndex)
-                  toast.success(`Zoom: ${percentage}%`)
-                }
-              }}
-            >
-              <SelectTrigger className="w-20 h-7 text-xs border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="w-20">
-                {zoomSteps.map((step, index) => {
-                  const percentage = Math.round(step * 100)
-                  return (
-                    <SelectItem key={index} value={percentage.toString()}>
-                      {percentage}%
-                    </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      )}
-
+    <div className='w-full relative'>
       {/* Content - Always visible */}
       <div className='w-full p-4 relative'>
+        {/* Zoom Control - Fixed bottom right corner (hidden on mobile) */}
+        {views.length > 0 && !metadataLoading && (
+          <div className='hidden sm:block fixed bottom-6 right-6 z-40'>
+            <div className='flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-border/50 rounded-lg px-3 py-2 shadow-lg'>
+              <span className='text-xs text-muted-foreground'>Zoom:</span>
+              <Select
+                value={Math.round(globalZoom * 100).toString()}
+                onValueChange={(value) => {
+                  const percentage = parseInt(value)
+                  const newIndex = zoomSteps.findIndex(step => Math.round(step * 100) === percentage)
+                  if (newIndex !== -1) {
+                    setGlobalZoomStepIndex(newIndex)
+                    toast.success(`Zoom: ${percentage}%`)
+                  }
+                }}
+              >
+                <SelectTrigger className="w-20 h-7 text-xs border border-border/50 hover:border-border transition-all duration-200 bg-background hover:bg-muted/50 rounded-md">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="w-20">
+                  {zoomSteps.map((step, index) => {
+                    const percentage = Math.round(step * 100)
+                    return (
+                      <SelectItem key={index} value={percentage.toString()}>
+                        {percentage}%
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
         <div className='w-full'>
           {views.length === 0 ? (
             <div className='flex items-center justify-center h-32'>
