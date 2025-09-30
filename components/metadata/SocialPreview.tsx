@@ -59,69 +59,40 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
   }) => {
     const statusIcon =
       status === 'present' ? (
-        <CheckCircle className='h-4 w-4' />
+        <CheckCircle className='h-3.5 w-3.5 text-green-600' />
       ) : status === 'inherited' ? (
-        <AlertTriangle className='h-4 w-4' />
+        <AlertTriangle className='h-3.5 w-3.5 text-orange-600' />
       ) : (
-        <XCircle className='h-4 w-4' />
+        <XCircle className='h-3.5 w-3.5 text-red-600' />
       )
 
-    const badgeClass =
-      status === 'present'
-        ? 'analysis-badge-success'
-        : status === 'inherited'
-        ? 'analysis-badge-warning'
-        : 'analysis-badge-error'
-
-    const statusText =
-      status === 'present'
-        ? 'Set'
-        : status === 'inherited'
-        ? 'Inherited'
-        : 'Missing'
-
     return (
-      <div className=''>
-        <div className='flex items-start gap-4'>
-          <div
-            className={`mt-0.5 ${
-              status === 'present'
-                ? 'text-emerald-600'
-                : status === 'inherited'
-                ? 'text-amber-600'
-                : 'text-red-600'
-            }`}
-          >
+      <div className="bg-card border border-border/40 rounded-lg overflow-hidden shadow-sm">
+        {/* Header section with gray background */}
+        <div className="bg-muted/50 px-3 py-2 border-b border-border/40">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-medium text-foreground">{label}</h4>
             {statusIcon}
           </div>
-          <div className='flex-1 min-w-0'>
-            <div className='flex items-center justify-between mb-2'>
-              <span className='font-semibold text-foreground analysis-text-sm'>
-                {label}
-              </span>
-              <div className={badgeClass}>{statusText}</div>
-            </div>
+        </div>
 
-            {value ? (
-              <div className='space-y-2'>
-                <p className='text-muted-foreground analysis-text-sm leading-relaxed break-words'>
-                  {value}
+        {/* Content section */}
+        <div className="p-3">
+          {value ? (
+            <>
+              <p className="text-xs text-foreground mb-1.5 break-words leading-relaxed">{value}</p>
+              {status === 'inherited' && (
+                <p className="text-[11px] text-muted-foreground leading-relaxed flex items-start gap-1.5">
+                  <AlertTriangle className='h-3 w-3 text-orange-500 flex-shrink-0 mt-0.5' />
+                  <span>Inherited from SEO meta - consider adding dedicated social media tags</span>
                 </p>
-                {status === 'inherited' && (
-                  <p className='analysis-text-xs text-muted-foreground pl-3 border-l-2 border-amber-200 border-l-amber-400 flex items-start gap-2'>
-                    <AlertTriangle className='h-3 w-3 text-amber-500 flex-shrink-0 mt-0.5' />
-                    <span>Inherited from SEO meta{' '}
-                    {label.toLowerCase().replace('opengraph ', '')} - consider
-                    adding dedicated social media tags</span>
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className='analysis-text-xs text-muted-foreground'>
-                Add {label.toLowerCase()} for better social media sharing
-              </p>
-            )}
-          </div>
+              )}
+            </>
+          ) : (
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Add {label.toLowerCase()} for better social media sharing
+            </p>
+          )}
         </div>
       </div>
     )
@@ -775,97 +746,83 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
         <SocialPreviewCard platform='telegram' />
       </div>
 
-      <div className='space-y-4'>
-        <div className='bg-card/30 rounded-lg border border-border/50 p-4'>
-          <SimpleListItem
-            icon='📖'
-            label='OpenGraph Title'
-            value={openGraph.title || seo.title}
-            status={
-              openGraph.title ? 'present' : seo.title ? 'inherited' : 'missing'
-            }
-          />
-        </div>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+        <SimpleListItem
+          icon='📖'
+          label='OpenGraph Title'
+          value={openGraph.title || seo.title}
+          status={
+            openGraph.title ? 'present' : seo.title ? 'inherited' : 'missing'
+          }
+        />
 
-        <div className='bg-card/30 rounded-lg border border-border/50 p-4'>
-          <SimpleListItem
-            icon='📝'
-            label='OpenGraph Description'
-            value={openGraph.description || seo.description}
-            status={
-              openGraph.description
-                ? 'present'
-                : seo.description
-                ? 'inherited'
-                : 'missing'
-            }
-          />
-        </div>
+        <SimpleListItem
+          icon='📝'
+          label='OpenGraph Description'
+          value={openGraph.description || seo.description}
+          status={
+            openGraph.description
+              ? 'present'
+              : seo.description
+              ? 'inherited'
+              : 'missing'
+          }
+        />
 
-        <div className='bg-card/30 rounded-lg border border-border/50 p-4'>
-          <SimpleListItem
-            icon='🖼️'
-            label='OpenGraph Image'
-            value={openGraph.image}
-            status={openGraph.image ? 'present' : 'missing'}
-          />
-        </div>
+        <SimpleListItem
+          icon='🖼️'
+          label='OpenGraph Image'
+          value={openGraph.image}
+          status={openGraph.image ? 'present' : 'missing'}
+        />
 
-        <div className='bg-card/30 rounded-lg border border-border/50 p-4'>
-          <SimpleListItem
-            icon='🐦'
-            label='Twitter Card'
-            value={twitterCard.card ? `${twitterCard.card} card` : undefined}
-            status={twitterCard.card ? 'present' : 'missing'}
-          />
-        </div>
+        <SimpleListItem
+          icon='🐦'
+          label='Twitter Card'
+          value={twitterCard.card ? `${twitterCard.card} card` : undefined}
+          status={twitterCard.card ? 'present' : 'missing'}
+        />
 
-        <div className='bg-card/30 rounded-lg border border-border/50 p-4'>
-          <SimpleListItem
-            icon='🐦'
-            label='Twitter Title'
-            value={twitterCard.title || openGraph.title || seo.title}
-            status={
-              twitterCard.title
-                ? 'present'
-                : openGraph.title || seo.title
-                ? 'inherited'
-                : 'missing'
-            }
-          />
-        </div>
+        <SimpleListItem
+          icon='🐦'
+          label='Twitter Title'
+          value={twitterCard.title || openGraph.title || seo.title}
+          status={
+            twitterCard.title
+              ? 'present'
+              : openGraph.title || seo.title
+              ? 'inherited'
+              : 'missing'
+          }
+        />
 
-        <div className='bg-card/30 rounded-lg border border-border/50 p-4'>
-          <SimpleListItem
-            icon='🐦'
-            label='Twitter Description'
-            value={
-              twitterCard.description || openGraph.description || seo.description
-            }
-            status={
-              twitterCard.description
-                ? 'present'
-                : openGraph.description || seo.description
-                ? 'inherited'
-                : 'missing'
-            }
-          />
-        </div>
+        <SimpleListItem
+          icon='🐦'
+          label='Twitter Description'
+          value={
+            twitterCard.description || openGraph.description || seo.description
+          }
+          status={
+            twitterCard.description
+              ? 'present'
+              : openGraph.description || seo.description
+              ? 'inherited'
+              : 'missing'
+          }
+        />
 
-        <div className='bg-card/30 rounded-lg border border-border/50 p-4'>
-          <SimpleListItem
-            icon='🖼️'
-            label='Twitter Image'
-            value={twitterCard.image || openGraph.image}
-            status={
-              twitterCard.image
-                ? 'present'
-                : openGraph.image
-                ? 'inherited'
-                : 'missing'
-            }
-          />
-        </div>
+        <SimpleListItem
+          icon='🖼️'
+          label='Twitter Image'
+          value={twitterCard.image || openGraph.image}
+          status={
+            twitterCard.image
+              ? 'present'
+              : openGraph.image
+              ? 'inherited'
+              : 'missing'
+          }
+        />
       </div>
     </div>
   )
