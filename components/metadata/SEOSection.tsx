@@ -48,7 +48,7 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
 
   const seoScore = getSEOScore()
 
-  // Clean status indicator component - matching sidebar style
+  // Elegant card-based status indicator - inspired by reference design
   const StatusIndicator = ({ status, label, value, details }: {
     status: 'good' | 'warning' | 'error'
     label: string
@@ -57,41 +57,49 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
   }) => {
     const statusConfig = {
       good: {
-        icon: <CheckCircle className="h-4 w-4 text-green-600" />,
-        dotClass: "w-2 h-2 bg-green-500 rounded-full"
+        icon: <CheckCircle className="h-3.5 w-3.5 text-green-600" />,
+        bgClass: "bg-green-50 dark:bg-green-950/30"
       },
       warning: {
-        icon: <AlertTriangle className="h-4 w-4 text-orange-600" />,
-        dotClass: "w-2 h-2 bg-orange-500 rounded-full"
+        icon: <AlertTriangle className="h-3.5 w-3.5 text-orange-600" />,
+        bgClass: "bg-orange-50 dark:bg-orange-950/30"
       },
       error: {
-        icon: <XCircle className="h-4 w-4 text-red-600" />,
-        dotClass: "w-2 h-2 bg-red-500 rounded-full"
+        icon: <XCircle className="h-3.5 w-3.5 text-red-600" />,
+        bgClass: "bg-red-50 dark:bg-red-950/30"
       }
     }
 
     const config = statusConfig[status]
 
     return (
-      <div className="flex items-start gap-3 p-3 bg-card border border-border rounded-lg">
-        <div className={config.dotClass} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <h4 className="text-sm font-medium text-foreground">{label}</h4>
+      <div className="bg-card border border-border/40 rounded-lg overflow-hidden shadow-sm">
+        {/* Header section with gray background */}
+        <div className="bg-muted/50 px-3 py-2 border-b border-border/40">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-medium text-foreground">{label}</h4>
             {config.icon}
           </div>
-          {value && (
-            <p className="text-sm text-foreground mb-1 break-words">{value}</p>
-          )}
-          {details && (
-            <p className="text-xs text-muted-foreground">{details}</p>
+        </div>
+
+        {/* Content section */}
+        <div className="p-3">
+          {value ? (
+            <>
+              <p className="text-xs text-foreground mb-1.5 break-words leading-relaxed">{value}</p>
+              {details && (
+                <p className="text-[11px] text-muted-foreground leading-relaxed">{details}</p>
+              )}
+            </>
+          ) : (
+            <p className="text-[11px] text-muted-foreground leading-relaxed">{details}</p>
           )}
         </div>
       </div>
     )
   }
 
-  // Clean SEO Score component - matching sidebar style
+  // Elegant SEO Score card - inspired by reference design
   const SEOScoreDisplay = () => {
     const getScoreColor = () => {
       if (seoScore.percentage >= 80) return 'bg-green-500'
@@ -100,49 +108,54 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
     }
 
     return (
-      <div className="bg-card border border-border rounded-lg p-3 mb-3">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-muted rounded-md flex items-center justify-center">
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+      <div className="bg-card border border-border/40 rounded-lg overflow-hidden shadow-sm">
+        {/* Header section with gray background */}
+        <div className="bg-muted/50 px-3 py-2 border-b border-border/40">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
+              <h3 className="text-xs font-medium text-foreground">SEO Health Score</h3>
             </div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">SEO Health Score</h3>
-              <p className="text-xs text-muted-foreground">Overall optimization status</p>
+            <div className="text-right">
+              <span className="text-sm font-semibold text-foreground">{seoScore.percentage}%</span>
             </div>
-          </div>
-          <div className="text-right">
-            <div className="text-lg font-bold text-foreground">{seoScore.percentage}%</div>
-            <div className="text-xs text-muted-foreground">{seoScore.score}/{seoScore.maxScore} checks passed</div>
           </div>
         </div>
 
-        <div className="h-2 bg-muted rounded-full overflow-hidden">
-          <div
-            className={getScoreColor()}
-            style={{ width: `${seoScore.percentage}%` }}
-          />
+        {/* Content section */}
+        <div className="p-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[11px] text-muted-foreground">Overall optimization status</p>
+            <p className="text-[11px] text-muted-foreground">{seoScore.score}/{seoScore.maxScore} checks passed</p>
+          </div>
+
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className={`${getScoreColor()} transition-all duration-300`}
+              style={{ width: `${seoScore.percentage}%` }}
+            />
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-3 p-3">
+    <div className="space-y-4 p-4">
       {/* SEO Score Header */}
       <SEOScoreDisplay />
 
       {/* Core Meta Tags Section */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Search className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2 mb-3">
+          <Search className="h-3.5 w-3.5 text-muted-foreground" />
           <div>
-            <h2 className="text-sm font-semibold text-foreground">Essential Meta Tags</h2>
-            <p className="text-xs text-muted-foreground">Core elements that affect search engine visibility</p>
+            <h2 className="text-xs font-semibold text-foreground">Essential Meta Tags</h2>
+            <p className="text-[11px] text-muted-foreground">Core elements that affect search engine visibility</p>
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <StatusIndicator
             status={seo.title && seo.title.length >= 30 && seo.title.length <= 60 ? 'good' : seo.title ? 'warning' : 'error'}
             label="Page Title"
@@ -168,15 +181,15 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
 
       {/* Technical Configuration */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Smartphone className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2 mb-3">
+          <Smartphone className="h-3.5 w-3.5 text-muted-foreground" />
           <div>
-            <h2 className="text-sm font-semibold text-foreground">Technical Configuration</h2>
-            <p className="text-xs text-muted-foreground">Technical settings for optimal user experience</p>
+            <h2 className="text-xs font-semibold text-foreground">Technical Configuration</h2>
+            <p className="text-[11px] text-muted-foreground">Technical settings for optimal user experience</p>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-3">
+        <div className="grid md:grid-cols-2 gap-2.5">
           <StatusIndicator
             status={seo.viewport ? 'good' : 'error'}
             label="Viewport"
@@ -209,157 +222,156 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
 
       {/* Visual Identity */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Target className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2 mb-3">
+          <Target className="h-3.5 w-3.5 text-muted-foreground" />
           <div>
-            <h2 className="text-sm font-semibold text-foreground">Visual Identity</h2>
-            <p className="text-xs text-muted-foreground">Icons and visual elements for brand recognition</p>
+            <h2 className="text-xs font-semibold text-foreground">Visual Identity</h2>
+            <p className="text-[11px] text-muted-foreground">Icons and visual elements for brand recognition</p>
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-lg p-3">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className={icons && icons.length > 0 ? "w-2 h-2 bg-green-500 rounded-full" : "w-2 h-2 bg-red-500 rounded-full"}></div>
-              <div>
-                <h3 className="text-sm font-medium text-foreground">Favicons & Icons</h3>
-                <p className="text-xs text-muted-foreground">
+        <div className="bg-card border border-border/40 rounded-lg overflow-hidden shadow-sm">
+          {/* Header section with gray background */}
+          <div className="bg-muted/50 px-3 py-2 border-b border-border/40">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs font-medium text-foreground">Favicons & Icons</h3>
+                <span className="text-[11px] text-muted-foreground">
                   {icons && icons.length > 0
-                    ? `${icons.length} icon${icons.length === 1 ? '' : 's'} detected`
-                    : 'No icons found'
+                    ? `${icons.length} detected`
+                    : 'None found'
                   }
-                </p>
+                </span>
               </div>
+              {icons && icons.length > 0 ? (
+                <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+              ) : (
+                <XCircle className="h-3.5 w-3.5 text-red-600" />
+              )}
             </div>
-            {icons && icons.length > 0 ? (
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            ) : (
-              <XCircle className="h-4 w-4 text-red-600" />
-            )}
           </div>
 
-          {icons && icons.length > 0 ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                {icons.slice(0, 4).map((icon, index) => (
-                  <div key={index} className="flex items-center gap-2 bg-muted/50 rounded-sm px-3 py-2 border border-border">
-                    {icon.href && (
-                      <Image
-                        src={icon.href}
-                        alt={`${icon.sizes || 'favicon'}`}
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none'
-                        }}
-                        unoptimized
-                      />
-                    )}
-                    <span className="text-sm font-medium text-foreground">{icon.sizes || '16x16'}</span>
-                  </div>
-                ))}
-                {icons.length > 4 && (
-                  <div className="text-sm text-muted-foreground px-3 py-2">
-                    +{icons.length - 4} more
-                  </div>
-                )}
+          {/* Content section */}
+          <div className="p-3">
+            {icons && icons.length > 0 ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {icons.slice(0, 4).map((icon, index) => (
+                    <div key={index} className="flex items-center gap-1.5 bg-muted/30 rounded px-2 py-1.5 border border-border/40">
+                      {icon.href && (
+                        <Image
+                          src={icon.href}
+                          alt={`${icon.sizes || 'favicon'}`}
+                          width={16}
+                          height={16}
+                          className="w-4 h-4"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                          }}
+                          unoptimized
+                        />
+                      )}
+                      <span className="text-[11px] font-medium text-foreground">{icon.sizes || '16x16'}</span>
+                    </div>
+                  ))}
+                  {icons.length > 4 && (
+                    <div className="text-[11px] text-muted-foreground px-2 py-1.5">
+                      +{icons.length - 4} more
+                    </div>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Icons help with brand recognition across browsers and platforms.
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Icons help with brand recognition across browsers and platforms.
-              </p>
-            </div>
-          ) : (
-            <div className="border border-border rounded-sm p-3 bg-muted/30">
-              <p className="text-xs text-muted-foreground">
+            ) : (
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
                 No favicons detected. Add favicon.ico and various icon sizes to improve brand recognition in browser tabs, bookmarks, and search results.
               </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
       {/* Analytics & Tracking */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2 mb-3">
+          <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
           <div>
-            <h2 className="text-sm font-semibold text-foreground">Analytics & Tracking</h2>
-            <p className="text-xs text-muted-foreground">Data collection tools for performance monitoring</p>
+            <h2 className="text-xs font-semibold text-foreground">Analytics & Tracking</h2>
+            <p className="text-[11px] text-muted-foreground">Data collection tools for performance monitoring</p>
           </div>
         </div>
 
         {analytics ? (
-          <div className="bg-card border border-border rounded-lg p-3">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                {(() => {
-                  const hasAnalytics = analytics.googleAnalytics.present || analytics.googleTagManager.present || analytics.otherAnalytics.some(a => a.detected)
-                  return <div className={hasAnalytics ? "w-2 h-2 bg-green-500 rounded-full" : "w-2 h-2 bg-red-500 rounded-full"}></div>
-                })()}
-                <div>
-                  <h3 className="text-sm font-medium text-foreground">Analytics Tools</h3>
-                  <p className="text-xs text-muted-foreground">
+          <div className="bg-card border border-border/40 rounded-lg overflow-hidden shadow-sm">
+            {/* Header section with gray background */}
+            <div className="bg-muted/50 px-3 py-2 border-b border-border/40">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-medium text-foreground">Analytics Tools</h3>
+                  <span className="text-[11px] text-muted-foreground">
                     {(() => {
                       const totalTools = [
                         analytics.googleAnalytics.present,
                         analytics.googleTagManager.present,
                         ...analytics.otherAnalytics.map(tool => tool.detected)
                       ].filter(Boolean).length
-                      return totalTools > 0 ? `${totalTools} tool${totalTools === 1 ? '' : 's'} active` : 'No tracking detected'
+                      return totalTools > 0 ? `${totalTools} active` : 'None detected'
                     })()}
-                  </p>
+                  </span>
                 </div>
+                {(() => {
+                  const hasAnalytics = analytics.googleAnalytics.present || analytics.googleTagManager.present || analytics.otherAnalytics.some(a => a.detected)
+                  return hasAnalytics ? (
+                    <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                  ) : (
+                    <XCircle className="h-3.5 w-3.5 text-red-600" />
+                  )
+                })()}
               </div>
-              {(() => {
-                const hasAnalytics = analytics.googleAnalytics.present || analytics.googleTagManager.present || analytics.otherAnalytics.some(a => a.detected)
-                return hasAnalytics ? (
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                ) : (
-                  <XCircle className="h-4 w-4 text-red-600" />
-                )
-              })()}
             </div>
 
-            <div className="space-y-2">
-              {analytics.googleAnalytics.present && (
-                <div className="flex items-center gap-2 bg-muted/50 rounded-sm px-3 py-2 border border-border">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-foreground">Google Analytics</span>
-                  {analytics.googleAnalytics.ga4 && (
-                    <Badge variant="outline" className="text-xs">
-                      GA4
-                    </Badge>
-                  )}
-                </div>
-              )}
+            {/* Content section */}
+            <div className="p-3">
+              <div className="space-y-1.5">
+                {analytics.googleAnalytics.present && (
+                  <div className="flex items-center gap-2 bg-muted/30 rounded px-2 py-1.5 border border-border/40">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                    <span className="text-[11px] font-medium text-foreground">Google Analytics</span>
+                    {analytics.googleAnalytics.ga4 && (
+                      <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                        GA4
+                      </Badge>
+                    )}
+                  </div>
+                )}
 
-              {analytics.googleTagManager.present && (
-                <div className="flex items-center gap-2 bg-muted/50 rounded-sm px-3 py-2 border border-border">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-foreground">Google Tag Manager</span>
-                </div>
-              )}
+                {analytics.googleTagManager.present && (
+                  <div className="flex items-center gap-2 bg-muted/30 rounded px-2 py-1.5 border border-border/40">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                    <span className="text-[11px] font-medium text-foreground">Google Tag Manager</span>
+                  </div>
+                )}
 
-              {analytics.otherAnalytics.filter(tool => tool.detected).map((tool, index) => (
-                <div key={index} className="flex items-center gap-2 bg-muted/50 rounded-sm px-3 py-2 border border-border">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-foreground">{tool.name}</span>
-                </div>
-              ))}
+                {analytics.otherAnalytics.filter(tool => tool.detected).map((tool, index) => (
+                  <div key={index} className="flex items-center gap-2 bg-muted/30 rounded px-2 py-1.5 border border-border/40">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                    <span className="text-[11px] font-medium text-foreground">{tool.name}</span>
+                  </div>
+                ))}
 
-              {!analytics.googleAnalytics.present && !analytics.googleTagManager.present && analytics.otherAnalytics.filter(tool => tool.detected).length === 0 && (
-                <div className="border border-border rounded-sm p-3 bg-muted/30">
-                  <p className="text-xs text-muted-foreground">
+                {!analytics.googleAnalytics.present && !analytics.googleTagManager.present && analytics.otherAnalytics.filter(tool => tool.detected).length === 0 && (
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
                     No analytics detected. Consider adding Google Analytics or similar tools to track SEO performance and user behavior.
                   </p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-lg p-3">
-            <p className="text-xs text-muted-foreground">Analytics data not available</p>
+          <div className="bg-card border border-border/40 rounded-lg p-3">
+            <p className="text-[11px] text-muted-foreground">Analytics data not available</p>
           </div>
         )}
       </div>
@@ -367,31 +379,30 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
       {/* Sitemaps & Discovery */}
       {sitemap && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Globe className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-2 mb-3">
+            <Globe className="h-3.5 w-3.5 text-muted-foreground" />
             <div>
-              <h2 className="text-sm font-semibold text-foreground">Search Engine Discovery</h2>
-              <p className="text-xs text-muted-foreground">Files that help search engines understand your site</p>
+              <h2 className="text-xs font-semibold text-foreground">Search Engine Discovery</h2>
+              <p className="text-[11px] text-muted-foreground">Files that help search engines understand your site</p>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-3">
+          <div className="grid md:grid-cols-2 gap-2.5">
             {/* robots.txt */}
             {sitemap.robotsTxt && (
-              <div className="bg-card border border-border rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className={sitemap.robotsTxt.accessible || sitemap.robotsTxt.hasMetaRobots ? "w-2 h-2 bg-green-500 rounded-full" : "w-2 h-2 bg-red-500 rounded-full"}></div>
-                    <h4 className="text-sm font-medium text-foreground">robots.txt</h4>
+              <div className="bg-card border border-border/40 rounded-lg overflow-hidden shadow-sm">
+                <div className="bg-muted/50 px-3 py-2 border-b border-border/40">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-medium text-foreground">robots.txt</h4>
+                    {sitemap.robotsTxt.accessible || sitemap.robotsTxt.hasMetaRobots ? (
+                      <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                    ) : (
+                      <XCircle className="h-3.5 w-3.5 text-red-600" />
+                    )}
                   </div>
-                  {sitemap.robotsTxt.accessible || sitemap.robotsTxt.hasMetaRobots ? (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <XCircle className="h-4 w-4 text-red-600" />
-                  )}
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">
+                <div className="p-3">
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
                     {sitemap.robotsTxt.accessible
                       ? `Found at ${sitemap.robotsTxt.url.split('/').pop()} - provides crawling instructions`
                       : sitemap.robotsTxt.hasMetaRobots
@@ -404,46 +415,47 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
             )}
 
             {/* Sitemaps */}
-            <div className="bg-card border border-border rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className={sitemap.sitemaps.some(s => s.accessible) ? "w-2 h-2 bg-green-500 rounded-full" : "w-2 h-2 bg-red-500 rounded-full"}></div>
-                  <h4 className="text-sm font-medium text-foreground">XML Sitemaps</h4>
+            <div className="bg-card border border-border/40 rounded-lg overflow-hidden shadow-sm">
+              <div className="bg-muted/50 px-3 py-2 border-b border-border/40">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-medium text-foreground">XML Sitemaps</h4>
+                  {sitemap.sitemaps.some(s => s.accessible) ? (
+                    <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                  ) : (
+                    <XCircle className="h-3.5 w-3.5 text-red-600" />
+                  )}
                 </div>
-                {sitemap.sitemaps.some(s => s.accessible) ? (
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                ) : (
-                  <XCircle className="h-4 w-4 text-red-600" />
-                )}
               </div>
-              <div className="space-y-2">
-                {sitemap.sitemaps.filter(s => s.accessible).slice(0, 2).map((sitemapItem, index) => (
-                  <div key={index} className="flex items-center gap-2 text-xs">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <a
-                      href={sitemapItem.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-foreground hover:text-primary truncate flex-1 underline decoration-muted-foreground hover:decoration-primary"
-                      title={sitemapItem.url}
-                    >
-                      {sitemapItem.url.replace(/^https?:\/\/[^\/]+/, '')}
-                    </a>
-                    <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                  </div>
-                ))}
+              <div className="p-3">
+                <div className="space-y-1.5">
+                  {sitemap.sitemaps.filter(s => s.accessible).slice(0, 2).map((sitemapItem, index) => (
+                    <div key={index} className="flex items-center gap-1.5 text-[11px]">
+                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0"></div>
+                      <a
+                        href={sitemapItem.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-foreground hover:text-primary truncate flex-1 underline decoration-muted-foreground hover:decoration-primary"
+                        title={sitemapItem.url}
+                      >
+                        {sitemapItem.url.replace(/^https?:\/\/[^\/]+/, '')}
+                      </a>
+                      <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    </div>
+                  ))}
 
-                {sitemap.sitemaps.filter(s => s.accessible).length > 2 && (
-                  <p className="text-xs text-muted-foreground">
-                    +{sitemap.sitemaps.filter(s => s.accessible).length - 2} more sitemaps
-                  </p>
-                )}
+                  {sitemap.sitemaps.filter(s => s.accessible).length > 2 && (
+                    <p className="text-[11px] text-muted-foreground">
+                      +{sitemap.sitemaps.filter(s => s.accessible).length - 2} more sitemaps
+                    </p>
+                  )}
 
-                {sitemap.sitemaps.filter(s => s.accessible).length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    No accessible sitemaps found - consider adding sitemap.xml for better search engine discovery
-                  </p>
-                )}
+                  {sitemap.sitemaps.filter(s => s.accessible).length === 0 && (
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      No accessible sitemaps found - consider adding sitemap.xml for better search engine discovery
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
