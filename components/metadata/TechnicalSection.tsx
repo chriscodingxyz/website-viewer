@@ -126,10 +126,10 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
     }
 
     return (
-      <div className="bg-card border border-border rounded-lg p-4 mb-4">
-        <div className="flex items-center justify-between mb-3">
+      <div className="bg-card border border-border rounded-lg p-3 mb-3">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-muted rounded-md flex items-center justify-center">
+            <div className="w-6 h-6 bg-muted rounded-md flex items-center justify-center">
               <Settings className="h-4 w-4 text-muted-foreground" />
             </div>
             <div>
@@ -138,7 +138,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-xl font-bold text-foreground">{technicalScore.percentage}%</div>
+            <div className="text-lg font-bold text-foreground">{technicalScore.percentage}%</div>
             <div className="text-xs text-muted-foreground">{technicalScore.score}/{technicalScore.maxScore} checks passed</div>
           </div>
         </div>
@@ -154,7 +154,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
   }
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-3 p-3">
       {/* Technical Score Header */}
       <TechnicalScoreDisplay />
 
@@ -283,16 +283,16 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
       </div>
 
       {/* Technical Configuration */}
-      <div className="pro-section">
-        <div className="pro-section-header">
-          <h2 className="pro-section-title">
-            <Settings className="h-5 w-5 text-muted-foreground" />
-            Technical Configuration
-          </h2>
-          <p className="pro-section-subtitle">Core technical settings and metadata</p>
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Settings className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Technical Configuration</h2>
+            <p className="text-xs text-muted-foreground">Core technical settings and metadata</p>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-2 gap-3">
           <StatusIndicator
             status={metadata.seo.viewport ? 'good' : 'error'}
             label="Mobile Viewport"
@@ -331,30 +331,30 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
 
       {/* Structured Data */}
       {structuredData && structuredData.length > 0 && (
-        <div className="pro-section">
-          <div className="pro-section-header">
-            <h2 className="pro-section-title">
-              <Globe className="h-5 w-5 text-muted-foreground" />
-              Structured Data
-            </h2>
-            <p className="pro-section-subtitle">JSON-LD schemas for search engine understanding</p>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">Structured Data</h2>
+              <p className="text-xs text-muted-foreground">JSON-LD schemas for search engine understanding</p>
+            </div>
           </div>
 
-          <div className="pro-card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="status-dot-success"></div>
+          <div className="bg-card border border-border rounded-lg p-3">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <div>
-                  <h3 className="font-medium text-foreground">JSON-LD Schemas</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="text-sm font-medium text-foreground">JSON-LD Schemas</h3>
+                  <p className="text-xs text-muted-foreground">
                     {structuredData.length} schema{structuredData.length === 1 ? '' : 's'} detected
                   </p>
                 </div>
               </div>
-              <span className="pro-badge-success">✓</span>
+              <CheckCircle className="h-4 w-4 text-green-600" />
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex flex-wrap gap-2">
                 {structuredData.slice(0, 6).map((schema, index) => (
                   <div
@@ -370,7 +370,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                   </div>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Structured data helps search engines understand your content for rich snippets and better SEO.
               </p>
             </div>
@@ -380,34 +380,34 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
 
       {/* HTTP Headers Details */}
       {Object.keys(safeHeaders).length > 0 && (
-        <div className="pro-section">
-          <div className="pro-section-header">
-            <h2 className="pro-section-title">
-              <Server className="h-5 w-5 text-muted-foreground" />
-              HTTP Response Headers
-            </h2>
-            <p className="pro-section-subtitle">Server response headers for debugging and optimization</p>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Server className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">HTTP Response Headers</h2>
+              <p className="text-xs text-muted-foreground">Server response headers for debugging and optimization</p>
+            </div>
           </div>
 
-          <div className="pro-card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="status-dot-info"></div>
+          <div className="bg-card border border-border rounded-lg p-3">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 <div>
-                  <h3 className="font-medium text-foreground">Response Headers</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="text-sm font-medium text-foreground">Response Headers</h3>
+                  <p className="text-xs text-muted-foreground">
                     {Object.keys(safeHeaders).length} headers received
                   </p>
                 </div>
               </div>
-              <span className="pro-badge-info">i</span>
+              <Info className="h-4 w-4 text-blue-600" />
             </div>
 
-            <details className="bg-muted/50 rounded-sm p-4 border border-border">
+            <details className="bg-muted/50 rounded-sm p-3 border border-border">
               <summary className="text-sm font-medium cursor-pointer hover:text-foreground">
                 View All HTTP Headers
               </summary>
-              <div className="mt-3 bg-muted/30 rounded-sm p-3">
+              <div className="mt-2 bg-muted/30 rounded-sm p-3">
                 <pre className="text-xs text-muted-foreground overflow-x-auto whitespace-pre-wrap max-h-40 overflow-y-auto font-mono">
                   {Object.entries(safeHeaders)
                     .map(([key, value]) => `${key}: ${value}`)

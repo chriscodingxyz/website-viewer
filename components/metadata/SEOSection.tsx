@@ -208,22 +208,22 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
       </div>
 
       {/* Visual Identity */}
-      <div className="pro-section">
-        <div className="pro-section-header">
-          <h2 className="pro-section-title">
-            <Target className="h-5 w-5 text-muted-foreground" />
-            Visual Identity
-          </h2>
-          <p className="pro-section-subtitle">Icons and visual elements for brand recognition</p>
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Target className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Visual Identity</h2>
+            <p className="text-xs text-muted-foreground">Icons and visual elements for brand recognition</p>
+          </div>
         </div>
 
-        <div className="pro-card">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className={icons && icons.length > 0 ? "status-dot-success" : "status-dot-error"}></div>
+        <div className="bg-card border border-border rounded-lg p-3">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className={icons && icons.length > 0 ? "w-2 h-2 bg-green-500 rounded-full" : "w-2 h-2 bg-red-500 rounded-full"}></div>
               <div>
-                <h3 className="font-medium text-foreground">Favicons & Icons</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="text-sm font-medium text-foreground">Favicons & Icons</h3>
+                <p className="text-xs text-muted-foreground">
                   {icons && icons.length > 0
                     ? `${icons.length} icon${icons.length === 1 ? '' : 's'} detected`
                     : 'No icons found'
@@ -231,14 +231,16 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
                 </p>
               </div>
             </div>
-            <span className={icons && icons.length > 0 ? "pro-badge-success" : "pro-badge-error"}>
-              {icons && icons.length > 0 ? '✓' : '✕'}
-            </span>
+            {icons && icons.length > 0 ? (
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            ) : (
+              <XCircle className="h-4 w-4 text-red-600" />
+            )}
           </div>
 
           {icons && icons.length > 0 ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 flex-wrap">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {icons.slice(0, 4).map((icon, index) => (
                   <div key={index} className="flex items-center gap-2 bg-muted/50 rounded-sm px-3 py-2 border border-border">
                     {icon.href && (
@@ -263,13 +265,13 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
                   </div>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Icons help with brand recognition across browsers and platforms.
               </p>
             </div>
           ) : (
-            <div className="border border-border rounded-sm p-4 bg-muted/30">
-              <p className="text-sm text-muted-foreground">
+            <div className="border border-border rounded-sm p-3 bg-muted/30">
+              <p className="text-xs text-muted-foreground">
                 No favicons detected. Add favicon.ico and various icon sizes to improve brand recognition in browser tabs, bookmarks, and search results.
               </p>
             </div>
