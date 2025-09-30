@@ -146,10 +146,10 @@ function Header () {
 
 
   return (
-    <header className='sticky top-0 z-50 bg-background border-b border-border'>
-      <div className='py-2 px-2 sm:px-3'>
-        <div className='max-w-[1400px] mx-auto px-2 sm:px-4 lg:px-6'>
-          <div className='flex gap-1 sm:gap-2 flex-row items-center'>
+    <header className='sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border/40'>
+      <div className='py-1.5 px-2 sm:px-3'>
+        <div className='max-w-full mx-auto px-2 sm:px-4'>
+          <div className='flex gap-2 flex-row items-center'>
             {/* Home Button - Only show when site is loaded */}
             {currentSite && (
               <Button
@@ -159,15 +159,15 @@ function Header () {
                   clearSite()
                   router.push('/')
                 }}
-                className='h-9 w-9 p-0 border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md'
+                className='h-8 w-8 p-0 border border-border/40 hover:border-border hover:bg-muted/50 transition-all duration-200 rounded-md shrink-0'
                 title='Return to homepage'
               >
-                🧿
+                <Home className='h-3.5 w-3.5' />
               </Button>
             )}
 
-            {/* URL Input - Extended on mobile when site is loaded */}
-            <div className={cn('relative transition-all duration-300', currentSite ? 'flex-1 md:w-64' : 'flex-grow')}>
+            {/* URL Input - Spans wider */}
+            <div className={cn('relative transition-all duration-300', currentSite ? 'flex-1 max-w-2xl' : 'flex-1 max-w-3xl')}>
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -175,19 +175,29 @@ function Header () {
                     role='combobox'
                     aria-expanded={open}
                     className={cn(
-                      'w-full justify-between text-[16px] h-9 px-3 border border-border/50 hover:border-border transition-all duration-200 bg-card/90 hover:bg-card rounded-md',
-                      isInputHighlighted && 'highlight-input'
+                      'w-full justify-between text-sm h-8 px-3 border border-border/40 hover:border-border transition-all duration-200 bg-background hover:bg-muted/30 rounded-md shadow-sm',
+                      isInputHighlighted && 'ring-2 ring-primary ring-offset-1'
                     )}
                   >
                     <span
                       className={cn(
-                        'truncate',
-                        url ? 'text-foreground' : 'text-muted-foreground'
+                        'truncate flex items-center gap-2 text-sm',
+                        url ? 'text-foreground font-medium' : 'text-muted-foreground'
                       )}
                     >
-                      {url ? url : '🌐 Enter website URL to view...'}
+                      {url ? (
+                        <>
+                          <Globe className='h-3.5 w-3.5 flex-shrink-0 text-muted-foreground' />
+                          <span className='truncate'>{url}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Globe className='h-3.5 w-3.5 flex-shrink-0' />
+                          <span>Enter website URL...</span>
+                        </>
+                      )}
                     </span>
-                    <ChevronDown className='ml-3 h-4 w-4 shrink-0 text-primary/70' />
+                    <ChevronDown className='ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground' />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
@@ -238,22 +248,21 @@ function Header () {
 
             {/* Load Button - Only show when no site is loaded */}
             {!currentSite && (
-              <div className='flex gap-1'>
-                <Button
-                  size='sm'
-                  disabled={!formatUrl(url)}
-                  onClick={() => loadSite()}
-                  className={cn(
-                    'h-9 px-3 transition-all duration-200 disabled:opacity-40 rounded-md',
-                    formatUrl(url)
-                      ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
-                      : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                  )}
-                  title='Load website in all viewports'
-                >
-                  <Globe className='w-3 h-3' />
-                </Button>
-              </div>
+              <Button
+                size='sm'
+                disabled={!formatUrl(url)}
+                onClick={() => loadSite()}
+                className={cn(
+                  'h-8 px-4 text-sm transition-all duration-200 disabled:opacity-40 rounded-md shadow-sm shrink-0',
+                  formatUrl(url)
+                    ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                    : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                )}
+                title='Load website in all viewports'
+              >
+                <Eye className='w-3.5 h-3.5 mr-1.5' />
+                <span>Load</span>
+              </Button>
             )}
 
             {/* Spacer - removed redundant desktop tabs since we have sidebar */}

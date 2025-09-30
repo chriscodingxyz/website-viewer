@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Globe, ZoomIn, ZoomOut } from 'lucide-react'
+import { Globe, ZoomIn, ZoomOut, Monitor, Search, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import SectionContainer from './SectionContainer'
@@ -75,19 +75,25 @@ export default function WebsiteViewer () {
 
                 {/* Feature Cards */}
                 <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 mt-12'>
-                  <div className='p-6 rounded-xl border border-border/50 bg-card/30 hover:bg-card/50 transition-all duration-200'>
-                    <div className='text-2xl mb-3'>📱</div>
-                    <h3 className='font-semibold text-sm mb-2'>Multi-Device Preview</h3>
+                  <div className='p-6 rounded-lg border border-border/40 bg-card shadow-sm hover:shadow-md transition-all duration-200'>
+                    <div className='w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center mb-3'>
+                      <Monitor className='h-5 w-5 text-blue-600' />
+                    </div>
+                    <h3 className='font-semibold text-sm mb-2 text-foreground'>Multi-Device Preview</h3>
                     <p className='text-xs text-muted-foreground leading-relaxed'>Test responsive layouts across desktop, tablet, and mobile viewports simultaneously</p>
                   </div>
-                  <div className='p-6 rounded-xl border border-border/50 bg-card/30 hover:bg-card/50 transition-all duration-200'>
-                    <div className='text-2xl mb-3'>🔍</div>
-                    <h3 className='font-semibold text-sm mb-2'>SEO Analysis</h3>
+                  <div className='p-6 rounded-lg border border-border/40 bg-card shadow-sm hover:shadow-md transition-all duration-200'>
+                    <div className='w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center mb-3'>
+                      <Search className='h-5 w-5 text-green-600' />
+                    </div>
+                    <h3 className='font-semibold text-sm mb-2 text-foreground'>SEO Analysis</h3>
                     <p className='text-xs text-muted-foreground leading-relaxed'>Analyze meta tags, titles, descriptions, and optimization opportunities</p>
                   </div>
-                  <div className='p-6 rounded-xl border border-border/50 bg-card/30 hover:bg-card/50 transition-all duration-200'>
-                    <div className='text-2xl mb-3'>💬</div>
-                    <h3 className='font-semibold text-sm mb-2'>Social Previews</h3>
+                  <div className='p-6 rounded-lg border border-border/40 bg-card shadow-sm hover:shadow-md transition-all duration-200'>
+                    <div className='w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center mb-3'>
+                      <Share2 className='h-5 w-5 text-purple-600' />
+                    </div>
+                    <h3 className='font-semibold text-sm mb-2 text-foreground'>Social Previews</h3>
                     <p className='text-xs text-muted-foreground leading-relaxed'>Preview how your site appears on Twitter, Facebook, and LinkedIn</p>
                   </div>
                 </div>

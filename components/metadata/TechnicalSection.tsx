@@ -155,9 +155,9 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
             <p className="text-[11px] text-muted-foreground">{technicalScore.score}/{technicalScore.maxScore} checks passed</p>
           </div>
 
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <div className="h-2 bg-muted/60 rounded-full overflow-hidden">
             <div
-              className={`${getScoreColor()} transition-all duration-300`}
+              className={`h-full ${getScoreColor()} transition-all duration-300`}
               style={{ width: `${technicalScore.percentage}%` }}
             />
           </div>

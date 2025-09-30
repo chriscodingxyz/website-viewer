@@ -39,26 +39,22 @@ const sectionConfig = {
   viewports: {
     label: 'Viewports',
     icon: Eye,
-    description: 'Multi-device website preview',
-    emoji: '📱'
+    description: 'Multi-device website preview'
   },
   seo: {
     label: 'SEO Analysis',
     icon: BarChart3,
-    description: 'SEO score and optimization insights',
-    emoji: '🔍'
+    description: 'SEO score and optimization insights'
   },
   social: {
     label: 'Social Media',
     icon: Share,
-    description: 'Social media sharing previews',
-    emoji: '💬'
+    description: 'Social media sharing previews'
   },
   technical: {
     label: 'Technical',
     icon: Settings,
-    description: 'Technical metadata and headers',
-    emoji: '⚙️'
+    description: 'Technical metadata and headers'
   }
 }
 
@@ -133,7 +129,7 @@ export default function ShareableLink({ currentUrl, section, domainName, classNa
           {/* Header */}
           <div className="flex items-start gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-              <span className="text-xl">{config.emoji}</span>
+              <IconComponent className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1">
               <h4 className="font-semibold text-base">{config.label}</h4>

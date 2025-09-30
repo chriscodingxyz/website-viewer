@@ -108,10 +108,11 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
                   {value}
                 </p>
                 {status === 'inherited' && (
-                  <p className='analysis-text-xs text-muted-foreground pl-3 border-l-2 border-amber-200 border-l-amber-400'>
-                    📋 Inherited from SEO meta{' '}
+                  <p className='analysis-text-xs text-muted-foreground pl-3 border-l-2 border-amber-200 border-l-amber-400 flex items-start gap-2'>
+                    <AlertTriangle className='h-3 w-3 text-amber-500 flex-shrink-0 mt-0.5' />
+                    <span>Inherited from SEO meta{' '}
                     {label.toLowerCase().replace('opengraph ', '')} - consider
-                    adding dedicated social media tags
+                    adding dedicated social media tags</span>
                   </p>
                 )}
               </div>

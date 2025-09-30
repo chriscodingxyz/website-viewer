@@ -129,9 +129,9 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
             <p className="text-[11px] text-muted-foreground">{seoScore.score}/{seoScore.maxScore} checks passed</p>
           </div>
 
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <div className="h-2 bg-muted/60 rounded-full overflow-hidden">
             <div
-              className={`${getScoreColor()} transition-all duration-300`}
+              className={`h-full ${getScoreColor()} transition-all duration-300`}
               style={{ width: `${seoScore.percentage}%` }}
             />
           </div>

@@ -219,12 +219,12 @@ export default function ViewportsSection ({
                   <div className='mx-auto mb-3 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center'>
                     <CheckCircle className='w-5 h-5 text-green-600' />
                   </div>
-                  <h3 className='text-sm font-semibold text-gray-900 mb-2'>X-Frame-Options Configured</h3>
-                  <p className='text-xs text-gray-600 mb-3 leading-relaxed'>
-                    This website has <code className='bg-gray-100 px-1 py-0.5 rounded text-xs'>X-Frame-Options: DENY</code> configured,
+                  <h3 className='text-sm font-semibold text-foreground mb-2'>X-Frame-Options Configured</h3>
+                  <p className='text-xs text-muted-foreground mb-3 leading-relaxed'>
+                    This website has <code className='bg-muted px-1.5 py-0.5 rounded text-xs font-mono'>X-Frame-Options: DENY</code> configured,
                     which prevents iframe embedding. This is a good security practice that protects against clickjacking attacks.
                   </p>
-                  <div className='bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800'>
+                  <div className='bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-xs text-amber-900 dark:text-amber-200'>
                     <strong>Important:</strong> Only the website owner can remove X-Frame-Options. If this is YOUR website, you can modify the server configuration. Otherwise, viewport previews are impossible due to security restrictions.
                   </div>
                 </div>
