@@ -63,11 +63,11 @@ export default function ViewportsSection ({
       }
 
     // Check actual iframe statuses
-    const loadingCount = views.filter(v => v.iframeStatus === 'loading').length
-    const blockedCount = views.filter(v => v.iframeStatus === 'blocked').length
-    const errorCount = views.filter(v => v.iframeStatus === 'error').length
-    const timeoutCount = views.filter(v => v.iframeStatus === 'timeout').length
-    const loadedCount = views.filter(v => v.iframeStatus === 'loaded').length
+    const loadingCount = views.filter((v: any) => v.iframeStatus === 'loading').length
+    const blockedCount = views.filter((v: any) => v.iframeStatus === 'blocked').length
+    const errorCount = views.filter((v: any) => v.iframeStatus === 'error').length
+    const timeoutCount = views.filter((v: any) => v.iframeStatus === 'timeout').length
+    const loadedCount = views.filter((v: any) => v.iframeStatus === 'loaded').length
 
     // Skip loading status - just show ready
     // if (loadingCount > 0) {
@@ -142,7 +142,7 @@ export default function ViewportsSection ({
                 value={Math.round(globalZoom * 100).toString()}
                 onValueChange={(value) => {
                   const percentage = parseInt(value)
-                  const newIndex = zoomSteps.findIndex(step => Math.round(step * 100) === percentage)
+                  const newIndex = zoomSteps.findIndex((step: number) => Math.round(step * 100) === percentage)
                   if (newIndex !== -1) {
                     setGlobalZoomStepIndex(newIndex)
                     toast.success(`Zoom: ${percentage}%`)
@@ -153,7 +153,7 @@ export default function ViewportsSection ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="w-20">
-                  {zoomSteps.map((step, index) => {
+                  {zoomSteps.map((step: number, index: number) => {
                     const percentage = Math.round(step * 100)
                     return (
                       <SelectItem key={index} value={percentage.toString()}>
@@ -210,7 +210,7 @@ export default function ViewportsSection ({
                 </div>
               </div>
             </div>
-          ) : views.length > 0 && views.every(v => v.iframeStatus === 'blocked') ? (
+          ) : views.length > 0 && views.every((v: any) => v.iframeStatus === 'blocked') ? (
             // Show informational message when all viewports are blocked
             <div className='w-full'>
               <div className='flex justify-center items-center py-8'>
@@ -233,7 +233,7 @@ export default function ViewportsSection ({
             <div className='w-full'>
               {/* All Viewports - Display simultaneously */}
               <div className='flex flex-wrap gap-4 justify-center items-start'>
-                {views.map((view, index) => (
+                {views.map((view: any, index: number) => (
                   <WebsiteView
                     key={view.id}
                     view={view}

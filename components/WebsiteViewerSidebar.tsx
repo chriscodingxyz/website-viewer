@@ -144,9 +144,9 @@ export default function WebsiteViewerSidebar() {
   const getViewportStats = () => {
     if (!views.length) return null
 
-    const loaded = views.filter(v => v.iframeStatus === 'loaded').length
-    const blocked = views.filter(v => v.iframeStatus === 'blocked').length
-    const loading = views.filter(v => v.iframeStatus === 'loading').length
+    const loaded = views.filter((v: any) => v.iframeStatus === 'loaded').length
+    const blocked = views.filter((v: any) => v.iframeStatus === 'blocked').length
+    const loading = views.filter((v: any) => v.iframeStatus === 'loading').length
 
     return { loaded, blocked, loading, total: views.length }
   }

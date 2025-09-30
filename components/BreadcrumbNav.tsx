@@ -22,11 +22,13 @@ const tabConfig = {
 }
 
 export default function BreadcrumbNav() {
-  const { currentSite, selectedTab } = useWebsiteViewer()
+  const context = useWebsiteViewer()
 
-  if (!currentSite) {
+  if (!context || !context.currentSite) {
     return null
   }
+
+  const { currentSite, selectedTab } = context
 
   // Extract clean domain name from URL
   const getDomainName = (url: string) => {
@@ -38,8 +40,8 @@ export default function BreadcrumbNav() {
     }
   }
 
-  const currentTabConfig = tabConfig[selectedTab]
-  const IconComponent = currentTabConfig.icon
+  const currentTabConfig = tabConfig[selectedTab as keyof typeof tabConfig]
+  const IconComponent = currentTabConfig?.icon
 
   return (
     <div className="border-b bg-muted/30 px-6 py-3">

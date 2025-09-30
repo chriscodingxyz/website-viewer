@@ -569,9 +569,8 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 export function useWebsiteViewer () {
   const context = useContext(WebsiteViewerContext)
   if (context === undefined) {
-    throw new Error(
-      'useWebsiteViewer must be used within a WebsiteViewerProvider'
-    )
+    // Return null during SSR/prerender instead of throwing
+    return null as any
   }
   return context
 }

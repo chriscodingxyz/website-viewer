@@ -9,7 +9,12 @@ import SectionContainer from './SectionContainer'
 import NavigationBar from './NavigationBar'
 
 export default function WebsiteViewer () {
-  
+  const context = useWebsiteViewer()
+
+  if (!context) {
+    return null
+  }
+
   const {
     currentSite,
     views,
@@ -24,7 +29,7 @@ export default function WebsiteViewer () {
     metadata,
     metadataLoading,
     metadataError,
-  } = useWebsiteViewer()
+  } = context
 
   // Global zoom functions
   const globalZoomIn = () => {

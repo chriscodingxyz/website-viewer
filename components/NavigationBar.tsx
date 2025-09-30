@@ -35,6 +35,14 @@ const tabConfig = {
 }
 
 export default function NavigationBar() {
+  const context = useWebsiteViewer()
+  const router = useRouter()
+
+  // Don't show navigation if no site is loaded or context not available
+  if (!context || !context.currentSite) {
+    return null
+  }
+
   const {
     currentSite,
     selectedTab,
@@ -42,14 +50,7 @@ export default function NavigationBar() {
     fetchMetadata,
     isInitialLoad,
     metadata
-  } = useWebsiteViewer()
-
-  const router = useRouter()
-
-  // Don't show navigation if no site is loaded
-  if (!currentSite) {
-    return null
-  }
+  } = context
 
   // Extract clean domain name from URL
   const getDomainName = (url: string) => {
@@ -107,8 +108,8 @@ export default function NavigationBar() {
     }
   }
 
-  const currentTabConfig = tabConfig[selectedTab]
-  const IconComponent = currentTabConfig.icon
+  const currentTabConfig = tabConfig[selectedTab as keyof typeof tabConfig]
+  const IconComponent = currentTabConfig?.icon
 
   return (
     <div className="bg-background border-b border-border">

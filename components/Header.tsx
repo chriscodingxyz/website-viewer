@@ -228,7 +228,7 @@ function Header () {
                     <CommandList>
                       {url.length > 0 && filteredSuggestions.length > 0 && (
                         <CommandGroup heading='Suggestions'>
-                          {filteredSuggestions.map((suggestion, index) => (
+                          {filteredSuggestions.map((suggestion: string, index: number) => (
                             <CommandItem
                               key={`suggestion-${index}`}
                               onSelect={() => onSelect(suggestion)}
