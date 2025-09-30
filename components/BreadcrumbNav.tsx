@@ -22,13 +22,11 @@ const tabConfig = {
 }
 
 export default function BreadcrumbNav() {
-  const context = useWebsiteViewer()
+  const { currentSite, selectedTab } = useWebsiteViewer()
 
-  if (!context || !context.currentSite) {
+  if (!currentSite) {
     return null
   }
-
-  const { currentSite, selectedTab } = context
 
   // Extract clean domain name from URL
   const getDomainName = (url: string) => {

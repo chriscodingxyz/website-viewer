@@ -35,14 +35,6 @@ const tabConfig = {
 }
 
 export default function NavigationBar() {
-  const context = useWebsiteViewer()
-  const router = useRouter()
-
-  // Don't show navigation if no site is loaded or context not available
-  if (!context || !context.currentSite) {
-    return null
-  }
-
   const {
     currentSite,
     selectedTab,
@@ -50,7 +42,13 @@ export default function NavigationBar() {
     fetchMetadata,
     isInitialLoad,
     metadata
-  } = context
+  } = useWebsiteViewer()
+  const router = useRouter()
+
+  // Don't show navigation if no site is loaded
+  if (!currentSite) {
+    return null
+  }
 
   // Extract clean domain name from URL
   const getDomainName = (url: string) => {

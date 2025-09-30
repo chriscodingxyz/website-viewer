@@ -58,10 +58,17 @@ function HistoryProvider ({ children }: HistoryProviderProps) {
   )
 }
 
+const defaultHistoryContext: HistoryContextType = {
+  history: [],
+  addToHistory: () => {},
+  removeFromHistory: () => {},
+};
+
 function useHistory () {
   const context = useContext(HistoryContext)
   if (context === undefined) {
-    throw new Error('useHistory must be used within a HistoryProvider')
+    // Return default values during SSR
+    return defaultHistoryContext
   }
   return context
 }

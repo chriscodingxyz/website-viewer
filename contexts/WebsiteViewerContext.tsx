@@ -566,11 +566,57 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   )
 }
 
+// Default context value for SSR/prerendering
+const defaultContextValue: WebsiteViewerContextType = {
+  url: '',
+  setUrl: () => {},
+  currentSite: null,
+  views: [],
+  isInputHighlighted: false,
+  showSuggestions: false,
+  filteredSuggestions: [],
+  setShowSuggestions: () => {},
+  handleUrlChange: () => {},
+  handleKeyDown: () => {},
+  selectSuggestion: () => {},
+  formatUrl: () => null,
+  loadSite: () => {},
+  setUrlWithHighlight: () => {},
+  removeView: () => {},
+  changeViewType: () => {},
+  duplicateView: () => {},
+  globalZoom: 1,
+  setGlobalZoomStepIndex: () => {},
+  globalZoomStepIndex: 0,
+  zoomSteps: [1],
+  metadata: null,
+  metadataLoading: false,
+  metadataError: null,
+  fetchMetadata: async () => {},
+  clearMetadata: () => {},
+  updateViewIframeStatus: () => {},
+  clearSite: () => {},
+  selectedTab: 'viewports',
+  setSelectedTab: () => {},
+  isInitialLoad: true,
+  username: '',
+  password: '',
+  showAuthFields: false,
+  showAuthDialog: false,
+  authDialogUrl: '',
+  setUsername: () => {},
+  setPassword: () => {},
+  setShowAuthFields: () => {},
+  setShowAuthDialog: () => {},
+  setAuthDialogUrl: () => {},
+  clearCredentials: () => {}
+}
+
 export function useWebsiteViewer () {
   const context = useContext(WebsiteViewerContext)
   if (context === undefined) {
-    // Return null during SSR/prerender instead of throwing
-    return null as any
+    // Return default values during SSR/prerender
+    return defaultContextValue
   }
   return context
 }
