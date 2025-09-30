@@ -378,6 +378,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
                       width={200}
                       height={128}
                       className='w-full h-full object-cover'
+                      unoptimized
                     />
                   </div>
                 )}
@@ -533,6 +534,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
                         width={320}
                         height={192}
                         className='w-full h-full object-cover'
+                        unoptimized
                       />
                     </div>
                   )}
