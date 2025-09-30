@@ -304,6 +304,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
                   width={40}
                   height={40}
                   className='w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center'
+                  unoptimized
                 />
                 <div>
                   <div className='flex items-center gap-2'>
@@ -566,6 +567,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
                   width={40}
                   height={40}
                   className='w-10 h-10 object-cover rounded-full'
+                  unoptimized
                 />
                 <div className='flex-1'>
                   <div className='flex items-center gap-2 mb-1'>
@@ -664,6 +666,7 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
                   width={40}
                   height={40}
                   className='w-full h-full object-cover'
+                  unoptimized
                 />
               </div>
               <div className='flex-1'>
