@@ -12,6 +12,7 @@ import { HistoryProvider } from '@/contexts/HistoryContext'
 import { WebsiteViewerProvider } from '@/contexts/WebsiteViewerContext'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import WebsiteViewerSidebar from '@/components/WebsiteViewerSidebar'
+import ClientOnly from '@/components/ClientOnly'
 const inter = Inter({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700'],
@@ -143,7 +144,9 @@ export default function RootLayout ({
             <HistoryProvider>
               <WebsiteViewerProvider>
                 <SidebarProvider defaultOpen={false}>
-                  <WebsiteViewerSidebar />
+                  <ClientOnly>
+                    <WebsiteViewerSidebar />
+                  </ClientOnly>
                   <SidebarInset>
                     <Header />
                     <main className='flex-1'>{children}</main>
