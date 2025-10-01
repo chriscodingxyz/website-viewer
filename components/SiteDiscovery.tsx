@@ -171,23 +171,23 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
 
   const getStatusIcon = (accessible?: boolean) => {
     if (accessible === undefined) {
-      return <AlertTriangle className="h-3 w-3 text-yellow-500" />
+      return <AlertTriangle className="h-2.5 w-2.5 text-yellow-500" />
     }
     return accessible ?
-      <CheckCircle className="h-3 w-3 text-green-500" /> :
-      <XCircle className="h-3 w-3 text-red-500" />
+      <CheckCircle className="h-2.5 w-2.5 text-green-500" /> :
+      <XCircle className="h-2.5 w-2.5 text-red-500" />
   }
 
   const getSourceIcon = (source: string) => {
     switch (source) {
       case 'sitemap':
-        return <FileText className="h-4 w-4 text-blue-500" />
+        return <FileText className="h-3 w-3 text-blue-500" />
       case 'robots':
-        return <FileText className="h-4 w-4 text-purple-500" />
+        return <FileText className="h-3 w-3 text-purple-500" />
       case 'internal':
-        return <LinkIcon className="h-4 w-4 text-gray-500" />
+        return <LinkIcon className="h-3 w-3 text-gray-500" />
       default:
-        return <Globe className="h-4 w-4" />
+        return <Globe className="h-3 w-3" />
     }
   }
 
@@ -201,39 +201,39 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
     <div className="bg-card border border-border rounded-lg p-3">
       <div className="mb-3">
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Database className="h-4 w-4" />
+          <div className="flex items-center gap-1.5">
+            <Database className="h-3 w-3" />
             <div>
-              <h3 className="text-sm font-semibold text-foreground">Site Discovery</h3>
+              <h3 className="text-xs font-semibold text-foreground">Site Discovery</h3>
             </div>
           </div>
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-[10px] h-4 px-1.5">
             {discoveredPages.length} pages found
           </Badge>
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
           <Input
             placeholder="Search pages..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-8"
+            className="pl-8 h-7 text-xs"
           />
         </div>
       </div>
       <div>
         {loading ? (
-          <div className="flex items-center justify-center py-6">
+          <div className="flex items-center justify-center py-4">
             <div className="text-center">
-              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-xs text-muted-foreground">Discovering pages...</p>
+              <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-1.5"></div>
+              <p className="text-[10px] text-muted-foreground">Discovering pages...</p>
             </div>
           </div>
         ) : discoveredPages.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground">
-            <Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No pages discovered</p>
-            <p className="text-xs">Try checking if the site has a sitemap.xml</p>
+          <div className="text-center py-4 text-muted-foreground">
+            <Globe className="h-6 w-6 mx-auto mb-1.5 opacity-50" />
+            <p className="text-xs">No pages discovered</p>
+            <p className="text-[10px]">Try checking if the site has a sitemap.xml</p>
           </div>
         ) : (
           <Accordion type="multiple" className="w-full" defaultValue={['sitemap', 'robots', 'internal']}>
@@ -242,28 +242,28 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
 
               return (
                 <AccordionItem key={source} value={source}>
-                  <AccordionTrigger className="text-left">
-                    <div className="flex items-center gap-2">
+                  <AccordionTrigger className="text-left py-2">
+                    <div className="flex items-center gap-1.5">
                       {getSourceIcon(source)}
-                      <span>{sourceLabels[source as keyof typeof sourceLabels]}</span>
-                      <Badge variant="outline" className="ml-auto mr-2 text-xs">
+                      <span className="text-xs">{sourceLabels[source as keyof typeof sourceLabels]}</span>
+                      <Badge variant="outline" className="ml-auto mr-2 text-[10px] h-4 px-1.5">
                         {pages.length}
                       </Badge>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
                     <ScrollArea className="h-48">
-                      <div className="space-y-2">
+                      <div className="space-y-1.5">
                         {pages.map((page, index) => (
-                          <div key={index} className="flex items-center justify-between p-2 border rounded-md hover:bg-muted/50">
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div key={index} className="flex items-center justify-between p-1.5 border rounded-md hover:bg-muted/50">
+                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
                               {getStatusIcon(page.accessible)}
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{page.title || 'Untitled Page'}</p>
-                                <p className="text-xs text-muted-foreground truncate">{page.url}</p>
+                                <p className="text-xs font-medium truncate">{page.title || 'Untitled Page'}</p>
+                                <p className="text-[10px] text-muted-foreground truncate">{page.url}</p>
                                 {page.lastModified && (
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                                    <Calendar className="h-3 w-3" />
+                                  <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground mt-0.5">
+                                    <Calendar className="h-2.5 w-2.5" />
                                     {new Date(page.lastModified).toLocaleDateString()}
                                   </div>
                                 )}
@@ -273,9 +273,9 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
                               variant="outline"
                               size="sm"
                               onClick={() => handleNavigateToPage(page.url)}
-                              className="shrink-0 h-7 w-7 p-0"
+                              className="shrink-0 h-6 w-6 p-0"
                             >
-                              <ExternalLink className="h-3 w-3" />
+                              <ExternalLink className="h-2.5 w-2.5" />
                             </Button>
                           </div>
                         ))}
