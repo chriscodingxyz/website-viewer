@@ -143,16 +143,9 @@ export default function RootLayout ({
           <FavoritesProvider>
             <HistoryProvider>
               <WebsiteViewerProvider>
-                <SidebarProvider defaultOpen={false}>
-                  <ClientOnly>
-                    <WebsiteViewerSidebar />
-                  </ClientOnly>
-                  <SidebarInset>
-                    <Header />
-                    <main className='flex-1'>{children}</main>
-                  </SidebarInset>
-                  <AuthDialogWrapper />
-                </SidebarProvider>
+                <Header />
+                <main className='flex-1'>{children}</main>
+                <AuthDialogWrapper />
               </WebsiteViewerProvider>
             </HistoryProvider>
           </FavoritesProvider>

@@ -13,10 +13,10 @@ import {
   Search,
   Share2,
   Globe,
-  Loader2,
   AlertCircle,
   CheckCircle
 } from 'lucide-react'
+import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
 import SEOSection from './SEOSection'
 import SocialPreview from './SocialPreview'
@@ -54,7 +54,7 @@ export default function MetadataPanel({
 
 
   const getStatusIcon = () => {
-    if (loading) return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+    if (loading) return <Spinner className="h-4 w-4 text-blue-500" />
     if (error) return <AlertCircle className="h-4 w-4 text-red-500" />
     if (metadata) return <CheckCircle className="h-4 w-4 text-green-500" />
     return <Globe className="h-4 w-4 text-gray-500" />
@@ -160,7 +160,7 @@ export default function MetadataPanel({
             <Card>
               <CardContent className="py-12">
                 <div className="flex flex-col items-center gap-4">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                  <Spinner className="h-8 w-8 text-blue-500" />
                   <div className="text-center">
                     <p className="font-medium">Extracting metadata...</p>
                     <p className="text-sm text-muted-foreground mt-1">

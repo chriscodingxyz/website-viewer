@@ -4,11 +4,12 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Monitor,
-  Loader2,
   CheckCircle,
   XCircle,
   ExternalLink
 } from 'lucide-react'
+import { Spinner } from '@/components/ui/spinner'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import WebsiteView from '../WebsiteView'
 import { toast } from 'sonner'
@@ -168,24 +169,25 @@ export default function ViewportsSection ({
         )}
         <div className='w-full'>
           {views.length === 0 ? (
-            <div className='flex items-center justify-center h-32'>
-              <div className='text-center'>
-                <Monitor className='h-8 w-8 mx-auto text-gray-400 mb-2' />
-                <h3 className='text-sm font-medium mb-1'>Ready to Load</h3>
-                <p className='text-xs text-muted-foreground'>
+            <Empty className="border-0">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Monitor />
+                </EmptyMedia>
+                <EmptyTitle>Ready to Load</EmptyTitle>
+                <EmptyDescription>
                   Enter a website URL to view in different device sizes
-                </p>
-              </div>
-            </div>
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : metadataLoading && views.length > 0 ? (
             // Show single loading state while checking X-Frame-Options
             <div className='w-full'>
               <div className='flex justify-center items-center py-16'>
                 <div className='text-center max-w-md'>
                   {/* Clean spinner */}
-                  <div className='mx-auto mb-8 relative w-12 h-12'>
-                    <div className='absolute inset-0 border-[3px] border-border rounded-full'></div>
-                    <div className='absolute inset-0 border-[3px] border-transparent border-t-foreground rounded-full animate-spin'></div>
+                  <div className='mx-auto mb-8'>
+                    <Spinner className='w-12 h-12' />
                   </div>
 
                   <h3 className='text-base font-semibold mb-6 text-foreground'>

@@ -17,6 +17,7 @@ import ShareableLink from '@/components/ShareableLink'
 import ExportButton from '@/components/export/ExportButton'
 import { Home, Globe, Eye, Share2, Settings, BarChart3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ButtonGroup } from '@/components/ui/button-group'
 
 type TabType = 'viewports' | 'seo' | 'social' | 'technical'
 
@@ -116,12 +117,12 @@ export default function NavigationBar() {
           <div className="flex items-center justify-between gap-2 sm:gap-3">
           {/* Left: Just tabs */}
           {!isInitialLoad && (
-            <div className="flex items-center gap-1 overflow-x-auto">
+            <ButtonGroup className="overflow-x-auto">
               {tabs.map(tab => (
                 <button
                   key={tab.id}
                   className={cn(
-                    'px-2 sm:px-2.5 py-1 text-xs rounded-md transition-all duration-200 shrink-0',
+                    'px-2 sm:px-2.5 py-1 text-xs transition-all duration-200 shrink-0',
                     selectedTab === tab.id
                       ? 'bg-foreground text-background'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
@@ -131,12 +132,12 @@ export default function NavigationBar() {
                   {tab.label}
                 </button>
               ))}
-            </div>
+            </ButtonGroup>
           )}
 
           {/* Right: Export and Share buttons - Only show when metadata is loaded */}
           {metadata && (
-            <div className="flex items-center gap-1 sm:gap-2">
+            <ButtonGroup>
               <ExportButton
                 metadata={metadata}
                 variant="outline"
@@ -148,7 +149,7 @@ export default function NavigationBar() {
                 section={selectedTab}
                 domainName={getDomainName(currentSite)}
               />
-            </div>
+            </ButtonGroup>
           )}
           </div>
         </div>
