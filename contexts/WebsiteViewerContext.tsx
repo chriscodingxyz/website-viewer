@@ -167,14 +167,14 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   
   // Tab state - determine initial tab from URL
   const getInitialTab = (): TabType => {
-    if (typeof window === 'undefined') return 'viewports'
+    if (typeof window === 'undefined') return 'seo'
 
     const path = window.location.pathname
     if (path === '/seo') return 'seo'
     if (path === '/social') return 'social'
     if (path === '/technical') return 'technical'
     if (path === '/viewports') return 'viewports'
-    return 'viewports' // default
+    return 'seo' // default
   }
 
   const [selectedTab, setSelectedTab] = useState<TabType>(getInitialTab)
@@ -596,7 +596,7 @@ const defaultContextValue: WebsiteViewerContextType = {
   clearMetadata: () => {},
   updateViewIframeStatus: () => {},
   clearSite: () => {},
-  selectedTab: 'viewports',
+  selectedTab: 'seo',
   setSelectedTab: () => {},
   isInitialLoad: true,
   username: '',

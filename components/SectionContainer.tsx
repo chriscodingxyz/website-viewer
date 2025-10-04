@@ -7,33 +7,17 @@ import AnalysisSection from './sections/AnalysisSection'
 import SEOSection from './metadata/SEOSection'
 import SocialPreview from './metadata/SocialPreview'
 import TechnicalSection from './metadata/TechnicalSection'
+import Image from 'next/image'
 
 export default function SectionContainer () {
   const { currentSite, metadata, selectedTab } = useWebsiteViewer()
 
-  // Removed automatic tab switching - let users stay on their chosen tab
-  // const prevMetadataLoading = useRef(metadataLoading)
-  // const prevLighthouseLoading = useRef(lighthouseLoading)
-
-  // useEffect(() => {
-  //   // When metadata analysis finishes, switch to SEO/technical tab
-  //   if (prevMetadataLoading.current && !metadataLoading) {
-  //     setSelectedTab('seo')
-  //   }
-  //   prevMetadataLoading.current = metadataLoading
-  // }, [metadataLoading])
-
-  // useEffect(() => {
-  //   // When lighthouse analysis finishes, switch to performance tab
-  //   if (prevLighthouseLoading.current && !lighthouseLoading) {
-  //     setSelectedTab('performance')
-  //   }
-  //   prevLighthouseLoading.current = lighthouseLoading
-  // }, [lighthouseLoading])
-
   if (!currentSite) {
     return null
   }
+
+  // Determine if we should show the logo layout (for SEO, Social, Technical tabs)
+  const showLogoLayout = selectedTab === 'seo' || selectedTab === 'social' || selectedTab === 'technical'
 
   return (
     <div className='w-full'>
@@ -49,6 +33,8 @@ export default function SectionContainer () {
         >
           <ViewportsSection expanded={true} onToggle={() => {}} />
         </div>
+
+        {/* SEO, Social, Technical - With Logo Layout */}
         <div
           className={
             selectedTab === 'seo'
@@ -57,12 +43,28 @@ export default function SectionContainer () {
           }
           style={selectedTab !== 'seo' ? { height: '1px' } : {}}
         >
-          <div className='max-w-[1400px] mx-auto px-6 lg:px-8'>
-            <div className='w-full py-6'>
-              <SEOSection metadata={metadata} />
+          <div className='max-w-[1600px] mx-auto px-6 lg:px-8 py-6'>
+            <div className='flex gap-8 lg:gap-16'>
+              {/* Sticky Logo - Hidden on mobile */}
+              <div className='hidden lg:block flex-shrink-0 w-64 xl:w-80'>
+                <div className='sticky top-1/2 -translate-y-1/2'>
+                  <Image
+                    src='/logo.png'
+                    alt='Website Viewer Logo'
+                    width={320}
+                    height={320}
+                    className='w-full h-auto'
+                  />
+                </div>
+              </div>
+              {/* Content with min-height to prevent logo shift */}
+              <div className='flex-1 min-w-0 min-h-[calc(100svh-120px)]'>
+                <SEOSection metadata={metadata} />
+              </div>
             </div>
           </div>
         </div>
+
         <div
           className={
             selectedTab === 'social'
@@ -71,12 +73,28 @@ export default function SectionContainer () {
           }
           style={selectedTab !== 'social' ? { height: '1px' } : {}}
         >
-          <div className='max-w-[1400px] mx-auto px-6 lg:px-8'>
-            <div className='w-full py-6'>
-              <SocialPreview metadata={metadata} />
+          <div className='max-w-[1600px] mx-auto px-6 lg:px-8 py-6'>
+            <div className='flex gap-8 lg:gap-16'>
+              {/* Sticky Logo - Hidden on mobile */}
+              <div className='hidden lg:block flex-shrink-0 w-64 xl:w-80'>
+                <div className='sticky top-1/2 -translate-y-1/2'>
+                  <Image
+                    src='/logo.png'
+                    alt='Website Viewer Logo'
+                    width={320}
+                    height={320}
+                    className='w-full h-auto'
+                  />
+                </div>
+              </div>
+              {/* Content with min-height to prevent logo shift */}
+              <div className='flex-1 min-w-0 min-h-[calc(100svh-120px)]'>
+                <SocialPreview metadata={metadata} />
+              </div>
             </div>
           </div>
         </div>
+
         <div
           className={
             selectedTab === 'technical'
@@ -85,9 +103,24 @@ export default function SectionContainer () {
           }
           style={selectedTab !== 'technical' ? { height: '1px' } : {}}
         >
-          <div className='max-w-[1400px] mx-auto px-6 lg:px-8'>
-            <div className='w-full py-6'>
-              <TechnicalSection metadata={metadata} />
+          <div className='max-w-[1600px] mx-auto px-6 lg:px-8 py-6'>
+            <div className='flex gap-8 lg:gap-16'>
+              {/* Sticky Logo - Hidden on mobile */}
+              <div className='hidden lg:block flex-shrink-0 w-64 xl:w-80'>
+                <div className='sticky top-1/2 -translate-y-1/2'>
+                  <Image
+                    src='/logo.png'
+                    alt='Website Viewer Logo'
+                    width={320}
+                    height={320}
+                    className='w-full h-auto'
+                  />
+                </div>
+              </div>
+              {/* Content with min-height to prevent logo shift */}
+              <div className='flex-1 min-w-0 min-h-[calc(100svh-120px)]'>
+                <TechnicalSection metadata={metadata} />
+              </div>
             </div>
           </div>
         </div>

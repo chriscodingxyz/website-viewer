@@ -544,7 +544,7 @@ export default function WebsiteView ({
 
       {/* Enlarge Dialog */}
       <Dialog open={isEnlargeDialogOpen} onOpenChange={setIsEnlargeDialogOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-transparent border-0 shadow-none flex items-center justify-center">
+        <DialogContent className="max-w-[90vw] max-h-[90svh] p-0 bg-transparent border-0 shadow-none flex items-center justify-center">
           <div 
             className="relative rounded-xl overflow-hidden bg-white shadow-2xl border"
             style={{

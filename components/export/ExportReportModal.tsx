@@ -123,7 +123,7 @@ export default function ExportReportModal({ open, onOpenChange, metadata }: Expo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90svh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <FileDown className="h-5 w-5 text-blue-600" />

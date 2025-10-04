@@ -746,83 +746,93 @@ export default function SocialPreview ({ metadata }: SocialPreviewProps) {
         <SocialPreviewCard platform='telegram' />
       </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-        <SimpleListItem
-          icon='📖'
-          label='OpenGraph Title'
-          value={openGraph.title || seo.title}
-          status={
-            openGraph.title ? 'present' : seo.title ? 'inherited' : 'missing'
-          }
-        />
+      {/* OpenGraph Section */}
+      <div className='space-y-3'>
+        <h3 className='text-lg font-semibold text-foreground mb-4'>OpenGraph Tags</h3>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+          <SimpleListItem
+            icon='📖'
+            label='OpenGraph Title'
+            value={openGraph.title || seo.title}
+            status={
+              openGraph.title ? 'present' : seo.title ? 'inherited' : 'missing'
+            }
+          />
 
-        <SimpleListItem
-          icon='📝'
-          label='OpenGraph Description'
-          value={openGraph.description || seo.description}
-          status={
-            openGraph.description
-              ? 'present'
-              : seo.description
-              ? 'inherited'
-              : 'missing'
-          }
-        />
+          <SimpleListItem
+            icon='📝'
+            label='OpenGraph Description'
+            value={openGraph.description || seo.description}
+            status={
+              openGraph.description
+                ? 'present'
+                : seo.description
+                ? 'inherited'
+                : 'missing'
+            }
+          />
 
-        <SimpleListItem
-          icon='🖼️'
-          label='OpenGraph Image'
-          value={openGraph.image}
-          status={openGraph.image ? 'present' : 'missing'}
-        />
+          <SimpleListItem
+            icon='🖼️'
+            label='OpenGraph Image'
+            value={openGraph.image}
+            status={openGraph.image ? 'present' : 'missing'}
+          />
+        </div>
+      </div>
 
-        <SimpleListItem
-          icon='🐦'
-          label='Twitter Card'
-          value={twitterCard.card ? `${twitterCard.card} card` : undefined}
-          status={twitterCard.card ? 'present' : 'missing'}
-        />
+      {/* Twitter Section */}
+      <div className='space-y-3'>
+        <h3 className='text-lg font-semibold text-foreground mb-4'>Twitter Card Tags</h3>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+          <SimpleListItem
+            icon='🐦'
+            label='Twitter Card'
+            value={twitterCard.card ? `${twitterCard.card} card` : undefined}
+            status={twitterCard.card ? 'present' : 'missing'}
+          />
 
-        <SimpleListItem
-          icon='🐦'
-          label='Twitter Title'
-          value={twitterCard.title || openGraph.title || seo.title}
-          status={
-            twitterCard.title
-              ? 'present'
-              : openGraph.title || seo.title
-              ? 'inherited'
-              : 'missing'
-          }
-        />
+          <SimpleListItem
+            icon='🐦'
+            label='Twitter Title'
+            value={twitterCard.title || openGraph.title || seo.title}
+            status={
+              twitterCard.title
+                ? 'present'
+                : openGraph.title || seo.title
+                ? 'inherited'
+                : 'missing'
+            }
+          />
 
-        <SimpleListItem
-          icon='🐦'
-          label='Twitter Description'
-          value={
-            twitterCard.description || openGraph.description || seo.description
-          }
-          status={
-            twitterCard.description
-              ? 'present'
-              : openGraph.description || seo.description
-              ? 'inherited'
-              : 'missing'
-          }
-        />
+          <SimpleListItem
+            icon='🐦'
+            label='Twitter Description'
+            value={
+              twitterCard.description || openGraph.description || seo.description
+            }
+            status={
+              twitterCard.description
+                ? 'present'
+                : openGraph.description || seo.description
+                ? 'inherited'
+                : 'missing'
+            }
+          />
 
-        <SimpleListItem
-          icon='🖼️'
-          label='Twitter Image'
-          value={twitterCard.image || openGraph.image}
-          status={
-            twitterCard.image
-              ? 'present'
-              : openGraph.image
-              ? 'inherited'
-              : 'missing'
-          }
-        />
+          <SimpleListItem
+            icon='🖼️'
+            label='Twitter Image'
+            value={twitterCard.image || openGraph.image}
+            status={
+              twitterCard.image
+                ? 'present'
+                : openGraph.image
+                ? 'inherited'
+                : 'missing'
+            }
+          />
+        </div>
       </div>
     </div>
   )

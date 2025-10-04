@@ -65,10 +65,10 @@ function Header () {
   type TabType = 'viewports' | 'seo' | 'social' | 'technical'
 
   const tabs: { id: TabType; label: string; icon: any }[] = [
-    { id: 'viewports', label: 'Viewports', icon: Monitor },
     { id: 'seo', label: 'SEO', icon: Search },
     { id: 'social', label: 'Social', icon: Share2 },
-    { id: 'technical', label: 'Technical', icon: Code }
+    { id: 'technical', label: 'Technical', icon: Code },
+    { id: 'viewports', label: 'Viewports', icon: Monitor }
   ]
 
   // Function to handle tab navigation
@@ -126,7 +126,7 @@ function Header () {
   }
 
   return (
-    <header className='sticky top-0 z-50 bg-background border-b'>
+    <header className='fixed top-0 left-0 right-0 z-50 bg-background border-b'>
       <div className='px-4 py-3'>
         <div className='max-w-[1600px] mx-auto flex items-center gap-3'>
           {/* Home Button */}
@@ -211,65 +211,28 @@ function Header () {
             </Button>
           )}
 
-          {/* Tabs & Zoom - Only when site loaded */}
+          {/* Tabs - Only when site loaded */}
           {currentSite && (
-            <>
-              <div className='hidden lg:flex items-center gap-2'>
-                {tabs.map(tab => {
-                  const Icon = tab.icon
-                  return (
-                    <button
-                      key={tab.id}
-                      className={cn(
-                        'h-9 px-4 text-sm font-medium flex items-center gap-2 rounded-lg transition-all',
-                        selectedTab === tab.id
-                          ? 'bg-foreground text-background'
-                          : 'hover:bg-muted text-foreground'
-                      )}
-                      onClick={() => handleTabClick(tab.id)}
-                    >
-                      <Icon className='h-4 w-4' />
-                      {tab.label}
-                    </button>
-                  )
-                })}
-              </div>
-
-              {/* Zoom Controls */}
-              <div className='hidden md:flex items-center border rounded-lg overflow-hidden'>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  onClick={globalZoomOut}
-                  disabled={globalZoomStepIndex === 0}
-                  className='h-9 w-9 rounded-none hover:bg-muted'
-                >
-                  <ZoomOut className='h-4 w-4' />
-                </Button>
-                <div className='h-9 px-3 flex items-center text-sm font-medium border-x min-w-[60px] justify-center bg-background'>
-                  {Math.round(zoomSteps[globalZoomStepIndex] * 100)}%
-                </div>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  onClick={globalZoomIn}
-                  disabled={globalZoomStepIndex === zoomSteps.length - 1}
-                  className='h-9 w-9 rounded-none hover:bg-muted'
-                >
-                  <ZoomIn className='h-4 w-4' />
-                </Button>
-              </div>
-
-              {/* Search/Settings Icons */}
-              <Button
-                variant='ghost'
-                size='icon'
-                className='h-9 w-9 hidden md:flex rounded-md hover:bg-muted'
-                title='Search'
-              >
-                <Search className='h-4 w-4' />
-              </Button>
-            </>
+            <div className='hidden lg:flex items-center gap-2'>
+              {tabs.map(tab => {
+                const Icon = tab.icon
+                return (
+                  <button
+                    key={tab.id}
+                    className={cn(
+                      'h-9 px-4 text-sm font-medium flex items-center gap-2 rounded-lg transition-all',
+                      selectedTab === tab.id
+                        ? 'bg-foreground text-background'
+                        : 'hover:bg-muted text-foreground'
+                    )}
+                    onClick={() => handleTabClick(tab.id)}
+                  >
+                    <Icon className='h-4 w-4' />
+                    {tab.label}
+                  </button>
+                )
+              })}
+            </div>
           )}
         </div>
       </div>
