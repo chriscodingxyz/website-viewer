@@ -83,11 +83,11 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
   }) => {
     const statusConfig = {
       good: {
-        icon: <CheckCircle className="h-3.5 w-3.5 text-green-600" />,
+        icon: <CheckCircle className="h-3.5 w-3.5" style={{ color: 'hsl(var(--brand-teal))' }} />,
         bgClass: "bg-green-50 dark:bg-green-950/30"
       },
       warning: {
-        icon: <AlertTriangle className="h-3.5 w-3.5 text-orange-600" />,
+        icon: <AlertTriangle className="h-3.5 w-3.5" style={{ color: 'hsl(var(--brand-orange))' }} />,
         bgClass: "bg-orange-50 dark:bg-orange-950/30"
       },
       error: {
@@ -363,7 +363,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
                     {structuredData.length} detected
                   </span>
                 </div>
-                <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                <CheckCircle className="h-3.5 w-3.5" style={{ color: 'hsl(var(--brand-teal))' }} />
               </div>
             </div>
 

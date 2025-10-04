@@ -57,6 +57,7 @@ function Header () {
     fetchMetadata,
     selectedTab,
     setSelectedTab,
+    views,
   } = useWebsiteViewer()
 
   const router = useRouter()
@@ -66,12 +67,18 @@ function Header () {
   // Tab configuration
   type TabType = 'viewports' | 'seo' | 'social' | 'technical'
 
-  const tabs: { id: TabType; label: string; icon: any }[] = [
+  // Check if all viewports are blocked
+  const areViewportsBlocked = views.length > 0 && views.every((v: any) => v.iframeStatus === 'blocked')
+
+  const allTabs: { id: TabType; label: string; icon: any }[] = [
     { id: 'seo', label: 'SEO', icon: MagnifyingGlass },
     { id: 'social', label: 'Social', icon: ShareNetwork },
     { id: 'technical', label: 'Technical', icon: CodeIcon },
     { id: 'viewports', label: 'Viewports', icon: Devices }
   ]
+
+  // Filter out viewports tab if blocked
+  const tabs = areViewportsBlocked ? allTabs.filter(tab => tab.id !== 'viewports') : allTabs
 
   // Function to handle tab navigation
   const handleTabClick = (tabId: TabType) => {

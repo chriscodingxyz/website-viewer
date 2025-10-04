@@ -229,19 +229,15 @@ export default function ViewportsSection ({
           ) : views.length > 0 && views.every((v: any) => v.iframeStatus === 'blocked') ? (
             // Show informational message when all viewports are blocked
             <div className='w-full'>
-              <div className='flex justify-center items-center py-8'>
-                <div className='text-center max-w-lg'>
-                  <div className='mx-auto mb-3 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center'>
-                    <CheckCircle className='w-5 h-5 text-green-600' />
+              <div className='flex justify-center items-center min-h-[400px]'>
+                <div className='text-center max-w-md'>
+                  <div className='mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center' style={{ backgroundColor: 'hsl(var(--brand-teal-light))' }}>
+                    <CheckCircle className='w-8 h-8' style={{ color: 'hsl(var(--brand-teal))' }} />
                   </div>
-                  <h3 className='text-sm font-semibold text-foreground mb-2'>X-Frame-Options Configured</h3>
-                  <p className='text-xs text-muted-foreground mb-3 leading-relaxed'>
-                    This website has <code className='bg-muted px-1.5 py-0.5 rounded text-xs font-mono'>X-Frame-Options: DENY</code> configured,
-                    which prevents iframe embedding. This is a good security practice that protects against clickjacking attacks.
+                  <h3 className='text-lg font-semibold text-foreground mb-2'>Viewports Blocked</h3>
+                  <p className='text-sm text-muted-foreground leading-relaxed'>
+                    This site has X-Frame-Options configured, which prevents iframe embedding for security. Check out the SEO, Social, and Technical tabs instead!
                   </p>
-                  <div className='bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-xs text-amber-900 dark:text-amber-200'>
-                    <strong>Important:</strong> Only the website owner can remove X-Frame-Options. If this is YOUR website, you can modify the server configuration. Otherwise, viewport previews are impossible due to security restrictions.
-                  </div>
                 </div>
               </div>
             </div>

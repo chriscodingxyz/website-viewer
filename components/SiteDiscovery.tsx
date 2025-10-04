@@ -171,10 +171,10 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
 
   const getStatusIcon = (accessible?: boolean) => {
     if (accessible === undefined) {
-      return <AlertTriangle className="h-2.5 w-2.5 text-yellow-500" />
+      return <AlertTriangle className="h-2.5 w-2.5" style={{ color: 'hsl(var(--brand-orange))' }} />
     }
     return accessible ?
-      <CheckCircle className="h-2.5 w-2.5 text-green-500" /> :
+      <CheckCircle className="h-2.5 w-2.5" style={{ color: 'hsl(var(--brand-teal))' }} /> :
       <XCircle className="h-2.5 w-2.5 text-red-500" />
   }
 
@@ -269,14 +269,12 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
                                 )}
                               </div>
                             </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
+                            <button
                               onClick={() => handleNavigateToPage(page.url)}
-                              className="shrink-0 h-6 w-6 p-0"
+                              className="shrink-0 hover:opacity-70 transition-opacity"
                             >
-                              <ExternalLink className="h-2.5 w-2.5" />
-                            </Button>
+                              <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                            </button>
                           </div>
                         ))}
                       </div>

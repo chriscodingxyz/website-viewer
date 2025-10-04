@@ -233,16 +233,16 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
             shouldLoad: false
           }))
         )
-        // Only auto-switch to social tab if currently on viewports tab AND we haven't redirected yet
+        // Only auto-switch to SEO tab if currently on viewports tab AND we haven't redirected yet
         if (selectedTab === 'viewports' && !hasRedirected.current && typeof window !== 'undefined') {
           hasRedirected.current = true
-          setSelectedTab('social')
+          setSelectedTab('seo')
           // Update URL to match the new tab
           const searchParams = new URLSearchParams(window.location.search)
           const siteParam = searchParams.get('site')
-          const newPath = `/social${siteParam ? `?site=${siteParam}` : ''}`
+          const newPath = `/${siteParam ? `?site=${siteParam}` : ''}`
           window.history.pushState({}, '', newPath)
-          toast.info('Viewports blocked by website - switched to social preview')
+          toast.info('Viewports blocked by website - switched to SEO analysis')
         }
       } else {
         // No blocking headers or local/staging site, allow iframes to load
