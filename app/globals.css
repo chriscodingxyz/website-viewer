@@ -74,13 +74,23 @@
     --chart-5: 27 87% 67%;
     --radius: 0.25rem;
 
+    /* Logo-inspired brand colors */
+    --brand-teal: 177 60% 45%;
+    --brand-teal-light: 177 60% 95%;
+    --brand-orange: 18 85% 58%;
+    --brand-orange-light: 18 85% 95%;
+    --brand-coral: 10 90% 65%;
+    --brand-coral-light: 10 90% 95%;
+    --brand-yellow: 43 95% 65%;
+    --brand-yellow-light: 43 95% 95%;
+
     /* Professional status colors - subtle and minimal */
-    --success: 142 76% 36%;
+    --success: 177 60% 45%;
     --success-foreground: 0 0% 98%;
-    --success-muted: 142 33% 95%;
-    --warning: 32 95% 44%;
+    --success-muted: 177 60% 95%;
+    --warning: 18 85% 58%;
     --warning-foreground: 0 0% 98%;
-    --warning-muted: 32 78% 95%;
+    --warning-muted: 18 85% 95%;
     --error: 0 65% 55%;
     --error-foreground: 0 0% 98%;
     --error-muted: 0 56% 95%;
@@ -130,13 +140,23 @@
     --chart-5: 27 87% 67%;
     --radius: 0.25rem;
 
+    /* Logo-inspired brand colors - dark mode */
+    --brand-teal: 177 60% 50%;
+    --brand-teal-light: 177 60% 12%;
+    --brand-orange: 18 85% 60%;
+    --brand-orange-light: 18 85% 12%;
+    --brand-coral: 10 90% 68%;
+    --brand-coral-light: 10 90% 12%;
+    --brand-yellow: 43 95% 68%;
+    --brand-yellow-light: 43 95% 12%;
+
     /* Professional status colors - dark mode */
-    --success: 142 76% 36%;
+    --success: 177 60% 50%;
     --success-foreground: 0 0% 98%;
-    --success-muted: 142 33% 8%;
-    --warning: 32 95% 44%;
+    --success-muted: 177 60% 12%;
+    --warning: 18 85% 60%;
     --warning-foreground: 0 0% 98%;
-    --warning-muted: 32 78% 8%;
+    --warning-muted: 18 85% 12%;
     --error: 0 65% 55%;
     --error-foreground: 0 0% 98%;
     --error-muted: 0 56% 8%;
@@ -204,11 +224,13 @@ html {
 }
 
 .status-dot-success {
-  @apply w-2 h-2 rounded-full flex-shrink-0 mt-1 bg-green-600;
+  @apply w-2 h-2 rounded-full flex-shrink-0 mt-1;
+  background-color: hsl(var(--success));
 }
 
 .status-dot-warning {
-  @apply w-2 h-2 rounded-full flex-shrink-0 mt-1 bg-orange-600;
+  @apply w-2 h-2 rounded-full flex-shrink-0 mt-1;
+  background-color: hsl(var(--warning));
 }
 
 .status-dot-error {
@@ -220,11 +242,17 @@ html {
 }
 
 .pro-badge-success {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border bg-green-50 text-green-700 border-green-200;
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border;
+  background-color: hsl(var(--success-muted));
+  color: hsl(var(--success));
+  border-color: hsl(var(--success) / 0.3);
 }
 
 .pro-badge-warning {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border bg-orange-50 text-orange-700 border-orange-200;
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border;
+  background-color: hsl(var(--warning-muted));
+  color: hsl(var(--warning));
+  border-color: hsl(var(--warning) / 0.3);
 }
 
 .pro-badge-error {

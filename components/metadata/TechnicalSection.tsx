@@ -129,7 +129,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
   const TechnicalScoreDisplay = () => {
     const getScoreColor = () => {
       if (technicalScore.percentage >= 80) return 'bg-green-500'
-      if (technicalScore.percentage >= 60) return 'bg-orange-500'
+      if (technicalScore.percentage >= 60) return 'bg-[hsl(var(--brand-orange))]'
       return 'bg-red-500'
     }
 

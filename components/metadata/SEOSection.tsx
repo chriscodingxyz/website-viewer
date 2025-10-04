@@ -102,7 +102,7 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
   // Elegant SEO Score card - inspired by reference design
   const SEOScoreDisplay = () => {
     const getScoreColor = () => {
-      if (seoScore.percentage >= 80) return 'bg-green-500'
+      if (seoScore.percentage >= 80) return 'bg-[hsl(var(--brand-teal))]'
       if (seoScore.percentage >= 60) return 'bg-orange-500'
       return 'bg-red-500'
     }
