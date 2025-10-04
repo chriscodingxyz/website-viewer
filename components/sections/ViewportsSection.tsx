@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import Image from 'next/image'
 
 interface ViewportsSectionProps {
   expanded: boolean
@@ -131,43 +132,56 @@ export default function ViewportsSection ({
   }
 
   return (
-    <div className='w-full relative'>
-      {/* Content - Always visible */}
-      <div className='w-full p-4 relative'>
-        {/* Zoom Control - Fixed bottom right corner (hidden on mobile) */}
-        {views.length > 0 && !metadataLoading && (
-          <div className='hidden sm:block fixed bottom-6 right-6 z-40'>
-            <div className='flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-border/50 rounded-lg px-3 py-2 shadow-lg'>
-              <span className='text-xs text-muted-foreground'>Zoom:</span>
-              <Select
-                value={Math.round(globalZoom * 100).toString()}
-                onValueChange={(value) => {
-                  const percentage = parseInt(value)
-                  const newIndex = zoomSteps.findIndex((step: number) => Math.round(step * 100) === percentage)
-                  if (newIndex !== -1) {
-                    setGlobalZoomStepIndex(newIndex)
-                    toast.success(`Zoom: ${percentage}%`)
-                  }
-                }}
-              >
-                <SelectTrigger className="w-20 h-7 text-xs border border-border/50 hover:border-border transition-all duration-200 bg-background hover:bg-muted/50 rounded-md">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="w-20">
-                  {zoomSteps.map((step: number, index: number) => {
-                    const percentage = Math.round(step * 100)
-                    return (
-                      <SelectItem key={index} value={percentage.toString()}>
-                        {percentage}%
-                      </SelectItem>
-                    )
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
+    <div className='max-w-[1600px] mx-auto px-6 lg:px-8 py-6'>
+      <div className='flex gap-8 lg:gap-16'>
+        {/* Sticky Logo - Hidden on mobile */}
+        <div className='hidden lg:block flex-shrink-0 w-64 xl:w-80'>
+          <div className='sticky top-1/2 -translate-y-1/2'>
+            <Image
+              src='/logo.png'
+              alt='Website Viewer Logo'
+              width={320}
+              height={320}
+              className='w-full h-auto'
+            />
           </div>
-        )}
-        <div className='w-full'>
+        </div>
+
+        {/* Content with min-height to prevent logo shift */}
+        <div className='flex-1 min-w-0 min-h-[calc(100svh-120px)] relative'>
+          {/* Zoom Control - Fixed bottom right corner (hidden on mobile) */}
+          {views.length > 0 && !metadataLoading && (
+            <div className='hidden sm:block fixed bottom-6 right-6 z-40'>
+              <div className='flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-border/50 rounded-lg px-3 py-2 shadow-lg'>
+                <span className='text-xs text-muted-foreground'>Zoom:</span>
+                <Select
+                  value={Math.round(globalZoom * 100).toString()}
+                  onValueChange={(value) => {
+                    const percentage = parseInt(value)
+                    const newIndex = zoomSteps.findIndex((step: number) => Math.round(step * 100) === percentage)
+                    if (newIndex !== -1) {
+                      setGlobalZoomStepIndex(newIndex)
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-20 h-7 text-xs border border-border/50 hover:border-border transition-all duration-200 bg-background hover:bg-muted/50 rounded-md">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="w-20">
+                    {zoomSteps.map((step: number, index: number) => {
+                      const percentage = Math.round(step * 100)
+                      return (
+                        <SelectItem key={index} value={percentage.toString()} className="text-xs">
+                          {percentage}%
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
           {views.length === 0 ? (
             <Empty className="border-0">
               <EmptyHeader>

@@ -62,7 +62,6 @@ import {
 const actualViewDimensions = {
   desktop: { width: 1024, height: 768 },
   tablet: { width: 768, height: 1024 },
-  mobileLarge: { width: 640, height: 1000 },
   mobile: { width: 375, height: 667 }
 }
 
@@ -70,7 +69,6 @@ const actualViewDimensions = {
 const displayViewDimensions = {
   desktop: { width: 400, height: 300 }, // 2.56x scale down
   tablet: { width: 384, height: 512 }, // 2x scale down
-  mobileLarge: { width: 320, height: 500 }, // 2x scale down
   mobile: { width: 187, height: 333 } // 2x scale down
 }
 

@@ -113,18 +113,15 @@ function Header () {
   const globalZoomIn = () => {
     const newIndex = Math.min(globalZoomStepIndex + 1, zoomSteps.length - 1)
     setGlobalZoomStepIndex(newIndex)
-    toast.success(`Zoom: ${Math.round(zoomSteps[newIndex] * 100)}%`)
   }
 
   const globalZoomOut = () => {
     const newIndex = Math.max(globalZoomStepIndex - 1, 0)
     setGlobalZoomStepIndex(newIndex)
-    toast.success(`Zoom: ${Math.round(zoomSteps[newIndex] * 100)}%`)
   }
 
   const resetGlobalZoom = () => {
     setGlobalZoomStepIndex(0)
-    toast.success('Zoom reset to 100%')
   }
 
   return (

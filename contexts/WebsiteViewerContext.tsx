@@ -8,7 +8,7 @@ import { WebsiteMetadata } from '@/types/metadata'
 import { IframeStatus, IframeDetectionResult, iframeDetectionService } from '@/services/IframeDetectionService'
 
 
-export type ViewType = 'desktop' | 'tablet' | 'mobileLarge' | 'mobile'
+export type ViewType = 'desktop' | 'tablet' | 'mobile'
 export type TabType = 'viewports' | 'seo' | 'social' | 'technical'
 
 export interface View {
@@ -285,7 +285,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   }, [url])
 
   // Global zoom state - only 100% and above
-  const zoomSteps = [1, 1.25, 1.5, 1.75, 2, 2.5, 3]
+  const zoomSteps = [1, 1.25, 1.5, 1.75, 2]
   const [globalZoomStepIndex, setGlobalZoomStepIndex] = useState(0) // Default to 100%
   const globalZoom = zoomSteps[globalZoomStepIndex]
 
@@ -297,7 +297,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
 
   const loadSiteInternal = async (formattedUrl: string) => {
-    // Create all 4 viewports for comprehensive device testing
+    // Create 3 viewports for comprehensive device testing
     // Start with shouldLoad: false to wait for X-Frame-Options check
     const newViews = [
       {
@@ -317,22 +317,15 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
       {
         id: nextId + 2,
         url: formattedUrl,
-        type: 'mobileLarge' as ViewType,
-        iframeStatus: 'loading' as IframeStatus,
-        shouldLoad: false
-      },
-      {
-        id: nextId + 3,
-        url: formattedUrl,
         type: 'mobile' as ViewType,
         iframeStatus: 'loading' as IframeStatus,
         shouldLoad: false
       }
     ]
-    
+
     setViews(newViews)
     setCurrentSite(formattedUrl)
-    setNextId(nextId + 4) // Increment by 4 for all viewports
+    setNextId(nextId + 3) // Increment by 3 for all viewports
     addToHistory(formattedUrl)
     setUrl(formattedUrl)
 
