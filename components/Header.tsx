@@ -165,6 +165,7 @@ function Header () {
                 <button
                   role='combobox'
                   aria-expanded={open}
+                  aria-controls='url-suggestions'
                   className={cn(
                     'w-full flex items-center justify-between h-8 px-3 text-sm bg-background border rounded-lg hover:border-foreground/40 transition-colors',
                     isInputHighlighted && 'ring-2 ring-primary ring-offset-2'
@@ -180,7 +181,7 @@ function Header () {
                 </button>
               </PopoverTrigger>
               <PopoverContent className='p-0' align='start' sideOffset={6} style={{ width: 'var(--radix-popover-trigger-width)' }}>
-                <Command>
+                <Command id='url-suggestions'>
                   <CommandInput
                     placeholder='Enter website URL...'
                     value={url}

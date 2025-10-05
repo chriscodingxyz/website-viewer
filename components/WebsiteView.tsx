@@ -257,8 +257,6 @@ export default function WebsiteView ({
         return <Monitor className='h-3.5 w-3.5' />
       case 'tablet':
         return <Tablet className='h-3.5 w-3.5' />
-      case 'mobileLarge':
-        return <Smartphone className='h-3.5 w-3.5' />
       case 'mobile':
         return <Smartphone className='h-3.5 w-3.5' />
     }
@@ -270,8 +268,6 @@ export default function WebsiteView ({
         return 'Desktop'
       case 'tablet':
         return 'Tablet'
-      case 'mobileLarge':
-        return 'Mobile Large'
       case 'mobile':
         return 'Mobile'
     }
@@ -283,8 +279,6 @@ export default function WebsiteView ({
         return 'device-desktop'
       case 'tablet':
         return 'device-tablet'
-      case 'mobileLarge':
-        return 'device-mobile-large'
       case 'mobile':
         return 'device-mobile'
     }
@@ -296,14 +290,12 @@ export default function WebsiteView ({
         return { color: 'rgb(59 130 246)', backgroundColor: 'rgb(59 130 246 / 0.05)' } // blue
       case 'tablet':
         return { color: 'rgb(34 197 94)', backgroundColor: 'rgb(34 197 94 / 0.05)' } // green
-      case 'mobileLarge':
-        return { color: 'rgb(249 115 22)', backgroundColor: 'rgb(249 115 22 / 0.05)' } // orange
       case 'mobile':
         return { color: 'rgb(168 85 247)', backgroundColor: 'rgb(168 85 247 / 0.05)' } // purple
     }
   }
 
-  const deviceTypes: ViewType[] = ['desktop', 'tablet', 'mobileLarge', 'mobile']
+  const deviceTypes: ViewType[] = ['desktop', 'tablet', 'mobile']
 
   // Container size - shows full content at all zoom levels
   const scaledWidth = displayDimensions[view.type].width * scale
@@ -433,13 +425,6 @@ export default function WebsiteView ({
                       }}
                     >
                       <Tablet className='mr-2 h-3 w-3' /> Tablet
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        onDuplicate({ ...view, type: 'mobileLarge' })
-                      }}
-                    >
-                      <Smartphone className='mr-2 h-3 w-3' /> Mobile Large
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => {
