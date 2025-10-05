@@ -12,7 +12,11 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  Menu
+  Menu,
+  Search,
+  ArrowRight,
+  ArrowLeft,
+  X
 } from 'lucide-react'
 import {
   MagnifyingGlass,
@@ -20,6 +24,7 @@ import {
   Code as CodeIcon,
   Devices
 } from '@phosphor-icons/react'
+import { Clock } from 'lucide-react'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
@@ -68,6 +73,7 @@ function Header () {
   } = useWebsiteViewer()
 
   const router = useRouter()
+  const { history } = useHistory()
 
   const [open, setOpen] = useState(false)
 
@@ -140,9 +146,9 @@ function Header () {
 
   return (
     <header className='fixed top-0 left-0 right-0 z-50 bg-background border-b'>
-      <div className='px-4 py-2.5'>
-        <div className='max-w-[1600px] mx-auto flex items-center gap-2.5'>
-          {/* Home Button */}
+      <div className='px-2 sm:px-4 py-2.5'>
+        <div className='max-w-[1600px] mx-auto flex items-center justify-center gap-1.5 sm:gap-2.5'>
+          {/* Back/Clear Button */}
           {currentSite && (
             <Button
               variant='ghost'
@@ -151,15 +157,15 @@ function Header () {
                 clearSite()
                 router.push('/')
               }}
-              className='h-8 w-8 shrink-0 hover:bg-muted rounded-md'
-              title='Home'
+              className='h-8 w-8 shrink-0 hover:bg-muted rounded-md hidden sm:flex'
+              title='Clear and go back'
             >
-              <Home className='h-3.5 w-3.5' />
+              <ArrowLeft className='h-4 w-4' />
             </Button>
           )}
 
-          {/* URL Input */}
-          <div className='relative flex-1 max-w-2xl'>
+          {/* URL Input - Responsive width */}
+          <div className='relative flex-1 min-w-0 max-w-2xl'>
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <button
@@ -197,6 +203,19 @@ function Header () {
                   />
                   <CommandEmpty>No URL found.</CommandEmpty>
                   <CommandList>
+                    {/* Recently Viewed - Show when no search input */}
+                    {url.length === 0 && history.length > 0 && (
+                      <CommandGroup heading='Recently Viewed'>
+                        {history.slice(0, 5).map((item: string, index: number) => (
+                          <CommandItem key={`history-${index}`} onSelect={() => onSelect(item)}>
+                            <Clock className='mr-2 h-4 w-4 text-muted-foreground' />
+                            <span className='truncate'>{item}</span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+
+                    {/* Suggestions - Show when typing */}
                     {url.length > 0 && filteredSuggestions.length > 0 && (
                       <CommandGroup heading='Suggestions'>
                         {filteredSuggestions.map((suggestion: string, index: number) => (
@@ -213,23 +232,21 @@ function Header () {
             </Popover>
           </div>
 
-          {/* View Button - Only when no site loaded */}
-          {!currentSite && (
-            <Button
-              disabled={!formatUrl(url)}
-              onClick={() => loadSite()}
-              className='h-8 px-4 shrink-0 rounded-lg text-sm'
-            >
-              <Eye className='w-3.5 h-3.5 mr-1.5' />
-              View
-            </Button>
-          )}
+          {/* Search Button - Always visible */}
+          <Button
+            disabled={!formatUrl(url)}
+            onClick={() => loadSite()}
+            size='icon'
+            className='h-8 w-8 shrink-0 rounded-lg'
+          >
+            <Search className='w-3.5 h-3.5 sm:w-4 sm:h-4' />
+          </Button>
 
           {/* Tabs - Desktop: horizontal tabs, Mobile: dropdown */}
           {currentSite && (
             <>
-              {/* Desktop Tabs */}
-              <div className='hidden lg:flex items-center gap-1 bg-muted/50 p-0.5 rounded-lg'>
+              {/* Desktop Tabs - Hide on smaller screens when needed */}
+              <div className='hidden xl:flex items-center gap-1 bg-muted/50 p-0.5 rounded-lg'>
                 {tabs.map(tab => {
                   const Icon = tab.icon
                   return (
@@ -250,17 +267,17 @@ function Header () {
                 })}
               </div>
 
-              {/* Mobile Dropdown */}
-              <div className='lg:hidden'>
+              {/* Mobile Dropdown - Show on all non-XL screens */}
+              <div className='xl:hidden'>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant='outline' size='sm' className='h-8 gap-1.5 text-xs'>
+                    <Button variant='outline' size='sm' className='h-8 gap-1 sm:gap-1.5 text-xs px-2 sm:px-3'>
                       {(() => {
                         const currentTab = tabs.find(t => t.id === selectedTab)
                         const CurrentIcon = currentTab?.icon
                         return CurrentIcon ? <CurrentIcon className='h-3.5 w-3.5' weight='fill' /> : null
                       })()}
-                      <ChevronDown className='h-3.5 w-3.5' />
+                      <ChevronDown className='h-3 w-3 sm:h-3.5 sm:w-3.5' />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align='end' className='text-xs'>

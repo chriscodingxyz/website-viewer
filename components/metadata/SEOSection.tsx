@@ -25,9 +25,35 @@ export default function SEOSection ({ metadata }: SEOSectionProps) {
   if (!metadata) {
     return (
       <div className='w-full min-h-[400px] flex items-center justify-center'>
-        <div className='text-center'>
-          <div className='text-xl font-medium text-muted-foreground mb-2'>Loading SEO Analysis...</div>
-          <div className='text-sm text-muted-foreground'>Analyzing website metadata and optimization</div>
+        <div className='text-center max-w-md'>
+          {/* Clean spinner */}
+          <div className='flex justify-center items-center mb-8'>
+            <div className='w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin'></div>
+          </div>
+
+          <h3 className='text-base font-semibold mb-6 text-foreground'>
+            Analyzing SEO Data
+          </h3>
+
+          {/* Clean animated list */}
+          <div className='space-y-3 text-sm text-muted-foreground'>
+            <div className='flex items-center justify-center gap-3 px-4 py-2 bg-muted/50 rounded-full opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.1s_forwards]'>
+              <div className='w-1 h-1 rounded-full bg-foreground'></div>
+              <span>Scanning meta tags</span>
+            </div>
+            <div className='flex items-center justify-center gap-3 px-4 py-2 bg-muted/50 rounded-full opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.3s_forwards]'>
+              <div className='w-1 h-1 rounded-full bg-foreground'></div>
+              <span>Checking SEO scores</span>
+            </div>
+            <div className='flex items-center justify-center gap-3 px-4 py-2 bg-muted/50 rounded-full opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.5s_forwards]'>
+              <div className='w-1 h-1 rounded-full bg-foreground'></div>
+              <span>Analyzing keywords</span>
+            </div>
+            <div className='flex items-center justify-center gap-3 px-4 py-2 bg-muted/50 rounded-full opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.7s_forwards]'>
+              <div className='w-1 h-1 rounded-full bg-foreground'></div>
+              <span>Discovering sitemaps</span>
+            </div>
+          </div>
         </div>
       </div>
     )

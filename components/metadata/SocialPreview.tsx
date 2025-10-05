@@ -37,9 +37,32 @@ interface SocialPreviewProps {
 export default function SocialPreview ({ metadata }: SocialPreviewProps) {
   if (!metadata) {
     return (
-      <div className='w-full'>
-        <div className='text-center py-16 text-gray-500 dark:text-gray-400'>
-          <div className='text-xl'>Loading social media data...</div>
+      <div className='w-full min-h-[400px] flex items-center justify-center'>
+        <div className='text-center max-w-md'>
+          {/* Clean spinner */}
+          <div className='flex justify-center items-center mb-8'>
+            <div className='w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin'></div>
+          </div>
+
+          <h3 className='text-base font-semibold mb-6 text-foreground'>
+            Analyzing Social Media
+          </h3>
+
+          {/* Clean animated list */}
+          <div className='space-y-3 text-sm text-muted-foreground'>
+            <div className='flex items-center justify-center gap-3 px-4 py-2 bg-muted/50 rounded-full opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.1s_forwards]'>
+              <div className='w-1 h-1 rounded-full bg-foreground'></div>
+              <span>Checking Open Graph tags</span>
+            </div>
+            <div className='flex items-center justify-center gap-3 px-4 py-2 bg-muted/50 rounded-full opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.3s_forwards]'>
+              <div className='w-1 h-1 rounded-full bg-foreground'></div>
+              <span>Analyzing Twitter cards</span>
+            </div>
+            <div className='flex items-center justify-center gap-3 px-4 py-2 bg-muted/50 rounded-full opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.5s_forwards]'>
+              <div className='w-1 h-1 rounded-full bg-foreground'></div>
+              <span>Validating social images</span>
+            </div>
+          </div>
         </div>
       </div>
     )
