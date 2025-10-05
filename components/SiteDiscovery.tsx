@@ -236,7 +236,7 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
             <p className="text-[10px]">Try checking if the site has a sitemap.xml</p>
           </div>
         ) : (
-          <Accordion type="multiple" className="w-full" defaultValue={['sitemap', 'robots', 'internal']}>
+          <Accordion type="multiple" className="w-full" defaultValue={[]}>
             {Object.entries(pagesBySource).map(([source, pages]) => {
               if (pages.length === 0) return null
 
