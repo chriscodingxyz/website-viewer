@@ -64,7 +64,7 @@ export default function WebsiteViewer () {
                 {/* Logo */}
                 <div className='flex-shrink-0 w-32 h-32 sm:w-40 sm:h-40 lg:w-64 lg:h-64'>
                   <Image
-                    src='/logo.png'
+                    src='/seoseal.png'
                     alt='Website Viewer Logo'
                     width={256}
                     height={256}

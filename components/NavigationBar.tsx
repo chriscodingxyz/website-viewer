@@ -15,9 +15,16 @@ import {
 } from '@/components/ui/breadcrumb'
 import ShareableLink from '@/components/ShareableLink'
 import ExportButton from '@/components/export/ExportButton'
-import { Home, Globe, Eye, Share2, Settings, BarChart3 } from 'lucide-react'
+import { Home, Globe, Eye, Share2, Settings, BarChart3, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ButtonGroup } from '@/components/ui/button-group'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
 
 type TabType = 'viewports' | 'seo' | 'social' | 'technical'
 
@@ -115,24 +122,58 @@ export default function NavigationBar() {
       <div className="py-1.5 px-2 sm:px-4">
         <div className="max-w-[1400px] mx-auto px-2 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-2 sm:gap-3">
-          {/* Left: Just tabs */}
+          {/* Left: Tabs - Dropdown on mobile, horizontal on desktop */}
           {!isInitialLoad && (
-            <ButtonGroup className="overflow-x-auto">
-              {tabs.map(tab => (
-                <button
-                  key={tab.id}
-                  className={cn(
-                    'px-2 sm:px-2.5 py-1 text-xs transition-all duration-200 shrink-0',
-                    selectedTab === tab.id
-                      ? 'bg-foreground text-background'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                  )}
-                  onClick={() => handleTabClick(tab.id)}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </ButtonGroup>
+            <>
+              {/* Mobile Dropdown */}
+              <div className="md:hidden">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
+                      {IconComponent && <IconComponent className="h-3 w-3" />}
+                      <span>{currentTabConfig?.label}</span>
+                      <ChevronDown className="h-3 w-3 ml-0.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    {tabs.map(tab => {
+                      const Icon = tabConfig[tab.id].icon
+                      return (
+                        <DropdownMenuItem
+                          key={tab.id}
+                          onClick={() => handleTabClick(tab.id)}
+                          className={cn(
+                            'cursor-pointer gap-2',
+                            selectedTab === tab.id && 'bg-accent'
+                          )}
+                        >
+                          <Icon className="h-4 w-4" />
+                          <span>{tab.label}</span>
+                        </DropdownMenuItem>
+                      )
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Desktop Tabs */}
+              <ButtonGroup className="hidden md:flex overflow-x-auto">
+                {tabs.map(tab => (
+                  <button
+                    key={tab.id}
+                    className={cn(
+                      'px-2 sm:px-2.5 py-1 text-xs transition-all duration-200 shrink-0',
+                      selectedTab === tab.id
+                        ? 'bg-foreground text-background'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    )}
+                    onClick={() => handleTabClick(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </ButtonGroup>
+            </>
           )}
 
           {/* Right: Export and Share buttons - Only show when metadata is loaded */}

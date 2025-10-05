@@ -11,7 +11,8 @@ import {
   Eye,
   ZoomIn,
   ZoomOut,
-  RotateCcw
+  RotateCcw,
+  Menu
 } from 'lucide-react'
 import {
   MagnifyingGlass,
@@ -28,6 +29,12 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '@/components/ui/popover'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Command,
   CommandEmpty,
@@ -217,57 +224,69 @@ function Header () {
             </Button>
           )}
 
-          {/* Tabs - Only when site loaded */}
+          {/* Tabs - Desktop: horizontal tabs, Mobile: dropdown */}
           {currentSite && (
-            <div className='hidden lg:flex items-center gap-1 bg-muted/50 p-0.5 rounded-lg'>
-              {tabs.map(tab => {
-                const Icon = tab.icon
-                return (
-                  <button
-                    key={tab.id}
-                    className={cn(
-                      'h-7 px-2.5 text-xs font-medium flex items-center gap-1.5 rounded-md transition-all',
-                      selectedTab === tab.id
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                    )}
-                    onClick={() => handleTabClick(tab.id)}
-                  >
-                    <Icon className='h-3.5 w-3.5' weight={selectedTab === tab.id ? 'fill' : 'regular'} />
-                    {tab.label}
-                  </button>
-                )
-              })}
-            </div>
+            <>
+              {/* Desktop Tabs */}
+              <div className='hidden lg:flex items-center gap-1 bg-muted/50 p-0.5 rounded-lg'>
+                {tabs.map(tab => {
+                  const Icon = tab.icon
+                  return (
+                    <button
+                      key={tab.id}
+                      className={cn(
+                        'h-7 px-2.5 text-xs font-medium flex items-center gap-1.5 rounded-md transition-all',
+                        selectedTab === tab.id
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                      )}
+                      onClick={() => handleTabClick(tab.id)}
+                    >
+                      <Icon className='h-3.5 w-3.5' weight={selectedTab === tab.id ? 'fill' : 'regular'} />
+                      {tab.label}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Mobile Dropdown */}
+              <div className='lg:hidden'>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant='outline' size='sm' className='h-8 gap-1.5 text-xs'>
+                      {(() => {
+                        const currentTab = tabs.find(t => t.id === selectedTab)
+                        const CurrentIcon = currentTab?.icon
+                        return CurrentIcon ? <CurrentIcon className='h-3.5 w-3.5' weight='fill' /> : null
+                      })()}
+                      <ChevronDown className='h-3.5 w-3.5' />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end' className='text-xs'>
+                    {tabs.map(tab => {
+                      const Icon = tab.icon
+                      return (
+                        <DropdownMenuItem
+                          key={tab.id}
+                          onClick={() => handleTabClick(tab.id)}
+                          className={cn(
+                            'cursor-pointer gap-2 text-xs',
+                            selectedTab === tab.id && 'bg-accent'
+                          )}
+                        >
+                          <Icon className='h-3.5 w-3.5' weight={selectedTab === tab.id ? 'fill' : 'regular'} />
+                          <span>{tab.label}</span>
+                        </DropdownMenuItem>
+                      )
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </>
           )}
         </div>
       </div>
 
-      {/* Mobile Tabs */}
-      {currentSite && (
-        <div className='lg:hidden border-t px-4 py-1.5'>
-          <div className='flex gap-1 overflow-x-auto bg-muted/50 p-0.5 rounded-lg'>
-            {tabs.map(tab => {
-              const Icon = tab.icon
-              return (
-                <button
-                  key={tab.id}
-                  className={cn(
-                    'h-7 px-2.5 text-xs font-medium flex items-center gap-1.5 rounded-md whitespace-nowrap transition-all',
-                    selectedTab === tab.id
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                  )}
-                  onClick={() => handleTabClick(tab.id)}
-                >
-                  <Icon className='h-3.5 w-3.5' weight={selectedTab === tab.id ? 'fill' : 'regular'} />
-                  {tab.label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
     </header>
   )
 }

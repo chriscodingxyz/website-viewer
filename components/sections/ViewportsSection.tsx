@@ -138,7 +138,7 @@ export default function ViewportsSection ({
         <div className='hidden lg:block flex-shrink-0 w-64 xl:w-80'>
           <div className='sticky top-1/2 -translate-y-1/2'>
             <Image
-              src='/logo.png'
+              src='/seoseal.png'
               alt='Website Viewer Logo'
               width={320}
               height={320}

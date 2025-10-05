@@ -17,7 +17,10 @@ export default function SectionContainer () {
   }
 
   // Determine if we should show the logo layout (for SEO, Social, Technical tabs)
-  const showLogoLayout = selectedTab === 'seo' || selectedTab === 'social' || selectedTab === 'technical'
+  const showLogoLayout =
+    selectedTab === 'seo' ||
+    selectedTab === 'social' ||
+    selectedTab === 'technical'
 
   return (
     <div className='w-full'>
@@ -43,13 +46,13 @@ export default function SectionContainer () {
           }
           style={selectedTab !== 'seo' ? { height: '1px' } : {}}
         >
-          <div className='max-w-[1600px] mx-auto px-6 lg:px-8 py-6'>
+          <div className='max-w-[1600px] mx-auto px-4 lg:px-8 py-6'>
             <div className='flex gap-8 lg:gap-16'>
               {/* Sticky Logo - Hidden on mobile */}
               <div className='hidden lg:block flex-shrink-0 w-64 xl:w-80'>
                 <div className='sticky top-1/2 -translate-y-1/2'>
                   <Image
-                    src='/logo.png'
+                    src='/seoseal.png'
                     alt='Website Viewer Logo'
                     width={320}
                     height={320}
@@ -73,13 +76,13 @@ export default function SectionContainer () {
           }
           style={selectedTab !== 'social' ? { height: '1px' } : {}}
         >
-          <div className='max-w-[1600px] mx-auto px-6 lg:px-8 py-6'>
+          <div className='max-w-[1600px] mx-auto px-4 lg:px-8 py-6'>
             <div className='flex gap-8 lg:gap-16'>
               {/* Sticky Logo - Hidden on mobile */}
               <div className='hidden lg:block flex-shrink-0 w-64 xl:w-80'>
                 <div className='sticky top-1/2 -translate-y-1/2'>
                   <Image
-                    src='/logo.png'
+                    src='/seoseal.png'
                     alt='Website Viewer Logo'
                     width={320}
                     height={320}
@@ -103,13 +106,13 @@ export default function SectionContainer () {
           }
           style={selectedTab !== 'technical' ? { height: '1px' } : {}}
         >
-          <div className='max-w-[1600px] mx-auto px-6 lg:px-8 py-6'>
+          <div className='max-w-[1600px] mx-auto px-4 lg:px-8 py-6'>
             <div className='flex gap-8 lg:gap-16'>
               {/* Sticky Logo - Hidden on mobile */}
               <div className='hidden lg:block flex-shrink-0 w-64 xl:w-80'>
                 <div className='sticky top-1/2 -translate-y-1/2'>
                   <Image
-                    src='/logo.png'
+                    src='/seoseal.png'
                     alt='Website Viewer Logo'
                     width={320}
                     height={320}

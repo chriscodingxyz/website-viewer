@@ -167,7 +167,7 @@ export default function TechnicalSection ({ metadata }: TechnicalSectionProps) {
   }
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4">
       {/* Technical Score Header */}
       <TechnicalScoreDisplay />
 
