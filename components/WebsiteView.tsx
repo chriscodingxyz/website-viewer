@@ -1,12 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
 import {
   Monitor,
   Tablet,
@@ -17,23 +9,13 @@ import {
   RefreshCw,
   ExternalLink,
   Copy,
-  Loader2,
   AlertCircle,
-  CheckCircle,
   Settings,
-  Expand,
-  Eye,
-  Play
+  Expand
 } from 'lucide-react'
 import { View, ViewType, useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { toast } from 'sonner'
-import { iframeDetectionService } from '@/services/IframeDetectionService'
-import { 
-  IframeLoading, 
-  IframeBlocked, 
-  IframeError 
-} from '@/components/fallbacks/IframeFallbacks'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,13 +64,6 @@ type WebsiteViewProps = {
   index: number
 }
 
-type LoadingState = 'loading' | 'loaded' | 'error'
-
-// Container element for iframe detection
-interface IframeContainer {
-  element: HTMLDivElement
-  cleanup: () => void
-}
 
 export default function WebsiteView ({
   view,
