@@ -24,8 +24,11 @@ interface SEOSectionProps {
 }
 
 export default function SEOSection ({ metadata, loading, error }: SEOSectionProps) {
+  console.log('🔥 [SEOSection] Render:', { hasMetadata: !!metadata, loading, hasError: !!error })
+
   // Show error state first
   if (error) {
+    console.log('🔥 [SEOSection] Showing ERROR')
     return (
       <div className='w-full min-h-[400px] flex items-center justify-center'>
         <div className='text-center max-w-md'>
@@ -45,6 +48,7 @@ export default function SEOSection ({ metadata, loading, error }: SEOSectionProp
 
   // Show loading state
   if (!metadata) {
+    console.log('🔥 [SEOSection] Showing SPINNER (no metadata)')
     return (
       <div className='w-full min-h-[400px] flex items-center justify-center'>
         <div className='text-center max-w-md'>
@@ -81,6 +85,7 @@ export default function SEOSection ({ metadata, loading, error }: SEOSectionProp
     )
   }
 
+  console.log('🔥 [SEOSection] Showing CONTENT')
   const { seo, sitemap, icons, analytics } = metadata
 
   const getSEOScore = () => {

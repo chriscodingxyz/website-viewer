@@ -470,47 +470,40 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
       return
     }
 
-    // Detect localhost URLs when app is running in production (on HTTPS)
-    if (typeof window !== 'undefined') {
-      const isProductionHTTPS = window.location.protocol === 'https:' &&
-                                 !window.location.hostname.includes('localhost') &&
-                                 !window.location.hostname.includes('127.0.0.1')
-
-      const isTargetLocalhost = targetUrl.includes('localhost') || targetUrl.includes('127.0.0.1')
-
-      if (isProductionHTTPS && isTargetLocalhost) {
-        setMetadataError('Cannot analyze localhost URLs from the hosted version. Metadata analysis is only available for public websites, or you can run this app locally.')
-        setMetadata(null)
-        setMetadataLoading(false)
-        setIsInitialLoad(false)
-        return
-      }
-    }
-
     setMetadataLoading(true)
     setMetadataError(null)
 
     try {
+      console.log('🔥 [FETCH] Starting fetch for:', targetUrl)
       const response = await fetch(`/api/metadata?url=${encodeURIComponent(targetUrl)}`)
+      console.log('🔥 [FETCH] Response status:', response.status)
       const data = await response.json()
+      console.log('🔥 [FETCH] Data received:', { success: data.success, hasData: !!data.data })
 
       if (data.success && data.data) {
+        console.log('🔥 [FETCH] Setting metadata NOW!')
         setMetadata(data.data)
+        console.log('🔥 [FETCH] Metadata set!')
       } else {
+        console.log('🔥 [FETCH] Data NOT successful or no data')
         // Check if this is a 401 authentication error
         if (data.status === 401 && !username && !password) {
+          console.log('🔥 [FETCH] Auth required')
           setAuthDialogUrl(targetUrl)
           setShowAuthDialog(true)
           return
         }
+        console.log('🔥 [FETCH] Setting error:', data.error)
         setMetadataError(data.error || 'Failed to extract metadata')
         setMetadata(null)
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.log('🔥 [FETCH] CATCH ERROR:', errorMessage)
       setMetadataError(errorMessage)
       setMetadata(null)
     } finally {
+      console.log('🔥 [FETCH] FINALLY BLOCK - Setting loading to FALSE')
       setMetadataLoading(false)
       setIsInitialLoad(false)
     }
