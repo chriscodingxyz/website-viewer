@@ -44,7 +44,7 @@ export default function SEOSection ({ metadata, loading, error }: SEOSectionProp
   }
 
   // Show loading state
-  if (loading || !metadata) {
+  if (!metadata) {
     return (
       <div className='w-full min-h-[400px] flex items-center justify-center'>
         <div className='text-center max-w-md'>

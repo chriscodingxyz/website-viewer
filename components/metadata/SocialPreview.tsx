@@ -57,7 +57,7 @@ export default function SocialPreview ({ metadata, loading, error }: SocialPrevi
   }
 
   // Show loading state
-  if (loading || !metadata) {
+  if (!metadata) {
     return (
       <div className='w-full min-h-[400px] flex items-center justify-center'>
         <div className='text-center max-w-md'>
