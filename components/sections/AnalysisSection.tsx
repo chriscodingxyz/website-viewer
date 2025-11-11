@@ -19,7 +19,6 @@ interface AnalysisSectionProps {
 
 export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionProps) {
   const { metadata, metadataLoading, metadataError, fetchMetadata, currentSite } = useWebsiteViewer()
-  console.log('🔥 [AnalysisSection] State:', { hasMetadata: !!metadata, metadataLoading, metadataError })
 
   // Helper functions from OverviewDashboard
   const getSEOScore = (metadata: WebsiteMetadata | null) => {

@@ -473,37 +473,119 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setMetadataLoading(true)
     setMetadataError(null)
 
+    // Check if this is a localhost URL when running in production
+    const isLocalhost = targetUrl.includes('localhost') || targetUrl.includes('127.0.0.1')
+    const isProduction = typeof window !== 'undefined' &&
+                         window.location.protocol === 'https:' &&
+                         !window.location.hostname.includes('localhost')
+
+    // For localhost URLs in production, fetch directly from browser using iframe
+    if (isLocalhost && isProduction) {
+      try {
+        // Create a hidden iframe to fetch the HTML
+        const iframe = document.createElement('iframe')
+        iframe.style.display = 'none'
+        document.body.appendChild(iframe)
+
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Timeout loading localhost'))
+          }, 8000)
+
+          iframe.onload = () => {
+            clearTimeout(timeout)
+            try {
+              const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
+              if (!iframeDoc) {
+                throw new Error('Cannot access iframe content')
+              }
+
+              // Extract basic metadata from the iframe document
+              const title = iframeDoc.querySelector('title')?.textContent || ''
+              const metaDescription = iframeDoc.querySelector('meta[name="description"]')?.getAttribute('content') || ''
+              const ogTitle = iframeDoc.querySelector('meta[property="og:title"]')?.getAttribute('content') || ''
+              const ogDescription = iframeDoc.querySelector('meta[property="og:description"]')?.getAttribute('content') || ''
+              const ogImage = iframeDoc.querySelector('meta[property="og:image"]')?.getAttribute('content') || ''
+
+              // Build metadata object with what we can extract
+              const metadata: any = {
+                url: targetUrl,
+                seo: {
+                  title,
+                  description: metaDescription,
+                  language: iframeDoc.documentElement.lang || 'en',
+                  viewport: iframeDoc.querySelector('meta[name="viewport"]')?.getAttribute('content') || '',
+                },
+                openGraph: {
+                  title: ogTitle || title,
+                  description: ogDescription || metaDescription,
+                  image: ogImage,
+                },
+                twitterCard: {
+                  card: iframeDoc.querySelector('meta[name="twitter:card"]')?.getAttribute('content') || '',
+                  title: iframeDoc.querySelector('meta[name="twitter:title"]')?.getAttribute('content') || ogTitle || title,
+                  description: iframeDoc.querySelector('meta[name="twitter:description"]')?.getAttribute('content') || ogDescription || metaDescription,
+                },
+                technical: {
+                  charset: iframeDoc.characterSet || 'utf-8',
+                },
+                headers: {},
+                performance: {
+                  loadTime: 0,
+                },
+                extractedAt: new Date().toISOString(),
+              }
+
+              setMetadata(metadata)
+              resolve(true)
+            } catch (error) {
+              reject(error)
+            } finally {
+              document.body.removeChild(iframe)
+            }
+          }
+
+          iframe.onerror = () => {
+            clearTimeout(timeout)
+            document.body.removeChild(iframe)
+            reject(new Error('Failed to load localhost'))
+          }
+
+          iframe.src = targetUrl
+        })
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        setMetadataError(errorMessage)
+        setMetadata(null)
+      } finally {
+        setMetadataLoading(false)
+        setIsInitialLoad(false)
+      }
+      return
+    }
+
+    // Normal server-side fetch for non-localhost URLs
     try {
-      console.log('🔥 [FETCH] Starting fetch for:', targetUrl)
       const response = await fetch(`/api/metadata?url=${encodeURIComponent(targetUrl)}`)
-      console.log('🔥 [FETCH] Response status:', response.status)
       const data = await response.json()
-      console.log('🔥 [FETCH] Data received:', { success: data.success, hasData: !!data.data })
 
       if (data.success && data.data) {
-        console.log('🔥 [FETCH] Setting metadata NOW!')
         setMetadata(data.data)
-        console.log('🔥 [FETCH] Metadata set!')
       } else {
-        console.log('🔥 [FETCH] Data NOT successful or no data')
         // Check if this is a 401 authentication error
         if (data.status === 401 && !username && !password) {
-          console.log('🔥 [FETCH] Auth required')
           setAuthDialogUrl(targetUrl)
           setShowAuthDialog(true)
           return
         }
-        console.log('🔥 [FETCH] Setting error:', data.error)
         setMetadataError(data.error || 'Failed to extract metadata')
         setMetadata(null)
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      console.log('🔥 [FETCH] CATCH ERROR:', errorMessage)
       setMetadataError(errorMessage)
       setMetadata(null)
     } finally {
-      console.log('🔥 [FETCH] FINALLY BLOCK - Setting loading to FALSE')
       setMetadataLoading(false)
       setIsInitialLoad(false)
     }
