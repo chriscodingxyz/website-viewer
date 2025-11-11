@@ -297,28 +297,27 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
   const loadSiteInternal = async (formattedUrl: string) => {
     // Create 3 viewports for comprehensive device testing
-    // Start with shouldLoad: false to wait for X-Frame-Options check
     const newViews = [
       {
         id: nextId,
         url: formattedUrl,
         type: 'desktop' as ViewType,
         iframeStatus: 'loading' as IframeStatus,
-        shouldLoad: false
+        shouldLoad: true
       },
       {
         id: nextId + 1,
         url: formattedUrl,
         type: 'tablet' as ViewType,
         iframeStatus: 'loading' as IframeStatus,
-        shouldLoad: false
+        shouldLoad: true
       },
       {
         id: nextId + 2,
         url: formattedUrl,
         type: 'mobile' as ViewType,
         iframeStatus: 'loading' as IframeStatus,
-        shouldLoad: false
+        shouldLoad: true
       }
     ]
 

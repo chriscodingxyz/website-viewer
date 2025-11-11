@@ -109,7 +109,6 @@ export default function WebsiteView ({
   const [isEnlargeDialogOpen, setIsEnlargeDialogOpen] = useState(false)
   const [enlargeDialogScale, setEnlargeDialogScale] = useState(1)
   const [realIframeStatus, setRealIframeStatus] = useState<'loading' | 'loaded' | 'error'>('loading')
-  const [iframeSrc, setIframeSrc] = useState<string | undefined>(undefined)
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
   const { updateViewIframeStatus } = useWebsiteViewer()
 
@@ -145,17 +144,8 @@ export default function WebsiteView ({
     return () => window.removeEventListener('resize', updateScale)
   }, [view.type, displayDimensions, globalZoom])
 
-  // Manage iframe src to prevent unnecessary reloads
-  useEffect(() => {
-    // Only set src if shouldLoad is true and we haven't set it yet, or if it's a refresh
-    if (view.shouldLoad && (!iframeSrc || refreshKey)) {
-      setIframeSrc(view.url)
-    } else if (view.shouldLoad === false && realIframeStatus !== 'loaded') {
-      // Only clear src if iframe hasn't loaded yet
-      setIframeSrc(undefined)
-    }
-    // If iframe is already loaded, never change the src to prevent reloads
-  }, [view.shouldLoad, view.url, refreshKey, realIframeStatus, iframeSrc])
+  // Simple key-based iframe reloading - just use refreshKey to force remount
+  const iframeKey = `${view.id}-${refreshKey || 0}`
 
   // Sync local realIframeStatus with global view.iframeStatus
   useEffect(() => {
@@ -163,15 +153,12 @@ export default function WebsiteView ({
                        view.iframeStatus === 'loaded' ? 'loaded' : 'error')
   }, [view.iframeStatus])
 
-  // Refresh iframe on refresh key
+  // Reset status when refreshKey changes
   useEffect(() => {
     if (refreshKey && refreshKey > 0) {
-      setRealIframeStatus('loading') // Reset status on refresh
-      // Force reload by clearing and resetting src
-      setIframeSrc(undefined)
-      setTimeout(() => setIframeSrc(view.url), 10)
+      setRealIframeStatus('loading')
     }
-  }, [refreshKey, view.url])
+  }, [refreshKey])
 
   // Calculate responsive scale for enlarge dialog
   useEffect(() => {
@@ -214,9 +201,8 @@ export default function WebsiteView ({
   const handleRetry = () => {
     updateViewIframeStatus(view.id, 'loading')
     setRealIframeStatus('loading')
-    // Force reload by clearing and resetting src
-    setIframeSrc(undefined)
-    setTimeout(() => setIframeSrc(view.url), 10)
+    // Trigger a refresh by updating the refresh key in parent
+    refreshView()
   }
 
   const refreshView = () => {
@@ -465,8 +451,9 @@ export default function WebsiteView ({
         }}
       >
         <iframe
+          key={iframeKey}
           ref={iframeRef}
-          src={iframeSrc}
+          src={view.url}
           style={{
             width: `${actualDimensions[view.type].width}px`,
             height: `${actualDimensions[view.type].height}px`,
@@ -555,7 +542,8 @@ export default function WebsiteView ({
             </DialogHeader>
             <div className="relative bg-white overflow-hidden">
               <iframe
-                src={iframeSrc}
+                key={`dialog-${iframeKey}`}
+                src={view.url}
                 style={{
                   width: `${actualDimensions[view.type].width * enlargeDialogScale}px`,
                   height: `${actualDimensions[view.type].height * enlargeDialogScale}px`,

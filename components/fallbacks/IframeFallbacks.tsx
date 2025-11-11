@@ -1,15 +1,17 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
-import { 
-  Shield, 
-  AlertCircle, 
-  ExternalLink, 
-  Copy, 
-  RefreshCw, 
+import {
+  Shield,
+  AlertCircle,
+  ExternalLink,
+  Copy,
+  RefreshCw,
   Clock,
   Eye,
   Play,
-  Loader2
+  Loader2,
+  Lock,
+  Laptop
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { IframeDetectionResult, iframeDetectionService } from '@/services/IframeDetectionService'

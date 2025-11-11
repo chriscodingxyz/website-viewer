@@ -3,7 +3,7 @@
  * Detects iframe blocking using multiple methods and provides graceful fallbacks
  */
 
-export type IframeStatus = 'ready' | 'loading' | 'loaded' | 'blocked' | 'error' | 'timeout'
+export type IframeStatus = 'ready' | 'loading' | 'loaded' | 'blocked' | 'error' | 'timeout' | 'mixed-content'
 
 interface DetectionMethodResult {
   success?: boolean
