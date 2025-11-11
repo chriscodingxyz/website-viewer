@@ -10,7 +10,7 @@ import TechnicalSection from './metadata/TechnicalSection'
 import Image from 'next/image'
 
 export default function SectionContainer () {
-  const { currentSite, metadata, selectedTab } = useWebsiteViewer()
+  const { currentSite, metadata, metadataLoading, metadataError, selectedTab } = useWebsiteViewer()
 
   if (!currentSite) {
     return null
@@ -62,7 +62,7 @@ export default function SectionContainer () {
               </div>
               {/* Content with min-height to prevent logo shift */}
               <div className='flex-1 min-w-0 min-h-[calc(100svh-120px)]'>
-                <SEOSection metadata={metadata} />
+                <SEOSection metadata={metadata} loading={metadataLoading} error={metadataError} />
               </div>
             </div>
           </div>
@@ -92,7 +92,7 @@ export default function SectionContainer () {
               </div>
               {/* Content with min-height to prevent logo shift */}
               <div className='flex-1 min-w-0 min-h-[calc(100svh-120px)]'>
-                <SocialPreview metadata={metadata} />
+                <SocialPreview metadata={metadata} loading={metadataLoading} error={metadataError} />
               </div>
             </div>
           </div>
@@ -122,7 +122,7 @@ export default function SectionContainer () {
               </div>
               {/* Content with min-height to prevent logo shift */}
               <div className='flex-1 min-w-0 min-h-[calc(100svh-120px)]'>
-                <TechnicalSection metadata={metadata} />
+                <TechnicalSection metadata={metadata} loading={metadataLoading} error={metadataError} />
               </div>
             </div>
           </div>
