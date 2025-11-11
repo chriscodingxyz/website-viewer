@@ -374,7 +374,7 @@ export async function GET (request: NextRequest) {
     // Make HTTP request with proper headers and SSL handling
     const startTime = Date.now()
     const response = await axios.get(targetUrl.toString(), {
-      timeout: 10000,
+      timeout: 8000, // 8 seconds (below Vercel's 10s limit)
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',

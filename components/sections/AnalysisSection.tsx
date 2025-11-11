@@ -133,17 +133,17 @@ export default function AnalysisSection({ expanded, onToggle }: AnalysisSectionP
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               {/* Left column - SEO takes full width */}
               <div className="xl:col-span-1">
-                <SEOSection metadata={metadata} />
+                <SEOSection metadata={metadata} loading={metadataLoading} error={metadataError} />
               </div>
-              
+
               {/* Right columns - 2 columns for other sections */}
               <div className="xl:col-span-2">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="lg:col-span-1">
-                    <SocialPreview metadata={metadata} />
+                    <SocialPreview metadata={metadata} loading={metadataLoading} error={metadataError} />
                   </div>
                   <div className="lg:col-span-1">
-                    <TechnicalSection metadata={metadata} />
+                    <TechnicalSection metadata={metadata} loading={metadataLoading} error={metadataError} />
                   </div>
                 </div>
               </div>

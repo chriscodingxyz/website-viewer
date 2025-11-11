@@ -469,6 +469,24 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     if (!targetUrl) {
       return
     }
+
+    // Detect localhost URLs when app is running in production (on HTTPS)
+    if (typeof window !== 'undefined') {
+      const isProductionHTTPS = window.location.protocol === 'https:' &&
+                                 !window.location.hostname.includes('localhost') &&
+                                 !window.location.hostname.includes('127.0.0.1')
+
+      const isTargetLocalhost = targetUrl.includes('localhost') || targetUrl.includes('127.0.0.1')
+
+      if (isProductionHTTPS && isTargetLocalhost) {
+        setMetadataError('Cannot analyze localhost URLs from the hosted version. Metadata analysis is only available for public websites, or you can run this app locally.')
+        setMetadata(null)
+        setMetadataLoading(false)
+        setIsInitialLoad(false)
+        return
+      }
+    }
+
     setMetadataLoading(true)
     setMetadataError(null)
 
