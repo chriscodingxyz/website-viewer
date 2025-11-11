@@ -246,11 +246,10 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
         }
       } else {
         // No blocking headers or local/staging site, allow iframes to load
-        // Only set shouldLoad to true if it's currently false to prevent unnecessary rerenders
         setViews(prevViews =>
           prevViews.map(view => ({
             ...view,
-            shouldLoad: view.shouldLoad !== false ? view.shouldLoad : true
+            shouldLoad: true
           }))
         )
       }
