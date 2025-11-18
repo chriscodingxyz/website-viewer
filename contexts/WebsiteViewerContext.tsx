@@ -199,13 +199,35 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
     const urlParams = new URLSearchParams(window.location.search)
     const siteParam = urlParams.get('site')
+    const metadataParam = urlParams.get('metadata')
+    
+    let initialMetadata: WebsiteMetadata | null = null
+
+    // Parse metadata if present (bookmarklet flow)
+    if (metadataParam) {
+      try {
+        const decodedMetadata = JSON.parse(atob(metadataParam))
+        initialMetadata = decodedMetadata
+        setMetadata(decodedMetadata)
+        toast.success('Localhost metadata loaded successfully')
+        
+        // Clean up URL parameters but keep site
+        if (siteParam) {
+          const newUrl = `${window.location.pathname}?site=${siteParam}`
+          window.history.replaceState({}, '', newUrl)
+        }
+      } catch (e) {
+        console.error('Failed to parse metadata from URL', e)
+        toast.error('Failed to load metadata from bookmarklet')
+      }
+    }
 
     if (siteParam) {
       // Auto-add protocol based on domain
       const fullUrl = addProtocolFromDomain(siteParam)
       if (isValidUrl(fullUrl)) {
         setUrl(fullUrl)
-        loadSiteInternal(fullUrl)
+        loadSiteInternal(fullUrl, initialMetadata)
       }
     }
   }, [])
@@ -296,7 +318,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   }
 
 
-  const loadSiteInternal = async (formattedUrl: string) => {
+  const loadSiteInternal = async (formattedUrl: string, initialMetadata?: WebsiteMetadata | null) => {
     // Create 3 viewports for comprehensive device testing
     const newViews = [
       {
@@ -334,8 +356,15 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
     // Don't force reset to viewports - respect current URL/tab
 
-    // Automatically start metadata extraction in the background
-    fetchMetadata(formattedUrl)
+    // If we have initial metadata (from bookmarklet), use it and skip fetch
+    if (initialMetadata) {
+      setMetadata(initialMetadata)
+      setMetadataLoading(false)
+      setIsInitialLoad(false)
+    } else {
+      // Automatically start metadata extraction in the background
+      fetchMetadata(formattedUrl)
+    }
   }
 
   const updateUrlParams = () => {
@@ -466,29 +495,6 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
   // Metadata functions
   const [metadataNeedsManual, setMetadataNeedsManual] = useState(false)
-
-  // Check for metadata in URL params (from bookmarklet)
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const urlParams = new URLSearchParams(window.location.search)
-    const metadataParam = urlParams.get('metadata')
-    
-    if (metadataParam) {
-      try {
-        const decodedMetadata = JSON.parse(atob(metadataParam))
-        setMetadata(decodedMetadata)
-        // Clean up URL
-        urlParams.delete('metadata')
-        const newUrl = `${window.location.pathname}?${urlParams.toString()}`
-        window.history.replaceState({}, '', newUrl)
-        toast.success('Localhost metadata loaded successfully')
-      } catch (e) {
-        console.error('Failed to parse metadata from URL', e)
-        toast.error('Failed to load metadata from bookmarklet')
-      }
-    }
-  }, [])
 
   const fetchMetadata = async (urlOverride?: string) => {
     const targetUrl = urlOverride || currentSite
