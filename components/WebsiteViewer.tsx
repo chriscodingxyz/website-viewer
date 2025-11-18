@@ -65,6 +65,7 @@ export default function WebsiteViewer () {
     if (typeof window === 'undefined') return ''
     
     const viewerOrigin = window.location.origin
+    // Minified bookmarklet code
     const code = `javascript:(function(){
       var d=document;
       var q=function(s){return d.querySelector(s)?.getAttribute('content')||''};
@@ -91,8 +92,17 @@ export default function WebsiteViewer () {
         },
         extractedAt:new Date().toISOString()
       };
+      
+      try {
+        if (window.opener && window.opener !== window) {
+          window.opener.postMessage({type:'WEBSITE_VIEWER_METADATA',payload:m}, '*');
+          console.log('Sent to viewer via postMessage');
+          return;
+        }
+      } catch(e){}
+      
       var p=btoa(JSON.stringify(m));
-      window.location.href='${viewerOrigin}?site='+encodeURIComponent(window.location.href)+'&metadata='+p;
+      window.location.href='${viewerOrigin}?site='+encodeURIComponent(window.location.href)+'#metadata='+p;
     })()`
     return code.replace(/\s+/g, ' ')
   }

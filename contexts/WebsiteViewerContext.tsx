@@ -199,22 +199,46 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
     const urlParams = new URLSearchParams(window.location.search)
     const siteParam = urlParams.get('site')
-    const metadataParam = urlParams.get('metadata')
+    
+    // Check for metadata in Query Params (legacy) or Hash (new, avoids limits)
+    let metadataParam = urlParams.get('metadata')
+    const hash = window.location.hash
+    if (!metadataParam && hash.includes('metadata=')) {
+      const match = hash.match(/metadata=([^&]+)/)
+      if (match) {
+        metadataParam = match[1]
+      }
+    }
     
     let initialMetadata: WebsiteMetadata | null = null
 
     // Parse metadata if present (bookmarklet flow)
     if (metadataParam) {
       try {
-        const decodedMetadata = JSON.parse(atob(metadataParam))
+        // Handle both URL-safe and standard base64
+        const base64 = metadataParam.replace(/-/g, '+').replace(/_/g, '/')
+        const decodedMetadata = JSON.parse(atob(base64))
         initialMetadata = decodedMetadata
         setMetadata(decodedMetadata)
         toast.success('Localhost metadata loaded successfully')
         
-        // Clean up URL parameters but keep site
+        // Clean up URL parameters and hash but keep site
         if (siteParam) {
           const newUrl = `${window.location.pathname}?site=${siteParam}`
           window.history.replaceState({}, '', newUrl)
+        } else if (decodedMetadata.url) {
+           // If no site param but we have metadata, set the site param from metadata
+           const url = new URL(decodedMetadata.url)
+           const cleanDomain = stripUrlForParams(url.toString())
+           const newUrl = `${window.location.pathname}?site=${cleanDomain}`
+           window.history.replaceState({}, '', newUrl)
+           // Also set the site param for loadSiteInternal
+           if (!siteParam) {
+             // We need to trigger the load
+             setUrl(url.toString())
+             loadSiteInternal(url.toString(), initialMetadata)
+             return // Exit here as we called loadSiteInternal
+           }
         }
       } catch (e) {
         console.error('Failed to parse metadata from URL', e)
@@ -230,6 +254,33 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
         loadSiteInternal(fullUrl, initialMetadata)
       }
     }
+
+    // Listen for postMessage from bookmarklet (seamless update)
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'WEBSITE_VIEWER_METADATA') {
+        try {
+          const receivedMetadata = event.data.payload
+          if (receivedMetadata && receivedMetadata.url) {
+            setMetadata(receivedMetadata)
+            toast.success('Metadata updated from localhost')
+            
+            // Update URL and view if needed
+            const url = new URL(receivedMetadata.url)
+            const cleanDomain = stripUrlForParams(url.toString())
+            const newUrl = `${window.location.pathname}?site=${cleanDomain}`
+            window.history.replaceState({}, '', newUrl)
+            
+            setUrl(url.toString())
+            loadSiteInternal(url.toString(), receivedMetadata)
+          }
+        } catch (e) {
+          console.error('Failed to process message metadata', e)
+        }
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
   }, [])
 
   // Use metadata API to determine iframe status and auto-switch tabs
