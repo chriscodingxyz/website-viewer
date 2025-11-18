@@ -120,6 +120,7 @@ interface WebsiteViewerContextType {
   metadata: WebsiteMetadata | null
   metadataLoading: boolean
   metadataError: string | null
+  metadataNeedsManual: boolean
   fetchMetadata: (url?: string) => Promise<void>
   clearMetadata: () => void
   // Iframe preview functionality
@@ -464,6 +465,31 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   }
 
   // Metadata functions
+  const [metadataNeedsManual, setMetadataNeedsManual] = useState(false)
+
+  // Check for metadata in URL params (from bookmarklet)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const urlParams = new URLSearchParams(window.location.search)
+    const metadataParam = urlParams.get('metadata')
+    
+    if (metadataParam) {
+      try {
+        const decodedMetadata = JSON.parse(atob(metadataParam))
+        setMetadata(decodedMetadata)
+        // Clean up URL
+        urlParams.delete('metadata')
+        const newUrl = `${window.location.pathname}?${urlParams.toString()}`
+        window.history.replaceState({}, '', newUrl)
+        toast.success('Localhost metadata loaded successfully')
+      } catch (e) {
+        console.error('Failed to parse metadata from URL', e)
+        toast.error('Failed to load metadata from bookmarklet')
+      }
+    }
+  }, [])
+
   const fetchMetadata = async (urlOverride?: string) => {
     const targetUrl = urlOverride || currentSite
     if (!targetUrl) {
@@ -472,6 +498,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
     setMetadataLoading(true)
     setMetadataError(null)
+    setMetadataNeedsManual(false)
 
     // Check if this is a localhost URL when running in production
     const isLocalhost = targetUrl.includes('localhost') || targetUrl.includes('127.0.0.1')
@@ -479,10 +506,80 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
                          window.location.protocol === 'https:' &&
                          !window.location.hostname.includes('localhost')
 
-    // For localhost URLs in production, fetch directly from browser using iframe
+    // For localhost URLs in production, we have limited options due to Mixed Content & CORS
     if (isLocalhost && isProduction) {
       try {
-        // Create a hidden iframe to fetch the HTML
+        // Option 1: Try a direct fetch with Private Network Access headers
+        // This only works if the local server sends back the right CORS headers
+        // Access-Control-Allow-Private-Network: true
+        try {
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 3000)
+          
+          const response = await fetch(targetUrl, {
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+              // @ts-ignore - experimental header
+              'Access-Control-Request-Private-Network': 'true'
+            },
+            signal: controller.signal
+          })
+          
+          clearTimeout(timeoutId)
+          
+          if (response.ok) {
+            const html = await response.text()
+            // Parse basic metadata from HTML
+            const parser = new DOMParser()
+            const doc = parser.parseFromString(html, 'text/html')
+            
+            const title = doc.querySelector('title')?.textContent || ''
+            const metaDescription = doc.querySelector('meta[name="description"]')?.getAttribute('content') || ''
+            const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content') || ''
+            const ogDescription = doc.querySelector('meta[property="og:description"]')?.getAttribute('content') || ''
+            const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') || ''
+            
+            const metadata: any = {
+              url: targetUrl,
+              seo: {
+                title,
+                description: metaDescription,
+                language: doc.documentElement.lang || 'en',
+                viewport: doc.querySelector('meta[name="viewport"]')?.getAttribute('content') || '',
+              },
+              openGraph: {
+                title: ogTitle || title,
+                description: ogDescription || metaDescription,
+                image: ogImage,
+              },
+              twitterCard: {
+                card: doc.querySelector('meta[name="twitter:card"]')?.getAttribute('content') || '',
+                title: doc.querySelector('meta[name="twitter:title"]')?.getAttribute('content') || ogTitle || title,
+                description: doc.querySelector('meta[name="twitter:description"]')?.getAttribute('content') || ogDescription || metaDescription,
+              },
+              technical: {
+                charset: doc.characterSet || 'utf-8',
+              },
+              headers: {},
+              performance: {
+                loadTime: 0,
+              },
+              extractedAt: new Date().toISOString(),
+            }
+            
+            setMetadata(metadata)
+            setMetadataLoading(false)
+            setIsInitialLoad(false)
+            return
+          }
+        } catch (e) {
+          // Direct fetch failed, fall through to iframe method
+          console.log('Direct PNA fetch failed, trying iframe')
+        }
+
+        // Option 2: Iframe method (existing logic)
+        // This often fails due to Mixed Content (loading http in https)
         const iframe = document.createElement('iframe')
         iframe.style.display = 'none'
         document.body.appendChild(iframe)
@@ -490,7 +587,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
         await new Promise((resolve, reject) => {
           const timeout = setTimeout(() => {
             reject(new Error('Timeout loading localhost'))
-          }, 8000)
+          }, 5000)
 
           iframe.onload = () => {
             clearTimeout(timeout)
@@ -554,8 +651,10 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
           iframe.src = targetUrl
         })
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-        setMetadataError(errorMessage)
+        // Both methods failed - likely due to Mixed Content blocking
+        // Show the manual workaround UI
+        console.error('Localhost metadata extraction failed:', error)
+        setMetadataNeedsManual(true)
         setMetadata(null)
       } finally {
         setMetadataLoading(false)
@@ -623,6 +722,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     metadata,
     metadataLoading,
     metadataError,
+    metadataNeedsManual,
     fetchMetadata,
     clearMetadata,
     updateViewIframeStatus,
@@ -676,6 +776,7 @@ const defaultContextValue: WebsiteViewerContextType = {
   metadata: null,
   metadataLoading: false,
   metadataError: null,
+  metadataNeedsManual: false,
   fetchMetadata: async () => {},
   clearMetadata: () => {},
   updateViewIframeStatus: () => {},

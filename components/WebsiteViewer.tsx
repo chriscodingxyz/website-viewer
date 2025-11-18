@@ -9,6 +9,14 @@ import SectionContainer from './SectionContainer'
 import NavigationBar from './NavigationBar'
 import { Kbd } from '@/components/ui/kbd'
 import Image from 'next/image'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function WebsiteViewer () {
   const {
@@ -25,6 +33,7 @@ export default function WebsiteViewer () {
     metadata,
     metadataLoading,
     metadataError,
+    metadataNeedsManual,
   } = useWebsiteViewer()
 
   // Global zoom functions
@@ -51,7 +60,42 @@ export default function WebsiteViewer () {
     toast.success('Global zoom reset to 100%')
   }
 
-  // No grouping needed in single-site mode
+  // Bookmarklet code generation
+  const getBookmarkletCode = () => {
+    if (typeof window === 'undefined') return ''
+    
+    const viewerOrigin = window.location.origin
+    const code = `javascript:(function(){
+      var d=document;
+      var q=function(s){return d.querySelector(s)?.getAttribute('content')||''};
+      var m={
+        url:window.location.href,
+        seo:{
+          title:d.title,
+          description:q('meta[name="description"]'),
+          language:d.documentElement.lang||'en',
+          viewport:q('meta[name="viewport"]')
+        },
+        openGraph:{
+          title:q('meta[property="og:title"]')||d.title,
+          description:q('meta[property="og:description"]')||q('meta[name="description"]'),
+          image:q('meta[property="og:image"]')
+        },
+        twitterCard:{
+          card:q('meta[name="twitter:card"]'),
+          title:q('meta[name="twitter:title"]')||q('meta[property="og:title"]')||d.title,
+          description:q('meta[name="twitter:description"]')||q('meta[property="og:description"]')||q('meta[name="description"]')
+        },
+        technical:{
+          charset:d.characterSet||'utf-8'
+        },
+        extractedAt:new Date().toISOString()
+      };
+      var p=btoa(JSON.stringify(m));
+      window.location.href='${viewerOrigin}?site='+encodeURIComponent(window.location.href)+'&metadata='+p;
+    })()`
+    return code.replace(/\s+/g, ' ')
+  }
 
   return (
     <div className='pt-[60px]'>
@@ -102,6 +146,50 @@ export default function WebsiteViewer () {
         {currentSite && (
           <SectionContainer />
         )}
+
+        {/* Localhost Metadata Dialog */}
+        <Dialog open={metadataNeedsManual} onOpenChange={() => {}}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Localhost Metadata Access</DialogTitle>
+              <DialogDescription>
+                Browsers block direct access to localhost metadata from secure websites. 
+                Use this bookmarklet to send your local metadata to the viewer.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-4 py-4">
+              <div className="bg-muted p-4 rounded-lg border border-dashed border-primary/50 flex flex-col items-center justify-center gap-2 text-center">
+                <a 
+                  href={getBookmarkletCode()}
+                  className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium hover:bg-primary/90 transition-colors cursor-grab active:cursor-grabbing"
+                  onClick={(e) => e.preventDefault()}
+                >
+                  Send to Viewer
+                </a>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Drag this button to your bookmarks bar ↗️
+                </p>
+              </div>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p><strong>How to use:</strong></p>
+                <ol className="list-decimal list-inside space-y-1 ml-1">
+                  <li>Drag the button above to your bookmarks bar</li>
+                  <li>Go to your localhost tab</li>
+                  <li>Click the "Send to Viewer" bookmark</li>
+                </ol>
+              </div>
+            </div>
+            <DialogFooter className="sm:justify-start">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => window.location.reload()}
+              >
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
