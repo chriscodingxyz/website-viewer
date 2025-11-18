@@ -175,7 +175,7 @@ export default function WebsiteViewer () {
                 <ol className="list-decimal list-inside space-y-1 ml-1">
                   <li>Drag the button above to your bookmarks bar</li>
                   <li>Go to your localhost tab</li>
-                  <li>Click the "Send to Viewer" bookmark</li>
+                  <li>Click the &quot;Send to Viewer&quot; bookmark</li>
                 </ol>
               </div>
             </div>
