@@ -60,52 +60,7 @@ export default function WebsiteViewer () {
     toast.success('Global zoom reset to 100%')
   }
 
-  // Bookmarklet code generation
-  const getBookmarkletCode = () => {
-    if (typeof window === 'undefined') return ''
-    
-    const viewerOrigin = window.location.origin
-    // Minified bookmarklet code
-    const code = `javascript:(function(){
-      var d=document;
-      var q=function(s){return d.querySelector(s)?.getAttribute('content')||''};
-      var m={
-        url:window.location.href,
-        seo:{
-          title:d.title,
-          description:q('meta[name="description"]'),
-          language:d.documentElement.lang||'en',
-          viewport:q('meta[name="viewport"]')
-        },
-        openGraph:{
-          title:q('meta[property="og:title"]')||d.title,
-          description:q('meta[property="og:description"]')||q('meta[name="description"]'),
-          image:q('meta[property="og:image"]')
-        },
-        twitterCard:{
-          card:q('meta[name="twitter:card"]'),
-          title:q('meta[name="twitter:title"]')||q('meta[property="og:title"]')||d.title,
-          description:q('meta[name="twitter:description"]')||q('meta[property="og:description"]')||q('meta[name="description"]')
-        },
-        technical:{
-          charset:d.characterSet||'utf-8'
-        },
-        extractedAt:new Date().toISOString()
-      };
-      
-      try {
-        if (window.opener && window.opener !== window) {
-          window.opener.postMessage({type:'WEBSITE_VIEWER_METADATA',payload:m}, '*');
-          console.log('Sent to viewer via postMessage');
-          return;
-        }
-      } catch(e){}
-      
-      var p=btoa(JSON.stringify(m));
-      window.location.href='${viewerOrigin}?site='+encodeURIComponent(window.location.href)+'#metadata='+p;
-    })()`
-    return code.replace(/\s+/g, ' ')
-  }
+
 
   return (
     <div className='pt-[60px]'>
@@ -159,36 +114,50 @@ export default function WebsiteViewer () {
 
         {/* Localhost Metadata Dialog */}
         <Dialog open={metadataNeedsManual} onOpenChange={() => {}}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>Localhost Metadata Access</DialogTitle>
+              <DialogTitle>Enable Live Preview</DialogTitle>
               <DialogDescription>
-                Browsers block direct access to localhost metadata from secure websites. 
-                Use this bookmarklet to send your local metadata to the viewer.
+                To view localhost metadata in production, add this snippet to your local project.
+                It automatically syncs your metadata to the viewer.
               </DialogDescription>
             </DialogHeader>
+            
             <div className="flex flex-col gap-4 py-4">
-              <div className="bg-muted p-4 rounded-lg border border-dashed border-primary/50 flex flex-col items-center justify-center gap-2 text-center">
-                <a 
-                  href={getBookmarkletCode()}
-                  className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium hover:bg-primary/90 transition-colors cursor-grab active:cursor-grabbing"
-                  onClick={(e) => e.preventDefault()}
-                >
-                  Send to Viewer
-                </a>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Drag this button to your bookmarks bar ↗️
-                </p>
-              </div>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p><strong>How to use:</strong></p>
-                <ol className="list-decimal list-inside space-y-1 ml-1">
-                  <li>Drag the button above to your bookmarks bar</li>
-                  <li>Go to your localhost tab</li>
-                  <li>Click the &quot;Send to Viewer&quot; bookmark</li>
-                </ol>
+              <div className="space-y-3">
+                <div className="relative bg-muted/50 p-4 rounded-lg border font-mono text-xs sm:text-sm break-all">
+                  <div className="absolute right-2 top-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => {
+                        const code = `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/live-preview.js"></script>`
+                        navigator.clipboard.writeText(code)
+                        toast.success('Copied to clipboard')
+                      }}
+                    >
+                      <span className="sr-only">Copy</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    </Button>
+                  </div>
+                  <span className="text-blue-500">&lt;script</span> <span className="text-purple-500">src</span>=<span className="text-green-500">&quot;{typeof window !== 'undefined' ? window.location.origin : ''}/live-preview.js&quot;</span><span className="text-blue-500">&gt;&lt;/script&gt;</span>
+                </div>
+                
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <p><strong>Instructions:</strong></p>
+                  <ol className="list-decimal list-inside space-y-1 ml-1">
+                    <li>Copy the code snippet above.</li>
+                    <li>Paste it into your local project&apos;s <code className="bg-muted px-1 py-0.5 rounded">index.html</code> or root layout.</li>
+                    <li>Reload your localhost page.</li>
+                  </ol>
+                  <p className="text-xs pt-2 text-muted-foreground/80">
+                    This script is safe, lightweight, and only runs in the browser. It sends metadata to the viewer via secure postMessage.
+                  </p>
+                </div>
               </div>
             </div>
+
             <DialogFooter className="sm:justify-start">
               <Button
                 type="button"
