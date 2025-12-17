@@ -144,16 +144,28 @@ function Header () {
     setGlobalZoomStepIndex(0)
   }
 
-  // Hide header completely on landing page
-  if (!currentSite) {
-    return null
-  }
-
   return (
     <header className='fixed top-0 left-0 right-0 z-50 bg-background border-b'>
       <div className='px-2 sm:px-4 py-2.5'>
-        <div className='max-w-[1600px] mx-auto flex items-center justify-center gap-1.5 sm:gap-2.5'>
-          {/* Back/Clear Button */}
+        <div className='max-w-[1600px] flex items-center justify-start gap-1.5 sm:gap-2.5'>
+          {/* Globe Icon and WebViewer Text - Home Link */}
+          <button
+            onClick={() => {
+              if (currentSite) {
+                clearSite()
+              }
+              router.push('/')
+            }}
+            className='flex items-center gap-2 hover:opacity-80 transition-opacity'
+            title='Go to home'
+          >
+            <Globe className='h-4 w-4 shrink-0' />
+            <span className='hidden sm:inline text-sm font-semibold text-foreground'>
+              WebViewer
+            </span>
+          </button>
+
+          {/* Back/Clear Button - Only show on desktop when viewing a site */}
           {currentSite && (
             <Button
               variant='ghost'
@@ -169,83 +181,88 @@ function Header () {
             </Button>
           )}
 
-          {/* URL Input - Responsive width */}
-          <div className='relative flex-1 min-w-0 max-w-2xl'>
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  role='combobox'
-                  aria-expanded={open}
-                  aria-controls='url-suggestions'
-                  className={cn(
-                    'w-full flex items-center justify-between h-8 px-3 text-sm bg-background border rounded-lg hover:border-foreground/40 transition-colors',
-                    isInputHighlighted && 'ring-2 ring-primary ring-offset-2'
-                  )}
-                >
-                  <span className='flex items-center gap-2 flex-1 min-w-0'>
-                    <Globe className='h-2.5 w-2.5 flex-shrink-0 text-muted-foreground' />
-                    <span className={cn('truncate text-sm', url ? 'text-foreground' : 'text-muted-foreground')}>
-                      {url || 'https://'}
-                    </span>
-                  </span>
-                  <ChevronDown className='h-3.5 w-3.5 flex-shrink-0 text-muted-foreground ml-2' />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className='p-0' align='start' sideOffset={6} style={{ width: 'var(--radix-popover-trigger-width)' }}>
-                <Command id='url-suggestions'>
-                  <CommandInput
-                    placeholder='Enter website URL...'
-                    value={url}
-                    onValueChange={handleUrlChange}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && url.trim()) {
-                        setOpen(false)
-                        loadSite()
-                      }
-                      handleKeyDown(e)
-                    }}
-                    className='text-[16px]'
-                  />
-                  <CommandEmpty>No URL found.</CommandEmpty>
-                  <CommandList>
-                    {/* Recently Viewed - Show when no search input */}
-                    {url.length === 0 && history.length > 0 && (
-                      <CommandGroup heading='Recently Viewed'>
-                        {history.slice(0, 5).map((item: string, index: number) => (
-                          <CommandItem key={`history-${index}`} onSelect={() => onSelect(item)}>
-                            <Clock className='mr-2 h-4 w-4 text-muted-foreground' />
-                            <span className='truncate'>{item}</span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
+          {/* URL Input - Only show when viewing a site */}
+          {currentSite && (
+            <>
+              <div className='relative flex-1 min-w-0 max-w-2xl'>
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      role='combobox'
+                      aria-expanded={open}
+                      aria-controls='url-suggestions'
+                      className={cn(
+                        'w-full flex items-center justify-between h-8 px-3 text-sm bg-background border rounded-lg hover:border-foreground/40 transition-colors',
+                        isInputHighlighted && 'ring-2 ring-primary ring-offset-2'
+                      )}
+                    >
+                      <span className='flex items-center gap-2 flex-1 min-w-0'>
+                        <Globe className='h-2.5 w-2.5 flex-shrink-0 text-muted-foreground' />
+                        <span className={cn('truncate text-sm', url ? 'text-foreground' : 'text-muted-foreground')}>
+                          {url || 'https://'}
+                        </span>
+                      </span>
+                      <ChevronDown className='h-3.5 w-3.5 flex-shrink-0 text-muted-foreground ml-2' />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className='p-0' align='start' sideOffset={6} style={{ width: 'var(--radix-popover-trigger-width)' }}>
+                    <Command id='url-suggestions'>
+                      <CommandInput
+                        placeholder='Enter website URL...'
+                        value={url}
+                        onValueChange={handleUrlChange}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && url.trim()) {
+                            setOpen(false)
+                            loadSite()
+                          }
+                          handleKeyDown(e)
+                        }}
+                        className='text-[16px]'
+                      />
+                      <CommandEmpty>No URL found.</CommandEmpty>
+                      <CommandList>
+                        {/* Recently Viewed - Show when no search input */}
+                        {url.length === 0 && history.length > 0 && (
+                          <CommandGroup heading='Recently Viewed'>
+                            {history.slice(0, 5).map((item: string, index: number) => (
+                              <CommandItem key={`history-${index}`} onSelect={() => onSelect(item)}>
+                                <Clock className='mr-2 h-4 w-4 text-muted-foreground' />
+                                <span className='truncate'>{item}</span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        )}
 
-                    {/* Suggestions - Show when typing */}
-                    {url.length > 0 && filteredSuggestions.length > 0 && (
-                      <CommandGroup heading='Suggestions'>
-                        {filteredSuggestions.map((suggestion: string, index: number) => (
-                          <CommandItem key={`suggestion-${index}`} onSelect={() => onSelect(suggestion)}>
-                            <Zap className='mr-2 h-4 w-4' />
-                            <span className='truncate'>{suggestion}</span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
+                        {/* Suggestions - Show when typing */}
+                        {url.length > 0 && filteredSuggestions.length > 0 && (
+                          <CommandGroup heading='Suggestions'>
+                            {filteredSuggestions.map((suggestion: string, index: number) => (
+                              <CommandItem key={`suggestion-${index}`} onSelect={() => onSelect(suggestion)}>
+                                <Zap className='mr-2 h-4 w-4' />
+                                <span className='truncate'>{suggestion}</span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        )}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-          {/* Search Button - Always visible */}
-          <Button
-            disabled={!formatUrl(url)}
-            onClick={() => loadSite()}
-            size='icon'
-            className='h-8 w-8 shrink-0 rounded-lg'
-          >
-            <Search className='w-3.5 h-3.5 sm:w-4 sm:h-4' />
-          </Button>
+              {/* Search Button - Show when viewing a site */}
+              <Button
+                disabled={!formatUrl(url)}
+                onClick={() => loadSite()}
+                size='icon'
+                className='h-8 w-8 shrink-0 rounded-lg'
+              >
+                <Search className='w-3.5 h-3.5 sm:w-4 sm:h-4' />
+              </Button>
+            </>
+          )}
+
 
           {/* Tabs - Desktop: horizontal tabs, Mobile: dropdown */}
           {currentSite && (
