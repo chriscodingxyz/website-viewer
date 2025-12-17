@@ -69,7 +69,7 @@ export default function SiteCard({
             onClick={onView}
             variant="outline"
             className="flex-1 bg-white hover:bg-gray-50 text-foreground hover:text-foreground border-gray-200 hover:border-gray-300"
-            size="xs"
+            size="sm"
           >
             View
           </Button>
@@ -77,7 +77,7 @@ export default function SiteCard({
             onClick={onView}
             className="flex-1 bg-gray-50 hover:bg-gray-100 text-foreground hover:text-foreground border border-gray-200 hover:border-gray-300"
             variant="ghost"
-            size="xs"
+            size="sm"
           >
             Analyze
           </Button>
@@ -88,7 +88,7 @@ export default function SiteCard({
                 onRemove()
               }}
               variant="outline"
-              size="xs"
+              size="sm"
               className="px-2 border-gray-200 text-foreground hover:text-red-600 hover:border-red-200 hover:bg-red-50"
             >
               <Delete02Icon className="w-3.5 h-3.5" />
