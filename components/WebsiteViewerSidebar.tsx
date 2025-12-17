@@ -191,8 +191,8 @@ export default function WebsiteViewerSidebar() {
                       isActive={selectedTab === item.id}
                       className={cn(
                         "w-full h-8 rounded-md transition-colors",
-                        "hover:bg-accent/60",
-                        selectedTab === item.id && "bg-accent font-medium",
+                        "hover:bg-accent/20 hover:text-foreground",
+                        selectedTab === item.id && "bg-accent text-accent-foreground font-medium",
                         state === "expanded" ? "px-2 justify-start" : "px-0 justify-center"
                       )}
                       tooltip={state === "collapsed" ? item.description : undefined}
@@ -216,7 +216,7 @@ export default function WebsiteViewerSidebar() {
                   <SidebarMenuButton
                     onClick={() => setIsExportModalOpen(true)}
                     className={cn(
-                      "w-full h-8 rounded-md transition-colors hover:bg-accent/60",
+                      "w-full h-8 rounded-md transition-colors hover:bg-accent/20 hover:text-foreground",
                       state === "expanded" ? "px-2 justify-start" : "px-0 justify-center"
                     )}
                     tooltip={state === "collapsed" ? "Export data" : undefined}
@@ -235,7 +235,7 @@ export default function WebsiteViewerSidebar() {
                       }
                     }}
                     className={cn(
-                      "w-full h-8 rounded-md transition-colors hover:bg-accent/60",
+                      "w-full h-8 rounded-md transition-colors hover:bg-accent/20 hover:text-foreground",
                       state === "expanded" ? "px-2 justify-start" : "px-0 justify-center"
                     )}
                     tooltip={state === "collapsed" ? "Share results" : undefined}
@@ -262,7 +262,7 @@ export default function WebsiteViewerSidebar() {
         >
           <SidebarGroup className="px-3 py-2">
             <CollapsibleTrigger asChild>
-              <SidebarGroupLabel className="px-2 cursor-pointer hover:bg-accent/40 rounded-md transition-colors text-xs font-medium" style={{ height: '32px', display: 'flex', alignItems: 'center' }}>
+              <SidebarGroupLabel className="px-2 cursor-pointer hover:bg-accent/20 hover:text-foreground rounded-md transition-colors text-xs font-medium" style={{ height: '32px', display: 'flex', alignItems: 'center' }}>
                 <div className="flex items-center gap-2 w-full text-muted-foreground/80">
                   <Bookmark className="h-3.5 w-3.5" />
                   {state === "expanded" && (
@@ -294,7 +294,7 @@ export default function WebsiteViewerSidebar() {
                         <SidebarMenuItem key={`fav-${index}`}>
                           <SidebarMenuButton
                             onClick={() => handleLoadSite(fav)}
-                            className="w-full justify-start pl-6 h-7 rounded-md transition-colors hover:bg-accent/60"
+                            className="w-full justify-start pl-6 h-7 rounded-md transition-colors hover:bg-accent/20 hover:text-foreground"
                             size="sm"
                             tooltip={undefined}
                           >
@@ -323,7 +323,7 @@ export default function WebsiteViewerSidebar() {
                         <SidebarMenuItem key={`history-${index}`}>
                           <SidebarMenuButton
                             onClick={() => handleLoadSite(item)}
-                            className="w-full justify-start pl-6 h-7 rounded-md transition-colors hover:bg-accent/60"
+                            className="w-full justify-start pl-6 h-7 rounded-md transition-colors hover:bg-accent/20 hover:text-foreground"
                             size="sm"
                             tooltip={undefined}
                           >
@@ -351,7 +351,7 @@ export default function WebsiteViewerSidebar() {
                       <SidebarMenuItem key={`port-${index}`}>
                         <SidebarMenuButton
                           onClick={() => handleLoadSite(port)}
-                          className="w-full justify-start pl-6 h-7 rounded-md transition-colors hover:bg-accent/60"
+                          className="w-full justify-start pl-6 h-7 rounded-md transition-colors hover:bg-accent/20 hover:text-foreground"
                           size="sm"
                           tooltip={undefined}
                         >

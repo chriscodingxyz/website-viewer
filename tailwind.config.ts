@@ -9,6 +9,9 @@ const config: Config = {
   ],
   theme: {
   	extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "sans-serif"],
+      },
   		borderWidth: {
   			DEFAULT: '0.5px',
   		},

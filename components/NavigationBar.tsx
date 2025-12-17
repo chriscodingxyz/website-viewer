@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/breadcrumb'
 import ShareableLink from '@/components/ShareableLink'
 import ExportButton from '@/components/export/ExportButton'
-import { Home, Globe, Eye, Share2, Settings, BarChart3, ChevronDown } from 'lucide-react'
+import { Home01Icon, Globe02Icon, EyeIcon, Share01Icon, Settings01Icon, ChartBarLineIcon, ArrowDown01Icon } from 'hugeicons-react'
 import { cn } from '@/lib/utils'
 import { ButtonGroup } from '@/components/ui/button-group'
 import {
@@ -36,10 +36,10 @@ interface Tab {
 }
 
 const tabConfig = {
-  viewports: { label: 'Viewports', icon: Eye },
-  seo: { label: 'SEO Analysis', icon: BarChart3 },
-  social: { label: 'Social Media', icon: Share2 },
-  technical: { label: 'Technical', icon: Settings }
+  viewports: { label: 'Viewports', icon: EyeIcon },
+  seo: { label: 'SEO Analysis', icon: ChartBarLineIcon },
+  social: { label: 'Social Media', icon: Share01Icon },
+  technical: { label: 'Technical', icon: Settings01Icon }
 }
 
 export default function NavigationBar() {
@@ -132,7 +132,7 @@ export default function NavigationBar() {
                     <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
                       {IconComponent && <IconComponent className="h-3 w-3" />}
                       <span>{currentTabConfig?.label}</span>
-                      <ChevronDown className="h-3 w-3 ml-0.5" />
+                      <ArrowDown01Icon className="h-3 w-3 ml-0.5" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-48">

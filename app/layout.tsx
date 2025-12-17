@@ -3,7 +3,7 @@ import Script from 'next/script'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
 
-import { Inter } from 'next/font/google'
+import { Outfit } from 'next/font/google'
 import Header from '@/components/Header'
 import AuthDialogWrapper from '@/components/AuthDialogWrapper'
 import { Toaster } from 'sonner'
@@ -13,10 +13,11 @@ import { WebsiteViewerProvider } from '@/contexts/WebsiteViewerContext'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import WebsiteViewerSidebar from '@/components/WebsiteViewerSidebar'
 import ClientOnly from '@/components/ClientOnly'
-const inter = Inter({
+
+const fontSans = Outfit({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-inter'
+  variable: '--font-sans',
+  display: 'swap',
 })
 
 const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://layoutlab.vercel.app'
@@ -111,7 +112,7 @@ export default function RootLayout ({
   return (
     <html lang='en'>
       <body
-        className={`${inter.variable} min-h-screen flex flex-col font-inter`}
+        className={`${fontSans.variable} min-h-screen flex flex-col font-sans antialiased`}
       >
         {/* Google Analytics 4 */}
         {GA_MEASUREMENT_ID && (
@@ -144,7 +145,7 @@ export default function RootLayout ({
             <HistoryProvider>
               <WebsiteViewerProvider>
                 <Header />
-                <main className='flex-1'>{children}</main>
+                <main className='flex-1 pt-16'>{children}</main>
                 <AuthDialogWrapper />
               </WebsiteViewerProvider>
             </HistoryProvider>

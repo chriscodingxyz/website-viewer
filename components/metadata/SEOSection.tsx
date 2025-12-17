@@ -106,11 +106,11 @@ export default function SEOSection ({ metadata, loading, error }: SEOSectionProp
   }) => {
     const statusConfig = {
       good: {
-        icon: <CheckCircle className="h-3.5 w-3.5" style={{ color: 'hsl(var(--brand-teal))' }} />,
+        icon: <CheckCircle className="h-3.5 w-3.5 text-green-600" />,
         bgClass: "bg-green-50 dark:bg-green-950/30"
       },
       warning: {
-        icon: <AlertTriangle className="h-3.5 w-3.5" style={{ color: 'hsl(var(--brand-orange))' }} />,
+        icon: <AlertTriangle className="h-3.5 w-3.5 text-orange-600" />,
         bgClass: "bg-orange-50 dark:bg-orange-950/30"
       },
       error: {
@@ -151,7 +151,7 @@ export default function SEOSection ({ metadata, loading, error }: SEOSectionProp
   // Elegant SEO Score card - inspired by reference design
   const SEOScoreDisplay = () => {
     const getScoreColor = () => {
-      if (seoScore.percentage >= 80) return 'bg-[hsl(var(--brand-teal))]'
+      if (seoScore.percentage >= 80) return 'bg-green-500'
       if (seoScore.percentage >= 60) return 'bg-orange-500'
       return 'bg-red-500'
     }
@@ -293,7 +293,7 @@ export default function SEOSection ({ metadata, loading, error }: SEOSectionProp
                 </span>
               </div>
               {icons && icons.length > 0 ? (
-                <CheckCircle className="h-3.5 w-3.5" style={{ color: 'hsl(var(--brand-teal))' }} />
+                <CheckCircle className="h-3.5 w-3.5 text-green-600" />
               ) : (
                 <XCircle className="h-3.5 w-3.5 text-red-600" />
               )}
@@ -373,7 +373,7 @@ export default function SEOSection ({ metadata, loading, error }: SEOSectionProp
                 {(() => {
                   const hasAnalytics = analytics.googleAnalytics.present || analytics.googleTagManager.present || analytics.otherAnalytics.some(a => a.detected)
                   return hasAnalytics ? (
-                    <CheckCircle className="h-3.5 w-3.5" style={{ color: 'hsl(var(--brand-teal))' }} />
+                    <CheckCircle className="h-3.5 w-3.5 text-green-600" />
                   ) : (
                     <XCircle className="h-3.5 w-3.5 text-red-600" />
                   )
@@ -444,7 +444,7 @@ export default function SEOSection ({ metadata, loading, error }: SEOSectionProp
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-medium text-foreground">robots.txt</h4>
                     {sitemap.robotsTxt.accessible || sitemap.robotsTxt.hasMetaRobots ? (
-                      <CheckCircle className="h-3.5 w-3.5" style={{ color: 'hsl(var(--brand-teal))' }} />
+                      <CheckCircle className="h-3.5 w-3.5 text-green-600" />
                     ) : (
                       <XCircle className="h-3.5 w-3.5 text-red-600" />
                     )}
@@ -469,7 +469,7 @@ export default function SEOSection ({ metadata, loading, error }: SEOSectionProp
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-medium text-foreground">XML Sitemaps</h4>
                   {sitemap.sitemaps.some(s => s.accessible) ? (
-                    <CheckCircle className="h-3.5 w-3.5" style={{ color: 'hsl(var(--brand-teal))' }} />
+                    <CheckCircle className="h-3.5 w-3.5 text-green-600" />
                   ) : (
                     <XCircle className="h-3.5 w-3.5 text-red-600" />
                   )}

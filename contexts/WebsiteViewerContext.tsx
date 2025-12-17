@@ -756,7 +756,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
   const value: WebsiteViewerContextType = {
     url,
-    setUrl,
+    setUrl: handleUrlChange,
     currentSite,
     views,
     isInputHighlighted,

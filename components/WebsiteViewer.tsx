@@ -2,13 +2,14 @@
 
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Globe, ZoomIn, ZoomOut, Monitor, Search, Share2 } from 'lucide-react'
+import { Globe02Icon, Search01Icon, Briefcase01Icon, Home01Icon, Layout01Icon, UserIcon } from 'hugeicons-react'
 import { toast } from 'sonner'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
+import { useHistory } from '@/contexts/HistoryContext'
 import SectionContainer from './SectionContainer'
-import NavigationBar from './NavigationBar'
 import { Kbd } from '@/components/ui/kbd'
 import Image from 'next/image'
+import SiteCard from './SiteCard'
 import {
   Dialog,
   DialogContent,
@@ -21,94 +22,108 @@ import {
 export default function WebsiteViewer () {
   const {
     currentSite,
-    views,
-    removeView,
-    changeViewType,
-    duplicateView,
-    globalZoom,
-    globalZoomStepIndex,
-    setGlobalZoomStepIndex,
-    zoomSteps,
-    setUrlWithHighlight,
-    metadata,
-    metadataLoading,
-    metadataError,
+    url,
+    setUrl,
+    loadSite,
     metadataNeedsManual,
   } = useWebsiteViewer()
 
-  // Global zoom functions
-  const globalZoomIn = () => {
-    setGlobalZoomStepIndex(Math.min(globalZoomStepIndex + 1, zoomSteps.length - 1))
-    toast.success(
-      `Global zoom: ${Math.round(
-        zoomSteps[Math.min(globalZoomStepIndex + 1, zoomSteps.length - 1)] * 100
-      )}%`
-    )
-  }
+  const { history, removeFromHistory } = useHistory()
 
-  const globalZoomOut = () => {
-    setGlobalZoomStepIndex(Math.max(globalZoomStepIndex - 1, 0))
-    toast.success(
-      `Global zoom: ${Math.round(
-        zoomSteps[Math.max(globalZoomStepIndex - 1, 0)] * 100
-      )}%`
-    )
-  }
-
-  const resetGlobalZoom = () => {
-    setGlobalZoomStepIndex(0)
-    toast.success('Global zoom reset to 100%')
-  }
-
-
+  // Reverse history to show newest first, take top 6
+  const recentSites = [...history].reverse().slice(0, 6)
 
   return (
-    <div className='pt-[60px]'>
+    <div className='min-h-screen bg-background font-sans text-foreground selection:bg-primary/30'>
+
       {/* Main Content Area */}
-      <div className='min-h-screen'>
-        {!currentSite && (
-          <div className='flex items-center justify-center h-[calc(100svh-60px)] max-h-[calc(100svh-60px)] overflow-hidden'>
-            <div className='w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-              <div className='flex flex-col lg:flex-row items-center justify-center gap-6 sm:gap-8 lg:gap-16'>
-                {/* Logo */}
-                <div className='flex-shrink-0 w-32 h-32 sm:w-40 sm:h-40 lg:w-64 lg:h-64'>
-                  <Image
-                    src='/seoseal.png'
-                    alt='Website Viewer Logo'
-                    width={256}
-                    height={256}
-                    className='w-full h-full object-contain'
-                    priority
-                  />
-                </div>
+      <main className=''>
+        {!currentSite ? (
+          <div className='container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 max-w-7xl'>
 
-                {/* Content */}
-                <div className='flex-1 text-center lg:text-left max-w-2xl'>
-                  <h1 className='text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground mb-3 sm:mb-4'>
-                    Website Viewer
-                  </h1>
-                  <p className='text-sm sm:text-base md:text-lg text-muted-foreground mb-4 sm:mb-6 leading-relaxed'>
-                    Preview any website across devices. Analyze SEO, metadata, and social previews—all in one place.
-                  </p>
+            {/* Hero Section */}
+            <div className="max-w-2xl mb-10">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/30 text-accent text-xs font-semibold mb-3">
+                <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+                v2.0 Now Available
+              </div>
 
-                  {/* Quick Start Hint */}
-                  <div className='inline-flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground bg-muted/30 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg border border-border/40'>
-                    <div className='flex items-center gap-1.5 sm:gap-2'>
-                      <Kbd>⌘K</Kbd>
-                      <span>to open</span>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-foreground mb-4 leading-[1.1]">
+                Ready to analyze <br/>
+                <span className="text-foreground relative">
+                    your next site?
+                    <svg className="absolute w-full h-3 -bottom-1 left-0 text-primary/20 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
+                       <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
+                    </svg>
+                </span>
+              </h1>
+
+              <p className="text-lg text-muted-foreground mb-6 max-w-lg leading-relaxed">
+                Preview across devices. Analyze SEO, metadata, and social previews. Built for developers who care about the details.
+              </p>
+
+              {/* Search Bar */}
+              <div className="flex flex-col sm:flex-row gap-3 max-w-xl">
+                 <div className="relative flex-1 group z-40">
+                    <Search01Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-foreground transition-colors pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Enter website URL (e.g. apple.com)"
+                      className="w-full h-10 pl-12 pr-4 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-foreground/10 focus:border-foreground/30 transition-all shadow-sm text-foreground placeholder:text-muted-foreground"
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && loadSite()}
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden sm:block pointer-events-none">
+                       <Kbd className="bg-muted text-[10px] text-muted-foreground">↵</Kbd>
                     </div>
-                    <span className='text-muted-foreground/40'>or</span>
-                    <span className='hidden sm:inline'>click URL bar above</span>
-                    <span className='sm:hidden'>click above</span>
-                  </div>
-                </div>
+                 </div>
+                 <Button
+                    size="sm"
+                    className="h-10 px-6 font-semibold text-white bg-foreground hover:bg-foreground/85 shadow-md hover:shadow-lg transition-all duration-200"
+                    onClick={() => loadSite()}
+                 >
+                    Explore now
+                 </Button>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Section Layout Content */}
-        {currentSite && (
+            {/* Recent Sites Grid */}
+            <div className="space-y-4">
+               <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-foreground">Recent sites</h2>
+                  {history.length > 0 && (
+                     <Button variant="link" className="text-xs text-muted-foreground hover:text-foreground">
+                        View all history
+                     </Button>
+                  )}
+               </div>
+
+               {recentSites.length === 0 ? (
+                  <div className="bg-muted/30 border border-dashed border-border rounded-xl p-8 text-center">
+                     <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <Globe02Icon className="w-6 h-6 text-muted-foreground/50" />
+                     </div>
+                     <h3 className="font-semibold text-sm mb-1">No history yet</h3>
+                     <p className="text-xs text-muted-foreground">URL searches will appear here for quick access.</p>
+                  </div>
+               ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                     {recentSites.map((siteUrl, index) => (
+                        <SiteCard
+                           key={`${siteUrl}-${index}`}
+                           url={siteUrl}
+                           onView={() => loadSite(siteUrl)}
+                           onRemove={() => removeFromHistory(siteUrl)}
+                        />
+                     ))}
+                  </div>
+               )}
+            </div>
+
+          </div>
+        ) : (
+          /* Viewer Mode */
           <SectionContainer />
         )}
 
@@ -119,18 +134,14 @@ export default function WebsiteViewer () {
               <DialogTitle>Enable Live Preview</DialogTitle>
               <DialogDescription>
                 To view localhost metadata in production, add this snippet to your local project.
-                It automatically syncs your metadata to the viewer.
               </DialogDescription>
             </DialogHeader>
-            
             <div className="flex flex-col gap-4 py-4">
-              <div className="space-y-3">
                 <div className="relative bg-muted/50 p-4 rounded-lg border font-mono text-xs sm:text-sm break-all">
-                  <div className="absolute right-2 top-2">
-                    <Button 
+                  <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="h-6 w-6 p-0"
+                      className="absolute right-2 top-2 h-6 w-6 p-0"
                       onClick={() => {
                         const code = `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/live-preview.js"></script>`
                         navigator.clipboard.writeText(code)
@@ -139,37 +150,16 @@ export default function WebsiteViewer () {
                     >
                       <span className="sr-only">Copy</span>
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                    </Button>
-                  </div>
+                  </Button>
                   <span className="text-blue-500">&lt;script</span> <span className="text-purple-500">src</span>=<span className="text-green-500">&quot;{typeof window !== 'undefined' ? window.location.origin : ''}/live-preview.js&quot;</span><span className="text-blue-500">&gt;&lt;/script&gt;</span>
                 </div>
-                
-                <div className="text-sm text-muted-foreground space-y-2">
-                  <p><strong>Instructions:</strong></p>
-                  <ol className="list-decimal list-inside space-y-1 ml-1">
-                    <li>Copy the code snippet above.</li>
-                    <li>Paste it into your local project&apos;s <code className="bg-muted px-1 py-0.5 rounded">index.html</code> or root layout.</li>
-                    <li>Reload your localhost page.</li>
-                  </ol>
-                  <p className="text-xs pt-2 text-muted-foreground/80">
-                    This script is safe, lightweight, and only runs in the browser. It sends metadata to the viewer via secure postMessage.
-                  </p>
-                </div>
-              </div>
             </div>
-
             <DialogFooter className="sm:justify-start">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => window.location.reload()}
-              >
-                Close
-              </Button>
+              <Button type="button" variant="secondary" onClick={() => window.location.reload()}>Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+      </main>
     </div>
   )
 }

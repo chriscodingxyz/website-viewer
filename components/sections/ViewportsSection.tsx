@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Monitor,
@@ -21,6 +21,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import Image from 'next/image'
+import { getBestFavicon } from '@/lib/favicon'
+import { cn } from '@/lib/utils'
 
 interface ViewportsSectionProps {
   expanded: boolean
@@ -32,6 +34,8 @@ export default function ViewportsSection ({
   onToggle
 }: ViewportsSectionProps) {
   const [refreshKey] = useState(0)
+  const [faviconError, setFaviconError] = useState(false)
+  const [faviconLoaded, setFaviconLoaded] = useState(false)
 
   const {
     currentSite,
@@ -43,8 +47,20 @@ export default function ViewportsSection ({
     globalZoomStepIndex,
     setGlobalZoomStepIndex,
     zoomSteps,
-    metadataLoading
+    metadataLoading,
+    metadata
   } = useWebsiteViewer()
+
+  // Reset favicon state when site changes
+  useEffect(() => {
+    setFaviconError(false)
+    setFaviconLoaded(false)
+  }, [currentSite])
+
+  // Generate favicon URL
+  const faviconUrl = currentSite
+    ? getBestFavicon(currentSite, metadata)
+    : '/seoseal.png'
 
   const getStatus = () => {
     if (!currentSite)
@@ -135,15 +151,35 @@ export default function ViewportsSection ({
     <div className='max-w-[1600px] mx-auto px-6 lg:px-8 py-6'>
       <div className='flex gap-8 lg:gap-16'>
         {/* Sticky Logo - Hidden on mobile */}
-        <div className='hidden lg:block flex-shrink-0 w-64 xl:w-80'>
+        <div className='hidden lg:block flex-shrink-0'>
           <div className='sticky top-1/2 -translate-y-1/2'>
-            <Image
-              src='/seoseal.png'
-              alt='Website Viewer Logo'
-              width={320}
-              height={320}
-              className='w-full h-auto'
-            />
+            {/* Container for favicon */}
+            <div className='flex items-center justify-center relative overflow-hidden'>
+              {/* Dynamic favicon image */}
+              <Image
+                src={faviconError ? '/seoseal.png' : faviconUrl}
+                alt={currentSite ? `${currentSite} favicon` : 'Website Viewer Logo'}
+                width={96}
+                height={96}
+                className={cn(
+                  'w-24 h-24 object-contain transition-opacity duration-300',
+                  faviconLoaded ? 'opacity-100' : 'opacity-0'
+                )}
+                onLoad={() => setFaviconLoaded(true)}
+                onError={() => {
+                  setFaviconError(true)
+                  setFaviconLoaded(true)
+                }}
+                priority
+              />
+
+              {/* Loading skeleton */}
+              {!faviconLoaded && (
+                <div className='absolute flex items-center justify-center'>
+                  <div className='w-24 h-24 bg-muted/50 rounded-lg animate-pulse' />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

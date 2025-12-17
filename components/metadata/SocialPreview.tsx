@@ -270,8 +270,8 @@ export default function SocialPreview ({ metadata, loading, error }: SocialPrevi
               </svg>
               <span className='text-sm font-medium text-gray-700'>Google</span>
             </div>
-            <div className='bg-white'>
-              <div className='flex items-center gap-2 mb-1'>
+            <div className='bg-white p-3'>
+              <div className='flex items-center gap-2 mb-2'>
                 <div className='w-4 h-4 rounded-sm overflow-hidden flex-shrink-0'>
                   {metadata.icons && metadata.icons.length > 0 ? (
                     <Image

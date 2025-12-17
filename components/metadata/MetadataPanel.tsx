@@ -71,8 +71,8 @@ export default function MetadataPanel({
     <div className="w-full">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
-          <Card 
-            className="cursor-pointer hover:bg-accent/50 transition-colors"
+          <Card
+            className="cursor-pointer hover:bg-accent/10 transition-colors"
             onClick={() => {
               if (!metadata && !loading && !error && url) {
                 onRefresh()

@@ -144,6 +144,11 @@ function Header () {
     setGlobalZoomStepIndex(0)
   }
 
+  // Hide header completely on landing page
+  if (!currentSite) {
+    return null
+  }
+
   return (
     <header className='fixed top-0 left-0 right-0 z-50 bg-background border-b'>
       <div className='px-2 sm:px-4 py-2.5'>
@@ -178,7 +183,7 @@ function Header () {
                   )}
                 >
                   <span className='flex items-center gap-2 flex-1 min-w-0'>
-                    <Globe className='h-3.5 w-3.5 flex-shrink-0 text-muted-foreground' />
+                    <Globe className='h-2.5 w-2.5 flex-shrink-0 text-muted-foreground' />
                     <span className={cn('truncate text-sm', url ? 'text-foreground' : 'text-muted-foreground')}>
                       {url || 'https://'}
                     </span>

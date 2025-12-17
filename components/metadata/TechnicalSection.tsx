@@ -127,11 +127,11 @@ export default function TechnicalSection ({ metadata, loading, error }: Technica
   }) => {
     const statusConfig = {
       good: {
-        icon: <CheckCircle className="h-3.5 w-3.5" style={{ color: 'hsl(var(--brand-teal))' }} />,
+        icon: <CheckCircle className="h-3.5 w-3.5 text-green-600" />,
         bgClass: "bg-green-50 dark:bg-green-950/30"
       },
       warning: {
-        icon: <AlertTriangle className="h-3.5 w-3.5" style={{ color: 'hsl(var(--brand-orange))' }} />,
+        icon: <AlertTriangle className="h-3.5 w-3.5 text-orange-600" />,
         bgClass: "bg-orange-50 dark:bg-orange-950/30"
       },
       error: {
@@ -173,7 +173,7 @@ export default function TechnicalSection ({ metadata, loading, error }: Technica
   const TechnicalScoreDisplay = () => {
     const getScoreColor = () => {
       if (technicalScore.percentage >= 80) return 'bg-green-500'
-      if (technicalScore.percentage >= 60) return 'bg-[hsl(var(--brand-orange))]'
+      if (technicalScore.percentage >= 60) return 'bg-orange-500'
       return 'bg-red-500'
     }
 
@@ -407,7 +407,7 @@ export default function TechnicalSection ({ metadata, loading, error }: Technica
                     {structuredData.length} detected
                   </span>
                 </div>
-                <CheckCircle className="h-3.5 w-3.5" style={{ color: 'hsl(var(--brand-teal))' }} />
+                <CheckCircle className="h-3.5 w-3.5 text-green-600" />
               </div>
             </div>
 
