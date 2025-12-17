@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { Analytics } from '@vercel/analytics/next'
 
 import { Outfit } from 'next/font/google'
 import Header from '@/components/Header'
@@ -17,7 +18,7 @@ import ClientOnly from '@/components/ClientOnly'
 const fontSans = Outfit({
   subsets: ['latin'],
   variable: '--font-sans',
-  display: 'swap',
+  display: 'swap'
 })
 
 const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://layoutlab.vercel.app'
@@ -102,45 +103,23 @@ export const metadata: Metadata = {
   }
 }
 
-export default function RootLayout ({
+export default function RootLayout({
   children
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
-
   return (
     <html lang='en'>
       <body
         className={`${fontSans.variable} min-h-screen flex flex-col font-sans antialiased`}
       >
-        {/* Google Analytics 4 */}
-        {GA_MEASUREMENT_ID && (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-              strategy='afterInteractive'
-            />
-            <Script id='google-analytics' strategy='afterInteractive'>
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-
-                gtag('config', '${GA_MEASUREMENT_ID}', {
-                  page_title: document.title,
-                  page_location: window.location.href,
-                  anonymize_ip: true,
-                  allow_google_signals: false,
-                  allow_ad_personalization_signals: false
-                });
-              `}
-            </Script>
-          </>
-        )}
-
         <Toaster richColors />
-        <ThemeProvider attribute='class' defaultTheme='light' enableSystem={false} forcedTheme='light'>
+        <ThemeProvider
+          attribute='class'
+          defaultTheme='light'
+          enableSystem={false}
+          forcedTheme='light'
+        >
           <FavoritesProvider>
             <HistoryProvider>
               <WebsiteViewerProvider>
@@ -151,6 +130,7 @@ export default function RootLayout ({
             </HistoryProvider>
           </FavoritesProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   )
