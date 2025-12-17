@@ -3,21 +3,12 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Globe02Icon, Search01Icon, Briefcase01Icon, Home01Icon, Layout01Icon, UserIcon } from 'hugeicons-react'
-import { toast } from 'sonner'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useHistory } from '@/contexts/HistoryContext'
 import SectionContainer from './SectionContainer'
 import { Kbd } from '@/components/ui/kbd'
 import Image from 'next/image'
 import SiteCard from './SiteCard'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 
 export default function WebsiteViewer () {
   const {
@@ -25,7 +16,6 @@ export default function WebsiteViewer () {
     url,
     setUrl,
     loadSite,
-    metadataNeedsManual,
   } = useWebsiteViewer()
 
   const { history, removeFromHistory } = useHistory()
@@ -127,38 +117,6 @@ export default function WebsiteViewer () {
           <SectionContainer />
         )}
 
-        {/* Localhost Metadata Dialog */}
-        <Dialog open={metadataNeedsManual} onOpenChange={() => {}}>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Enable Live Preview</DialogTitle>
-              <DialogDescription>
-                To view localhost metadata in production, add this snippet to your local project.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col gap-4 py-4">
-                <div className="relative bg-muted/50 p-4 rounded-lg border font-mono text-xs sm:text-sm break-all">
-                  <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="absolute right-2 top-2 h-6 w-6 p-0"
-                      onClick={() => {
-                        const code = `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/live-preview.js"></script>`
-                        navigator.clipboard.writeText(code)
-                        toast.success('Copied to clipboard')
-                      }}
-                    >
-                      <span className="sr-only">Copy</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                  </Button>
-                  <span className="text-blue-500">&lt;script</span> <span className="text-purple-500">src</span>=<span className="text-green-500">&quot;{typeof window !== 'undefined' ? window.location.origin : ''}/live-preview.js&quot;</span><span className="text-blue-500">&gt;&lt;/script&gt;</span>
-                </div>
-            </div>
-            <DialogFooter className="sm:justify-start">
-              <Button type="button" variant="secondary" onClick={() => window.location.reload()}>Close</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </main>
     </div>
   )

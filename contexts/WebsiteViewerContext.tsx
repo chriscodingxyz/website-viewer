@@ -120,7 +120,6 @@ interface WebsiteViewerContextType {
   metadata: WebsiteMetadata | null
   metadataLoading: boolean
   metadataError: string | null
-  metadataNeedsManual: boolean
   fetchMetadata: (url?: string) => Promise<void>
   clearMetadata: () => void
   // Iframe preview functionality
@@ -255,32 +254,6 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
       }
     }
 
-    // Listen for postMessage from bookmarklet (seamless update)
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'WEBSITE_VIEWER_METADATA') {
-        try {
-          const receivedMetadata = event.data.payload
-          if (receivedMetadata && receivedMetadata.url) {
-            setMetadata(receivedMetadata)
-            toast.success('Metadata updated from localhost')
-            
-            // Update URL and view if needed
-            const url = new URL(receivedMetadata.url)
-            const cleanDomain = stripUrlForParams(url.toString())
-            const newUrl = `${window.location.pathname}?site=${cleanDomain}`
-            window.history.replaceState({}, '', newUrl)
-            
-            setUrl(url.toString())
-            loadSiteInternal(url.toString(), receivedMetadata)
-          }
-        } catch (e) {
-          console.error('Failed to process message metadata', e)
-        }
-      }
-    }
-
-    window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
   }, [])
 
   // Use metadata API to determine iframe status and auto-switch tabs
@@ -544,8 +517,6 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setShowSuggestions(false)
   }
 
-  // Metadata functions
-  const [metadataNeedsManual, setMetadataNeedsManual] = useState(false)
 
   const fetchMetadata = async (urlOverride?: string) => {
     const targetUrl = urlOverride || currentSite
@@ -555,7 +526,6 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
     setMetadataLoading(true)
     setMetadataError(null)
-    setMetadataNeedsManual(false)
 
     // Check if this is a localhost URL when running in production
     const isLocalhost = targetUrl.includes('localhost') || targetUrl.includes('127.0.0.1')
@@ -709,9 +679,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
         })
       } catch (error) {
         // Both methods failed - likely due to Mixed Content blocking
-        // Show the manual workaround UI
         console.error('Localhost metadata extraction failed:', error)
-        setMetadataNeedsManual(true)
         setMetadata(null)
       } finally {
         setMetadataLoading(false)
@@ -779,7 +747,6 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     metadata,
     metadataLoading,
     metadataError,
-    metadataNeedsManual,
     fetchMetadata,
     clearMetadata,
     updateViewIframeStatus,
@@ -833,7 +800,6 @@ const defaultContextValue: WebsiteViewerContextType = {
   metadata: null,
   metadataLoading: false,
   metadataError: null,
-  metadataNeedsManual: false,
   fetchMetadata: async () => {},
   clearMetadata: () => {},
   updateViewIframeStatus: () => {},
