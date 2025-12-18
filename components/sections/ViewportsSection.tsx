@@ -262,21 +262,6 @@ export default function ViewportsSection ({
                 </div>
               </div>
             </div>
-          ) : views.length > 0 && views.every((v: any) => v.iframeStatus === 'blocked') ? (
-            // Show informational message when all viewports are blocked
-            <div className='w-full'>
-              <div className='flex justify-center items-center min-h-[400px]'>
-                <div className='text-center max-w-md'>
-                  <div className='mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center' style={{ backgroundColor: 'hsl(var(--brand-teal-light))' }}>
-                    <CheckCircle className='w-8 h-8' style={{ color: 'hsl(var(--brand-teal))' }} />
-                  </div>
-                  <h3 className='text-lg font-semibold text-foreground mb-2'>Viewports Blocked</h3>
-                  <p className='text-sm text-muted-foreground leading-relaxed'>
-                    This site has X-Frame-Options configured, which prevents iframe embedding for security. Check out the SEO, Social, and Technical tabs instead!
-                  </p>
-                </div>
-              </div>
-            </div>
           ) : (
             <div className='w-full'>
               {/* All Viewports - Display simultaneously */}

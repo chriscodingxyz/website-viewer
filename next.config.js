@@ -71,9 +71,27 @@ const nextConfig = {
           // NO frame-blocking headers for assets
         ],
       },
+      // Proxy API - Allow embedding
+      {
+        source: '/api/proxy',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'ALLOWALL',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors *",
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          }
+        ],
+      },
       // All other routes - secure headers
       {
-        source: '/((?!api/proxy-html|api/proxy-asset).*)',
+        source: '/:path((?!api/proxy|api/proxy-html|api/proxy-asset).*)',
         headers: [
           {
             key: 'X-Frame-Options',

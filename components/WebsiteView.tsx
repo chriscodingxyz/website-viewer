@@ -11,8 +11,11 @@ import {
   Copy,
   AlertCircle,
   Settings,
-  Expand
+  Expand,
+  Shield,
+  ShieldOff
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { View, ViewType, useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { toast } from 'sonner'
@@ -83,9 +86,9 @@ export default function WebsiteView ({
   const containerRef = useRef<HTMLDivElement>(null)
   const [isEnlargeDialogOpen, setIsEnlargeDialogOpen] = useState(false)
   const [enlargeDialogScale, setEnlargeDialogScale] = useState(1)
-  const [realIframeStatus, setRealIframeStatus] = useState<'loading' | 'loaded' | 'error'>('loading')
+  const [realIframeStatus, setRealIframeStatus] = useState<'loading' | 'loaded' | 'error' | 'blocked'>('loading')
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
-  const { updateViewIframeStatus } = useWebsiteViewer()
+  const { updateViewIframeStatus, toggleViewProxy } = useWebsiteViewer()
 
   const isFavorite = favorites.includes(view.url)
 
@@ -125,7 +128,8 @@ export default function WebsiteView ({
   // Sync local realIframeStatus with global view.iframeStatus
   useEffect(() => {
     setRealIframeStatus(view.iframeStatus === 'loading' ? 'loading' :
-                       view.iframeStatus === 'loaded' ? 'loaded' : 'error')
+                       view.iframeStatus === 'loaded' ? 'loaded' : 
+                       view.iframeStatus === 'blocked' ? 'blocked' : 'error')
   }, [view.iframeStatus])
 
   // Reset status when refreshKey changes
@@ -207,6 +211,8 @@ export default function WebsiteView ({
         return null // No icon when loaded - don't annoy users
       case 'error':
         return <AlertCircle className='h-3 w-3 text-red-600' />
+      case 'blocked':
+        return <Shield className='h-3 w-3 text-amber-600' />
       default:
         return null
     }
@@ -266,6 +272,11 @@ export default function WebsiteView ({
   const availableWidth = displayDimensions[view.type].width
   const contentScale = availableWidth / actualDimensions[view.type].width
   const finalContentScale = contentScale * scale
+
+  // Resolve URL for iframe
+  const displayUrl = view.useProxy 
+    ? `/api/proxy?url=${encodeURIComponent(view.url)}` 
+    : view.url
 
   const optionsHeight = isCompactView ? 40 : 35 // Minimal height - just action buttons
   const borderWidth = 1
@@ -338,13 +349,26 @@ export default function WebsiteView ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className='text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted/80 transition-colors'
+                className={`text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted/80 transition-colors ${view.useProxy ? 'text-blue-500' : ''}`}
                 title='More options'
               >
                 <Settings className='h-3.5 w-3.5' />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => toggleViewProxy(view.id)}>
+                {view.useProxy ? (
+                  <>
+                    <ShieldOff className='mr-2 h-4 w-4' />
+                    <span>Disable Proxy Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Shield className='mr-2 h-4 w-4' />
+                    <span>Enable Proxy Mode</span>
+                  </>
+                )}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={refreshView}>
                 <RefreshCw className='mr-2 h-4 w-4' />
                 <span>Refresh</span>
@@ -428,7 +452,7 @@ export default function WebsiteView ({
         <iframe
           key={iframeKey}
           ref={iframeRef}
-          src={view.url}
+          src={displayUrl}
           style={{
             width: `${actualDimensions[view.type].width}px`,
             height: `${actualDimensions[view.type].height}px`,
@@ -445,6 +469,7 @@ export default function WebsiteView ({
             setRealIframeStatus('error')
             updateViewIframeStatus(view.id, 'error')
           }}
+          sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
         />
         
         {/* Loading/Error Overlay */}
@@ -456,6 +481,34 @@ export default function WebsiteView ({
               </div>
               <p className="text-sm text-gray-700 mb-2 font-medium">Loading Website</p>
               <p className="text-xs text-gray-500">Please wait...</p>
+            </div>
+          </div>
+        )}
+        
+        {realIframeStatus === 'blocked' && (
+          <div className="absolute inset-0 bg-amber-50 flex items-center justify-center">
+            <div className="text-center max-w-xs px-4">
+              <Shield className="h-8 w-8 text-amber-600 mx-auto mb-2" />
+              <p className="text-sm text-amber-700 mb-1 font-semibold">Embedding Restricted</p>
+              <p className="text-xs text-amber-600 mb-4">
+                This site blocks standard embedding. Use Proxy Mode to bypass this restriction.
+              </p>
+              <div className="space-y-2">
+                <Button 
+                  size="sm"
+                  onClick={() => toggleViewProxy(view.id)}
+                  className="bg-amber-600 hover:bg-amber-700 text-white w-full gap-2"
+                >
+                  <Shield className="h-3.5 w-3.5" />
+                  Enable Proxy Mode
+                </Button>
+                <button 
+                  onClick={() => window.open(view.url, '_blank')}
+                  className="block mx-auto text-xs text-blue-700 hover:text-blue-900 underline"
+                >
+                  Open directly
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -518,13 +571,14 @@ export default function WebsiteView ({
             <div className="relative bg-white overflow-hidden">
               <iframe
                 key={`dialog-${iframeKey}`}
-                src={view.url}
+                src={displayUrl}
                 style={{
                   width: `${actualDimensions[view.type].width * enlargeDialogScale}px`,
                   height: `${actualDimensions[view.type].height * enlargeDialogScale}px`,
                   border: 'none'
                 }}
                 title={`Enlarged view ${view.id}`}
+                sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
               />
             </div>
           </div>

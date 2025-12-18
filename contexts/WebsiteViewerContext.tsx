@@ -20,6 +20,7 @@ export interface View {
   iframeResult?: IframeDetectionResult
   loadingDelay?: number // Delay in ms before starting to load iframe
   shouldLoad?: boolean // Whether iframe should start loading
+  useProxy?: boolean // Whether to load via proxy
 }
 
 const isValidUrl = (url: string): boolean => {
@@ -143,6 +144,8 @@ interface WebsiteViewerContextType {
   setShowAuthDialog: (show: boolean) => void
   setAuthDialogUrl: (url: string) => void
   clearCredentials: () => void
+  // Proxy functionality
+  toggleViewProxy: (id: number) => void
 }
 
 const WebsiteViewerContext = createContext<
@@ -280,17 +283,6 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
             shouldLoad: false
           }))
         )
-        // Only auto-switch to SEO tab if currently on viewports tab AND we haven't redirected yet
-        if (selectedTab === 'viewports' && !hasRedirected.current && typeof window !== 'undefined') {
-          hasRedirected.current = true
-          setSelectedTab('seo')
-          // Update URL to match the new tab
-          const searchParams = new URLSearchParams(window.location.search)
-          const siteParam = searchParams.get('site')
-          const newPath = `/${siteParam ? `?site=${siteParam}` : ''}`
-          window.history.pushState({}, '', newPath)
-          toast.info('Viewports blocked by website - switched to SEO analysis')
-        }
       } else {
         // No blocking headers or local/staging site, allow iframes to load
         setViews(prevViews =>
@@ -481,6 +473,22 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setShowAuthFields(false)
     setShowAuthDialog(false)
     setAuthDialogUrl('')
+  }
+  
+  const toggleViewProxy = (id: number) => {
+    setViews(prevViews =>
+      prevViews.map(view =>
+        view.id === id
+          ? {
+              ...view,
+              useProxy: !view.useProxy,
+              refreshKey: (view.refreshKey || 0) + 1,
+              iframeStatus: 'loading' as IframeStatus
+            }
+          : view
+      )
+    )
+    toast.info('Proxy mode toggled')
   }
 
   const handleUrlChange = (value: string) => {
@@ -764,7 +772,8 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     setShowAuthFields,
     setShowAuthDialog,
     setAuthDialogUrl,
-    clearCredentials
+    clearCredentials,
+    toggleViewProxy
   }
 
   return (
@@ -817,7 +826,8 @@ const defaultContextValue: WebsiteViewerContextType = {
   setShowAuthFields: () => {},
   setShowAuthDialog: () => {},
   setAuthDialogUrl: () => {},
-  clearCredentials: () => {}
+  clearCredentials: () => {},
+  toggleViewProxy: () => {}
 }
 
 export function useWebsiteViewer () {
