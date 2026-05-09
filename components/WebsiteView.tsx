@@ -88,7 +88,7 @@ export default function WebsiteView ({
   const [enlargeDialogScale, setEnlargeDialogScale] = useState(1)
   const [realIframeStatus, setRealIframeStatus] = useState<'loading' | 'loaded' | 'error' | 'blocked'>('loading')
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites()
-  const { updateViewIframeStatus, toggleViewProxy } = useWebsiteViewer()
+  const { updateViewIframeStatus, toggleViewProxy, refreshView: refreshViewport } = useWebsiteViewer()
 
   const isFavorite = favorites.includes(view.url)
 
@@ -122,8 +122,8 @@ export default function WebsiteView ({
     return () => window.removeEventListener('resize', updateScale)
   }, [view.type, displayDimensions, globalZoom])
 
-  // Simple key-based iframe reloading - just use refreshKey to force remount
-  const iframeKey = `${view.id}-${refreshKey || 0}`
+  // Simple key-based iframe reloading - use view-level refresh/proxy state to force remounts.
+  const iframeKey = `${view.id}-${view.useProxy ? 'proxy' : 'direct'}-${view.refreshKey || 0}-${refreshKey || 0}`
 
   // Sync local realIframeStatus with global view.iframeStatus
   useEffect(() => {
@@ -138,6 +138,25 @@ export default function WebsiteView ({
       setRealIframeStatus('loading')
     }
   }, [refreshKey])
+
+  useEffect(() => {
+    if (!view.useProxy || view.shouldLoad === false || realIframeStatus !== 'loading') {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setRealIframeStatus(currentStatus => {
+        if (currentStatus !== 'loading') {
+          return currentStatus
+        }
+
+        updateViewIframeStatus(view.id, 'loaded')
+        return 'loaded'
+      })
+    }, 3500)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [iframeKey, realIframeStatus, updateViewIframeStatus, view.id, view.shouldLoad, view.useProxy])
 
   // Calculate responsive scale for enlarge dialog
   useEffect(() => {
@@ -180,11 +199,10 @@ export default function WebsiteView ({
   const handleRetry = () => {
     updateViewIframeStatus(view.id, 'loading')
     setRealIframeStatus('loading')
-    // Trigger a refresh by updating the refresh key in parent
-    refreshView()
+    refreshViewport(view.id)
   }
 
-  const refreshView = () => {
+  const retryCurrentView = () => {
     handleRetry()
   }
 
@@ -254,11 +272,11 @@ export default function WebsiteView ({
   const getDeviceColorStyle = (deviceType: ViewType) => {
     switch (deviceType) {
       case 'desktop':
-        return { color: 'rgb(59 130 246)', backgroundColor: 'rgb(59 130 246 / 0.05)' } // blue
+        return { color: 'hsl(var(--info))', backgroundColor: 'hsl(var(--info-muted))' }
       case 'tablet':
-        return { color: 'rgb(34 197 94)', backgroundColor: 'rgb(34 197 94 / 0.05)' } // green
+        return { color: 'hsl(var(--success))', backgroundColor: 'hsl(var(--success-muted))' }
       case 'mobile':
-        return { color: 'rgb(168 85 247)', backgroundColor: 'rgb(168 85 247 / 0.05)' } // purple
+        return { color: 'hsl(var(--accent))', backgroundColor: 'hsl(var(--accent) / 0.1)' }
     }
   }
 
@@ -277,6 +295,7 @@ export default function WebsiteView ({
   const displayUrl = view.useProxy 
     ? `/api/proxy?url=${encodeURIComponent(view.url)}` 
     : view.url
+  const iframeSrc = view.shouldLoad === false ? undefined : displayUrl
 
   const optionsHeight = isCompactView ? 40 : 35 // Minimal height - just action buttons
   const borderWidth = 1
@@ -295,7 +314,7 @@ export default function WebsiteView ({
       }}
     >
       <div
-        className='flex items-center justify-between p-0 bg-muted/50 border-b border-border/40'
+        className='flex items-center justify-between p-0 glass border-b border-border/30'
         style={{
           height: `${optionsHeight}px`
         }}
@@ -369,7 +388,7 @@ export default function WebsiteView ({
                   </>
                 )}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={refreshView}>
+              <DropdownMenuItem onClick={retryCurrentView}>
                 <RefreshCw className='mr-2 h-4 w-4' />
                 <span>Refresh</span>
               </DropdownMenuItem>
@@ -442,7 +461,7 @@ export default function WebsiteView ({
       </div>
       <div
         ref={iframeContainerRef}
-        className='relative overflow-hidden bg-white shadow-inner'
+        className='relative overflow-hidden bg-card'
         style={{
           width: `${scaledWidth}px`,
           height: `${scaledHeight}px`,
@@ -452,7 +471,7 @@ export default function WebsiteView ({
         <iframe
           key={iframeKey}
           ref={iframeRef}
-          src={displayUrl}
+          src={iframeSrc}
           style={{
             width: `${actualDimensions[view.type].width}px`,
             height: `${actualDimensions[view.type].height}px`,
@@ -462,6 +481,11 @@ export default function WebsiteView ({
           }}
           title={`View ${view.id}`}
           onLoad={() => {
+            if (view.shouldLoad === false || view.iframeStatus === 'blocked') {
+              setRealIframeStatus('blocked')
+              return
+            }
+
             setRealIframeStatus('loaded')
             updateViewIframeStatus(view.id, 'loaded')
           }}
@@ -474,37 +498,37 @@ export default function WebsiteView ({
         
         {/* Loading/Error Overlay */}
         {realIframeStatus === 'loading' && (
-          <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-card flex items-center justify-center">
             <div className="text-center max-w-xs">
               <div className="mx-auto mb-4">
-                <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto"></div>
               </div>
-              <p className="text-sm text-gray-700 mb-2 font-medium">Loading Website</p>
-              <p className="text-xs text-gray-500">Please wait...</p>
+              <p className="text-sm text-foreground mb-2 font-medium">Loading Website</p>
+              <p className="text-xs text-muted-foreground">Please wait...</p>
             </div>
           </div>
         )}
         
         {realIframeStatus === 'blocked' && (
-          <div className="absolute inset-0 bg-amber-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-warning-muted flex items-center justify-center">
             <div className="text-center max-w-xs px-4">
-              <Shield className="h-8 w-8 text-amber-600 mx-auto mb-2" />
-              <p className="text-sm text-amber-700 mb-1 font-semibold">Embedding Restricted</p>
-              <p className="text-xs text-amber-600 mb-4">
+              <Shield className="h-8 w-8 text-warning mx-auto mb-2" />
+              <p className="text-sm text-foreground mb-1 font-semibold">Embedding Restricted</p>
+              <p className="text-xs text-muted-foreground mb-4">
                 This site blocks standard embedding. Use Proxy Mode to bypass this restriction.
               </p>
               <div className="space-y-2">
-                <Button 
+                <Button
                   size="sm"
                   onClick={() => toggleViewProxy(view.id)}
-                  className="bg-amber-600 hover:bg-amber-700 text-white w-full gap-2"
+                  className="bg-warning hover:bg-warning/90 text-white w-full gap-2"
                 >
                   <Shield className="h-3.5 w-3.5" />
                   Enable Proxy Mode
                 </Button>
-                <button 
+                <button
                   onClick={() => window.open(view.url, '_blank')}
-                  className="block mx-auto text-xs text-blue-700 hover:text-blue-900 underline"
+                  className="block mx-auto text-xs text-accent hover:text-accent/80 underline"
                 >
                   Open directly
                 </button>
@@ -514,23 +538,36 @@ export default function WebsiteView ({
         )}
         
         {realIframeStatus === 'error' && (
-          <div className="absolute inset-0 bg-red-50 flex items-center justify-center">
-            <div className="text-center max-w-xs">
-              <AlertCircle className="h-8 w-8 text-red-600 mx-auto mb-2" />
-              <p className="text-sm text-red-600 mb-1">Content Blocked</p>
-              <p className="text-xs text-red-500 mb-3">
-                Website refuses iframe embedding or connection failed
+          <div className="absolute inset-0 bg-destructive/5 flex items-center justify-center">
+            <div className="text-center max-w-xs px-4">
+              <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
+              <p className="text-sm text-destructive mb-1 font-semibold">Unable to Display</p>
+              <p className="text-xs text-muted-foreground mb-3">
+                {view.useProxy
+                  ? "The proxy couldn't load this content. The site may require authentication."
+                  : "This website blocks iframe embedding. Try enabling Proxy Mode."}
               </p>
               <div className="space-y-2">
-                <button 
-                  onClick={refreshView}
-                  className="block mx-auto text-xs text-red-700 hover:text-red-900 underline"
+                {!view.useProxy && (
+                  <Button
+                    size="sm"
+                    onClick={() => toggleViewProxy(view.id)}
+                    variant="outline"
+                    className="w-full gap-2"
+                  >
+                    <Shield className="h-3.5 w-3.5" />
+                    Try Proxy Mode
+                  </Button>
+                )}
+                <button
+                  onClick={retryCurrentView}
+                  className="block mx-auto text-xs text-muted-foreground hover:text-foreground underline"
                 >
                   Try again
                 </button>
-                <button 
+                <button
                   onClick={() => window.open(view.url, '_blank')}
-                  className="block mx-auto text-xs text-blue-700 hover:text-blue-900 underline"
+                  className="block mx-auto text-xs text-accent hover:text-accent/80 underline"
                 >
                   Open directly
                 </button>
@@ -543,8 +580,8 @@ export default function WebsiteView ({
       {/* Enlarge Dialog */}
       <Dialog open={isEnlargeDialogOpen} onOpenChange={setIsEnlargeDialogOpen}>
         <DialogContent className="max-w-[90vw] max-h-[90svh] p-0 bg-transparent border-0 shadow-none flex items-center justify-center">
-          <div 
-            className="relative rounded-xl overflow-hidden bg-white shadow-2xl border"
+          <div
+            className="relative rounded-xl overflow-hidden bg-card shadow-2xl border border-border"
             style={{
               width: `${(actualDimensions[view.type].width + 2) * enlargeDialogScale}px`,
               height: `${(actualDimensions[view.type].height + 50) * enlargeDialogScale}px`
@@ -568,10 +605,10 @@ export default function WebsiteView ({
                 </DialogClose>
               </div>
             </DialogHeader>
-            <div className="relative bg-white overflow-hidden">
+            <div className="relative bg-card overflow-hidden">
               <iframe
                 key={`dialog-${iframeKey}`}
-                src={displayUrl}
+                src={iframeSrc}
                 style={{
                   width: `${actualDimensions[view.type].width * enlargeDialogScale}px`,
                   height: `${actualDimensions[view.type].height * enlargeDialogScale}px`,

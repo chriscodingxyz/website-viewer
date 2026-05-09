@@ -95,6 +95,104 @@ const commonDevPorts = [
   '127.0.0.1:5173'
 ]
 
+const isLocalOrStagingUrl = (url: string): boolean => {
+  try {
+    const { hostname } = new URL(url)
+    return (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.includes('staging') ||
+      hostname.includes('dev') ||
+      hostname.includes('test') ||
+      hostname.endsWith('.local')
+    )
+  } catch {
+    return false
+  }
+}
+
+const blocksCurrentOrigin = (sourceList: string, targetUrl: string): boolean => {
+  const sources = sourceList
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+
+  if (sources.length === 0 || sources.includes('*')) {
+    return false
+  }
+
+  if (sources.includes("'none'")) {
+    return true
+  }
+
+  try {
+    const targetOrigin = new URL(targetUrl).origin.toLowerCase()
+    const currentOrigin =
+      typeof window !== 'undefined' ? window.location.origin.toLowerCase() : ''
+
+    if (sources.includes("'self'") && targetOrigin !== currentOrigin) {
+      return true
+    }
+
+    if (!currentOrigin) {
+      return false
+    }
+
+    return !sources.some(source => {
+      if (source === "'self'") {
+        return targetOrigin === currentOrigin
+      }
+
+      if (source.endsWith(':')) {
+        return currentOrigin.startsWith(source)
+      }
+
+      if (source.startsWith('*.')) {
+        const domain = source.slice(2)
+        const currentHostname = window.location.hostname.toLowerCase()
+        return currentHostname === domain || currentHostname.endsWith(`.${domain}`)
+      }
+
+      return source === currentOrigin
+    })
+  } catch {
+    return false
+  }
+}
+
+const hasIframeBlockingHeaders = (metadata: WebsiteMetadata): boolean => {
+  const xFrameOptions = metadata.headers?.xFrameOptions?.toLowerCase()
+  const csp = metadata.headers?.contentSecurityPolicy?.toLowerCase()
+
+  if (xFrameOptions?.includes('deny')) {
+    return true
+  }
+
+  if (xFrameOptions?.includes('sameorigin')) {
+    try {
+      const targetOrigin = new URL(metadata.url).origin
+      const currentOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+      if (targetOrigin !== currentOrigin) {
+        return true
+      }
+    } catch {
+      return true
+    }
+  }
+
+  const frameAncestors = csp
+    ?.split(';')
+    .map(directive => directive.trim())
+    .find(directive => directive.startsWith('frame-ancestors'))
+
+  if (frameAncestors) {
+    return blocksCurrentOrigin(frameAncestors.replace(/^frame-ancestors\s*/, ''), metadata.url)
+  }
+
+  return false
+}
+
 interface WebsiteViewerContextType {
   url: string
   setUrl: (url: string) => void
@@ -125,6 +223,7 @@ interface WebsiteViewerContextType {
   clearMetadata: () => void
   // Iframe preview functionality
   updateViewIframeStatus: (id: number, status: IframeStatus, result?: IframeDetectionResult) => void
+  refreshView: (id: number) => void
   // Navigation
   clearSite: () => void
   // Tab management
@@ -259,32 +358,31 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
   }, [])
 
-  // Use metadata API to determine iframe status and auto-switch tabs
+  // Use metadata API to choose the best viewport loading mode.
   useEffect(() => {
     if (metadata && views.length > 0) {
-      const xFrameOptions = metadata.headers?.xFrameOptions
-      const url = new URL(metadata.url)
+      const shouldProxy = hasIframeBlockingHeaders(metadata) && !isLocalOrStagingUrl(metadata.url)
 
-      // Allow iframes for local/staging environments (likely user's own sites)
-      const isLocalOrStaging =
-        url.hostname === 'localhost' ||
-        url.hostname === '127.0.0.1' ||
-        url.hostname.includes('staging') ||
-        url.hostname.includes('dev') ||
-        url.hostname.includes('test') ||
-        url.hostname.endsWith('.local')
-
-      // If X-Frame-Options blocks iframe embedding and it's not a local/staging site
-      if ((xFrameOptions === 'DENY' || xFrameOptions === 'SAMEORIGIN') && !isLocalOrStaging) {
+      if (shouldProxy) {
         setViews(prevViews =>
-          prevViews.map(view => ({
-            ...view,
-            iframeStatus: 'blocked' as IframeStatus,
-            shouldLoad: false
-          }))
+          prevViews.map(view => {
+            if (view.useProxy) {
+              return {
+                ...view,
+                shouldLoad: true
+              }
+            }
+
+            return {
+              ...view,
+              useProxy: true,
+              refreshKey: (view.refreshKey || 0) + 1,
+              iframeStatus: 'loading' as IframeStatus,
+              shouldLoad: true
+            }
+          })
         )
       } else {
-        // No blocking headers or local/staging site, allow iframes to load
         setViews(prevViews =>
           prevViews.map(view => ({
             ...view,
@@ -335,6 +433,8 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
 
   const loadSiteInternal = async (formattedUrl: string, initialMetadata?: WebsiteMetadata | null) => {
+    const useProxy = iframeDetectionService.shouldUseProxyByDefault(formattedUrl)
+
     // Create 3 viewports for comprehensive device testing
     const newViews = [
       {
@@ -342,21 +442,24 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
         url: formattedUrl,
         type: 'desktop' as ViewType,
         iframeStatus: 'loading' as IframeStatus,
-        shouldLoad: true
+        shouldLoad: true,
+        useProxy
       },
       {
         id: nextId + 1,
         url: formattedUrl,
         type: 'tablet' as ViewType,
         iframeStatus: 'loading' as IframeStatus,
-        shouldLoad: true
+        shouldLoad: true,
+        useProxy
       },
       {
         id: nextId + 2,
         url: formattedUrl,
         type: 'mobile' as ViewType,
         iframeStatus: 'loading' as IframeStatus,
-        shouldLoad: true
+        shouldLoad: true,
+        useProxy
       }
     ]
 
@@ -452,7 +555,19 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     )
   }
 
-  // Removed broken detection logic
+  const refreshView = (id: number) => {
+    setViews(prevViews =>
+      prevViews.map(view =>
+        view.id === id
+          ? {
+              ...view,
+              refreshKey: (view.refreshKey || 0) + 1,
+              iframeStatus: 'loading' as IframeStatus
+            }
+          : view
+      )
+    )
+  }
 
   const clearSite = () => {
     setViews([])
@@ -758,6 +873,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     fetchMetadata,
     clearMetadata,
     updateViewIframeStatus,
+    refreshView,
     clearSite,
     selectedTab,
     setSelectedTab,
@@ -812,6 +928,7 @@ const defaultContextValue: WebsiteViewerContextType = {
   fetchMetadata: async () => {},
   clearMetadata: () => {},
   updateViewIframeStatus: () => {},
+  refreshView: () => {},
   clearSite: () => {},
   selectedTab: 'seo',
   setSelectedTab: () => {},

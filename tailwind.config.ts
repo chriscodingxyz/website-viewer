@@ -74,6 +74,18 @@ const config: Config = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
+  			},
+  			success: {
+  				DEFAULT: 'hsl(var(--success))',
+  				muted: 'hsl(var(--success-muted))'
+  			},
+  			warning: {
+  				DEFAULT: 'hsl(var(--warning))',
+  				muted: 'hsl(var(--warning-muted))'
+  			},
+  			info: {
+  				DEFAULT: 'hsl(var(--info))',
+  				muted: 'hsl(var(--info-muted))'
   			}
   		},
   		keyframes: {
@@ -96,7 +108,10 @@ const config: Config = {
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'slide-up': 'slideUp 0.3s ease-out',
+  			'scale-in': 'scaleIn 0.2s ease-out',
+  			'subtle-pulse': 'subtlePulse 3s ease-in-out infinite'
   		}
   	}
   },

@@ -86,6 +86,14 @@
     --sidebar-accent-foreground: 0 0% 12%;
     --sidebar-border: 30 20% 91%;
     --sidebar-ring: 14 85% 55%;
+
+    /* Status colors */
+    --success: 142 71% 45%;
+    --success-muted: 142 71% 95%;
+    --warning: 38 92% 50%;
+    --warning-muted: 38 92% 95%;
+    --info: 217 91% 60%;
+    --info-muted: 217 91% 95%;
   }
   .dark {
     --background: 20 15% 10%; /* #1a1410 - Warm dark */
@@ -124,6 +132,14 @@
     --sidebar-accent-foreground: 30 15% 90%;
     --sidebar-border: 20 15% 26%;
     --sidebar-ring: 14 85% 60%;
+
+    /* Status colors - dark mode */
+    --success: 142 71% 55%;
+    --success-muted: 142 30% 20%;
+    --warning: 38 92% 55%;
+    --warning-muted: 38 40% 20%;
+    --info: 217 91% 65%;
+    --info-muted: 217 40% 20%;
   }
 }
 
@@ -202,10 +218,68 @@ html {
 }
 
 .pro-badge-error {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border bg-red-50 text-red-700 border-red-200;
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border;
+  background-color: hsl(var(--destructive) / 0.1);
+  color: hsl(var(--destructive));
+  border-color: hsl(var(--destructive) / 0.3);
 }
 
 .pro-badge-info {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border bg-blue-50 text-blue-700 border-blue-200;
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border;
+  background-color: hsl(var(--info-muted));
+  color: hsl(var(--info));
+  border-color: hsl(var(--info) / 0.3);
 }
+
+/* Micro-interaction utilities */
+.hover-lift {
+  @apply transition-all duration-200;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.12);
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.dark .glass {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Staggered animations */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes subtlePulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+.animate-stagger > * {
+  animation: slideUp 0.4s ease-out backwards;
+}
+.animate-stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.animate-stagger > *:nth-child(2) { animation-delay: 0.04s; }
+.animate-stagger > *:nth-child(3) { animation-delay: 0.06s; }
+.animate-stagger > *:nth-child(4) { animation-delay: 0.08s; }
+.animate-stagger > *:nth-child(5) { animation-delay: 0.10s; }
+.animate-stagger > *:nth-child(6) { animation-delay: 0.12s; }
 

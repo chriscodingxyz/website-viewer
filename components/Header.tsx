@@ -109,18 +109,35 @@ function Header () {
     }
   }
 
-  // Add keyboard shortcut handler (Command+K or Ctrl+K)
+  // Add keyboard shortcut handler (Command+K or Ctrl+K, and number keys for tabs)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in an input
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      // Command+K or Ctrl+K to toggle search
       if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
         event.preventDefault()
         setOpen(prev => !prev)
+        return
+      }
+
+      // Number keys 1-4 to switch tabs (when viewing a site)
+      if (currentSite && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        const num = parseInt(event.key)
+        if (num >= 1 && num <= tabs.length) {
+          event.preventDefault()
+          handleTabClick(tabs[num - 1].id)
+        }
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSite, tabs, selectedTab])
 
   // Function to handle selection from combobox
   const onSelect = (selectedValue: string) => {
@@ -269,21 +286,29 @@ function Header () {
             <>
               {/* Desktop Tabs - Hide on smaller screens when needed */}
               <div className='hidden xl:flex items-center gap-1 bg-muted/50 p-0.5 rounded-lg'>
-                {tabs.map(tab => {
+                {tabs.map((tab, index) => {
                   const Icon = tab.icon
+                  const isSelected = selectedTab === tab.id
                   return (
                     <button
                       key={tab.id}
                       className={cn(
-                        'h-7 px-2.5 text-xs font-medium flex items-center gap-1.5 rounded-md transition-all',
-                        selectedTab === tab.id
+                        'h-7 px-3 text-xs font-medium flex items-center gap-2 rounded-md transition-all duration-200 group',
+                        isSelected
                           ? 'bg-background text-foreground shadow-sm'
                           : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                       )}
                       onClick={() => handleTabClick(tab.id)}
+                      title={`${tab.label} (Press ${index + 1})`}
                     >
-                      <Icon className='h-3.5 w-3.5' weight={selectedTab === tab.id ? 'fill' : 'regular'} />
+                      <Icon className='h-3.5 w-3.5' weight={isSelected ? 'fill' : 'regular'} />
                       {tab.label}
+                      <span className={cn(
+                        'text-[10px] opacity-0 group-hover:opacity-50 transition-opacity duration-200 -ml-0.5',
+                        isSelected && 'opacity-30'
+                      )}>
+                        {index + 1}
+                      </span>
                     </button>
                   )
                 })}
@@ -293,29 +318,37 @@ function Header () {
               <div className='xl:hidden'>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant='outline' size='sm' className='h-8 gap-1 sm:gap-1.5 text-xs px-2 sm:px-3'>
+                    <Button variant='outline' size='sm' className='h-9 gap-1.5 text-xs px-3'>
                       {(() => {
                         const currentTab = tabs.find(t => t.id === selectedTab)
                         const CurrentIcon = currentTab?.icon
-                        return CurrentIcon ? <CurrentIcon className='h-3.5 w-3.5' weight='fill' /> : null
+                        return CurrentIcon ? <CurrentIcon className='h-4 w-4' weight='fill' /> : null
                       })()}
-                      <ChevronDown className='h-3 w-3 sm:h-3.5 sm:w-3.5' />
+                      <ChevronDown className='h-3.5 w-3.5' />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end' className='text-xs'>
-                    {tabs.map(tab => {
+                  <DropdownMenuContent align='end' className='w-48'>
+                    <div className='px-2 py-1.5 text-xs font-medium text-muted-foreground'>
+                      Switch View
+                    </div>
+                    {tabs.map((tab, index) => {
                       const Icon = tab.icon
+                      const isSelected = selectedTab === tab.id
                       return (
                         <DropdownMenuItem
                           key={tab.id}
                           onClick={() => handleTabClick(tab.id)}
                           className={cn(
-                            'cursor-pointer gap-2 text-xs',
-                            selectedTab === tab.id && 'bg-accent'
+                            'cursor-pointer gap-3 py-2.5',
+                            isSelected && 'bg-accent/10'
                           )}
                         >
-                          <Icon className='h-3.5 w-3.5' weight={selectedTab === tab.id ? 'fill' : 'regular'} />
-                          <span>{tab.label}</span>
+                          <Icon className='h-4 w-4' weight={isSelected ? 'fill' : 'regular'} />
+                          <span className='flex-1'>{tab.label}</span>
+                          <span className='text-[10px] text-muted-foreground'>{index + 1}</span>
+                          {isSelected && (
+                            <div className='w-1.5 h-1.5 rounded-full bg-accent' />
+                          )}
                         </DropdownMenuItem>
                       )
                     })}

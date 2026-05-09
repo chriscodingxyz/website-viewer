@@ -39,14 +39,15 @@ export default function SectionContainer () {
 
   return (
     <div className='w-full'>
-      {/* Tab Content - Keep all tabs mounted but show/hide with absolute positioning to avoid display:none issues */}
+      {/* Tab Content - Smooth transitions between tabs */}
       <div className='w-full relative'>
         <div
-          className={
+          className={cn(
+            'transition-all duration-300 ease-out',
             selectedTab === 'viewports'
-              ? 'block'
-              : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'
-          }
+              ? 'opacity-100 translate-y-0 relative'
+              : 'opacity-0 translate-y-2 absolute top-0 left-0 w-full pointer-events-none overflow-hidden'
+          )}
           style={selectedTab !== 'viewports' ? { height: '1px' } : {}}
         >
           <ViewportsSection expanded={true} onToggle={() => {}} />
@@ -54,11 +55,12 @@ export default function SectionContainer () {
 
         {/* SEO, Social, Technical - With Logo Layout */}
         <div
-          className={
+          className={cn(
+            'transition-all duration-300 ease-out',
             selectedTab === 'seo'
-              ? 'block'
-              : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'
-          }
+              ? 'opacity-100 translate-y-0 relative'
+              : 'opacity-0 translate-y-2 absolute top-0 left-0 w-full pointer-events-none overflow-hidden'
+          )}
           style={selectedTab !== 'seo' ? { height: '1px' } : {}}
         >
           <div className='max-w-[1600px] mx-auto px-4 lg:px-8 py-6'>
@@ -104,11 +106,12 @@ export default function SectionContainer () {
         </div>
 
         <div
-          className={
+          className={cn(
+            'transition-all duration-300 ease-out',
             selectedTab === 'social'
-              ? 'block'
-              : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'
-          }
+              ? 'opacity-100 translate-y-0 relative'
+              : 'opacity-0 translate-y-2 absolute top-0 left-0 w-full pointer-events-none overflow-hidden'
+          )}
           style={selectedTab !== 'social' ? { height: '1px' } : {}}
         >
           <div className='max-w-[1600px] mx-auto px-4 lg:px-8 py-6'>
@@ -154,11 +157,12 @@ export default function SectionContainer () {
         </div>
 
         <div
-          className={
+          className={cn(
+            'transition-all duration-300 ease-out',
             selectedTab === 'technical'
-              ? 'block'
-              : 'absolute top-0 left-0 w-full opacity-0 pointer-events-none overflow-hidden'
-          }
+              ? 'opacity-100 translate-y-0 relative'
+              : 'opacity-0 translate-y-2 absolute top-0 left-0 w-full pointer-events-none overflow-hidden'
+          )}
           style={selectedTab !== 'technical' ? { height: '1px' } : {}}
         >
           <div className='max-w-[1600px] mx-auto px-4 lg:px-8 py-6'>

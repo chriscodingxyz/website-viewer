@@ -14,26 +14,70 @@ export async function GET (request: NextRequest) {
   }
 
   try {
-    const url = new URL(targetUrl)
-    const origin = url.origin
-    const baseUrl = `${url.protocol}//${url.host}${url.pathname.substring(0, url.pathname.lastIndexOf('/') + 1)}`
+    const streamableMediaPattern = /\.(mp4|webm|mov|m4v|ogv|mp3|wav|ogg|m4a|aac)(?:$|[?#])/i
+    const requestHeaders: Record<string, string> = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': '*/*',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+    }
+
+    const rangeHeader = request.headers.get('range')
+    if (rangeHeader) {
+      requestHeaders.Range = rangeHeader
+    }
+
+    if (streamableMediaPattern.test(targetUrl)) {
+      const upstreamResponse = await fetch(targetUrl, {
+        headers: requestHeaders,
+        redirect: 'follow'
+      })
+
+      const headers: Record<string, string> = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges',
+        'Cross-Origin-Resource-Policy': 'cross-origin',
+        'X-Frame-Options': 'ALLOWALL',
+        'Content-Security-Policy': 'frame-ancestors *'
+      }
+
+      const passthroughHeaders = [
+        'accept-ranges',
+        'cache-control',
+        'content-length',
+        'content-range',
+        'content-type',
+        'etag',
+        'last-modified'
+      ]
+
+      passthroughHeaders.forEach(header => {
+        const value = upstreamResponse.headers.get(header)
+        if (value) {
+          headers[header] = value
+        }
+      })
+
+      return new NextResponse(upstreamResponse.body, {
+        status: upstreamResponse.status,
+        headers
+      })
+    }
 
     // Fetch the target content
     const response = await axios.get(targetUrl, {
       timeout: 15000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': '*/*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      },
+      headers: requestHeaders,
       maxRedirects: 10,
       // Handle SSL certs gracefully for dev environments
       httpsAgent: new (require('https').Agent)({
         rejectUnauthorized: false
       }),
-      responseType: 'arraybuffer' // Handle binary data
+      responseType: 'arraybuffer', // Handle binary data
+      validateStatus: status => status >= 200 && status < 400
     })
 
     const contentType = response.headers['content-type'] || 'text/html'
@@ -42,7 +86,7 @@ export async function GET (request: NextRequest) {
     // Helper to rewrite URLs to point back to this proxy
     const getProxiedUrl = (original: string, contextUrl: string) => {
       if (!original || typeof original !== 'string') return original
-      const trimmed = original.trim()
+      const trimmed = original.trim().replace(/&amp;/g, '&')
       
       if (trimmed === '' || 
           trimmed.startsWith('data:') || 
@@ -99,6 +143,48 @@ export async function GET (request: NextRequest) {
       return rewritten
     }
 
+    const rewriteJavaScriptUrls = (js: string, contextUrl: string) => {
+      if (!js || typeof js !== 'string') return js
+
+      const rootPathPattern = /(["'`])(\/(?:_next|api|images|videos|fonts|assets|static|media|favicon\.ico|robots\.txt|sitemap(?:_index)?\.xml|sitemaps?\.xml)[^"'`\\]*)\1/g
+      const escapedRootPathPattern = /\\(["'`])(\/(?:_next|api|images|videos|fonts|assets|static|media|favicon\.ico|robots\.txt|sitemap(?:_index)?\.xml|sitemaps?\.xml)[^"'`\\]*)\\\1/g
+
+      return js
+        .replace(rootPathPattern, (_match, quote, path) => {
+          return `${quote}${getProxiedUrl(path, contextUrl)}${quote}`
+        })
+        .replace(escapedRootPathPattern, (_match, quote, path) => {
+          return `\\${quote}${getProxiedUrl(path, contextUrl)}\\${quote}`
+        })
+    }
+
+    const getPassthroughHeaders = (
+      overrides: Record<string, string> = {},
+      options: { includeEntityHeaders?: boolean } = {}
+    ) => {
+      const includeEntityHeaders = options.includeEntityHeaders ?? true
+      const headers: Record<string, string> = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges',
+        'Cross-Origin-Resource-Policy': 'cross-origin',
+        ...overrides
+      }
+
+      const contentLength = response.headers['content-length']
+      const contentRange = response.headers['content-range']
+      const acceptRanges = response.headers['accept-ranges']
+
+      if (includeEntityHeaders) {
+        if (contentLength) headers['Content-Length'] = String(contentLength)
+        if (contentRange) headers['Content-Range'] = String(contentRange)
+        if (acceptRanges) headers['Accept-Ranges'] = String(acceptRanges)
+      }
+
+      return headers
+    }
+
     // 1. Handle HTML
     if (contentType.includes('text/html')) {
       const originalHtml = buffer.toString('utf-8')
@@ -113,6 +199,13 @@ export async function GET (request: NextRequest) {
       $('style').each((_, el) => {
         const css = $(el).text()
         $(el).text(rewriteCssUrls(css, targetUrl))
+      })
+
+      $('script:not([src])').each((_, el) => {
+        const script = $(el).html()
+        if (script) {
+          $(el).html(rewriteJavaScriptUrls(script, targetUrl))
+        }
       })
 
       // Framebusting protection
@@ -163,20 +256,18 @@ export async function GET (request: NextRequest) {
 
       return new NextResponse(processedHtml, {
         status: 200,
-        headers: {
+        headers: getPassthroughHeaders({
           'Content-Type': 'text/html; charset=utf-8',
-          'Access-Control-Allow-Origin': '*',
           'X-Frame-Options': 'ALLOWALL',
           'Content-Security-Policy': "frame-ancestors *",
-          'Access-Control-Allow-Headers': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        }
+        }, { includeEntityHeaders: false })
       })
     }
 
     // 2. Handle JavaScript
-    if (contentType.includes('application/javascript') || contentType.includes('text/javascript')) {
+    if (contentType.includes('application/javascript') || contentType.includes('text/javascript') || contentType.includes('application/x-javascript')) {
       let js = buffer.toString('utf-8')
+      js = rewriteJavaScriptUrls(js, targetUrl)
       js = js.replace(/\bwindow\.top\b/g, 'window.self')
       js = js.replace(/\bwindow\.parent\b/g, 'window.self')
       js = js.replace(/\btop\.location\b/g, 'self.location')
@@ -184,10 +275,9 @@ export async function GET (request: NextRequest) {
       
       return new NextResponse(js, {
         status: 200,
-        headers: {
+        headers: getPassthroughHeaders({
           'Content-Type': contentType,
-          'Access-Control-Allow-Origin': '*',
-        }
+        }, { includeEntityHeaders: false })
       })
     }
 
@@ -196,21 +286,19 @@ export async function GET (request: NextRequest) {
       const css = buffer.toString('utf-8')
       return new NextResponse(rewriteCssUrls(css, targetUrl), {
         status: 200,
-        headers: {
+        headers: getPassthroughHeaders({
           'Content-Type': 'text/css',
-          'Access-Control-Allow-Origin': '*',
-        }
+        }, { includeEntityHeaders: false })
       })
     }
 
     // 3. Handle everything else (images, fonts, scripts, etc.)
     return new NextResponse(buffer, {
-      status: 200,
-      headers: {
+      status: response.status,
+      headers: getPassthroughHeaders({
         'Content-Type': contentType,
-        'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'public, max-age=3600',
-      }
+      })
     })
 
   } catch (error: any) {

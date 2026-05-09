@@ -33,10 +33,10 @@ export default function SiteCard({
   const cleanUrl = url.replace(/^https?:\/\//, '').replace(/\/$/, '')
 
   return (
-    <div className="bg-white rounded-lg p-3 border border-border/60 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between h-full group">
+    <div className="bg-card rounded-xl p-4 border border-border shadow-sm hover-lift flex flex-col justify-between h-full group cursor-pointer" onClick={onView}>
       <div className="flex items-start gap-3 mb-3">
         {/* Icon / Logo */}
-        <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <div className="w-10 h-10 rounded-full bg-muted/50 border border-border/50 flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:bg-muted transition-colors duration-200">
           <Image
             src={getFavicon(url)}
             alt={cleanUrl}
@@ -49,7 +49,7 @@ export default function SiteCard({
               ;(e.target as HTMLImageElement).style.display = 'none'
             }}
           />
-          <Globe02Icon className="w-6 h-6 text-gray-400 absolute opacity-0" style={{ opacity: 0 }} />
+          <Globe02Icon className="w-6 h-6 text-muted-foreground absolute opacity-0" style={{ opacity: 0 }} />
           {/* We could show Globe if image fails, but simple favicon is usually reliable-ish */}
         </div>
 
@@ -63,20 +63,11 @@ export default function SiteCard({
         </div>
       </div>
 
-      <div className="mt-auto">
-        <div className="flex gap-1.5">
+      <div className="mt-auto pt-3 border-t border-border/50">
+        <div className="flex gap-2">
           <Button
-            onClick={onView}
-            variant="outline"
-            className="flex-1 bg-white hover:bg-gray-50 text-foreground hover:text-foreground border-gray-200 hover:border-gray-300"
-            size="sm"
-          >
-            View
-          </Button>
-          <Button
-            onClick={onView}
-            className="flex-1 bg-gray-50 hover:bg-gray-100 text-foreground hover:text-foreground border border-gray-200 hover:border-gray-300"
-            variant="ghost"
+            onClick={(e) => { e.stopPropagation(); onView(); }}
+            className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
             size="sm"
           >
             Analyze
@@ -87,11 +78,11 @@ export default function SiteCard({
                 e.stopPropagation()
                 onRemove()
               }}
-              variant="outline"
-              size="sm"
-              className="px-2 border-gray-200 text-foreground hover:text-red-600 hover:border-red-200 hover:bg-red-50"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             >
-              <Delete02Icon className="w-3.5 h-3.5" />
+              <Delete02Icon className="w-4 h-4" />
             </Button>
           )}
         </div>

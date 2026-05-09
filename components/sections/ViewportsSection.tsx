@@ -61,6 +61,7 @@ export default function ViewportsSection ({
   const faviconUrl = currentSite
     ? getBestFavicon(currentSite, metadata)
     : '/seoseal.png'
+  const faviconSize = currentSite ? 56 : 96
 
   const getStatus = () => {
     if (!currentSite)
@@ -159,10 +160,11 @@ export default function ViewportsSection ({
               <Image
                 src={faviconError ? '/seoseal.png' : faviconUrl}
                 alt={currentSite ? `${currentSite} favicon` : 'Website Viewer Logo'}
-                width={96}
-                height={96}
+                width={faviconSize}
+                height={faviconSize}
                 className={cn(
-                  'w-24 h-24 object-contain transition-opacity duration-300',
+                  'object-contain transition-opacity duration-300',
+                  currentSite ? 'w-14 h-14' : 'w-24 h-24',
                   faviconLoaded ? 'opacity-100' : 'opacity-0'
                 )}
                 onLoad={() => setFaviconLoaded(true)}
@@ -176,7 +178,12 @@ export default function ViewportsSection ({
               {/* Loading skeleton */}
               {!faviconLoaded && (
                 <div className='absolute flex items-center justify-center'>
-                  <div className='w-24 h-24 bg-muted/50 rounded-lg animate-pulse' />
+                  <div
+                    className={cn(
+                      'bg-muted/50 rounded-lg animate-pulse',
+                      currentSite ? 'w-14 h-14' : 'w-24 h-24'
+                    )}
+                  />
                 </div>
               )}
             </div>
@@ -231,32 +238,51 @@ export default function ViewportsSection ({
               </EmptyHeader>
             </Empty>
           ) : metadataLoading && views.length > 0 ? (
-            // Show single loading state while checking X-Frame-Options
+            // Unified loading experience
             <div className='w-full'>
               <div className='flex justify-center items-center py-16'>
                 <div className='text-center max-w-md'>
-                  {/* Clean spinner */}
-                  <div className='mx-auto mb-8'>
-                    <Spinner className='w-12 h-12' />
+                  {/* Progress ring */}
+                  <div className='relative mx-auto mb-8 w-16 h-16'>
+                    <div className='absolute inset-0 rounded-full border-2 border-muted' />
+                    <svg className='absolute inset-0 w-16 h-16 -rotate-90'>
+                      <circle
+                        cx='32'
+                        cy='32'
+                        r='30'
+                        fill='none'
+                        stroke='hsl(var(--accent))'
+                        strokeWidth='2'
+                        strokeDasharray='188'
+                        strokeDashoffset='94'
+                        className='transition-all duration-500'
+                      />
+                    </svg>
+                    <div className='absolute inset-0 flex items-center justify-center'>
+                      <Monitor className='w-6 h-6 text-accent animate-pulse' />
+                    </div>
                   </div>
 
-                  <h3 className='text-base font-semibold mb-6 text-foreground'>
+                  <h3 className='text-lg font-semibold mb-2 text-foreground'>
                     Analyzing Website
                   </h3>
+                  <p className='text-sm text-muted-foreground mb-6'>
+                    {currentSite ? new URL(currentSite).hostname : 'Loading...'}
+                  </p>
 
-                  {/* Clean animated list */}
-                  <div className='space-y-3 text-sm text-muted-foreground'>
-                    <div className='flex items-center justify-center gap-3 opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.1s_forwards]'>
-                      <div className='w-1 h-1 rounded-full bg-foreground'></div>
-                      <span>Extracting metadata & SEO data</span>
+                  {/* Step checklist */}
+                  <div className='space-y-2 text-left max-w-xs mx-auto'>
+                    <div className='flex items-center gap-3 text-sm text-foreground opacity-0 animate-[fadeIn_0.3s_ease-out_0.1s_forwards]'>
+                      <CheckCircle className='w-4 h-4 text-success flex-shrink-0' />
+                      <span>Fetching page content</span>
                     </div>
-                    <div className='flex items-center justify-center gap-3 opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.3s_forwards]'>
-                      <div className='w-1 h-1 rounded-full bg-foreground'></div>
-                      <span>Analyzing social media previews</span>
+                    <div className='flex items-center gap-3 text-sm text-foreground opacity-0 animate-[fadeIn_0.3s_ease-out_0.2s_forwards]'>
+                      <div className='w-4 h-4 rounded-full border-2 border-accent border-t-transparent animate-spin flex-shrink-0' />
+                      <span>Extracting metadata</span>
                     </div>
-                    <div className='flex items-center justify-center gap-3 opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.5s_forwards]'>
-                      <div className='w-1 h-1 rounded-full bg-foreground'></div>
-                      <span>Checking technical information</span>
+                    <div className='flex items-center gap-3 text-sm text-muted-foreground opacity-50 opacity-0 animate-[fadeIn_0.3s_ease-out_0.3s_forwards]'>
+                      <div className='w-4 h-4 rounded-full border border-muted flex-shrink-0' />
+                      <span>Analyzing SEO & social tags</span>
                     </div>
                   </div>
                 </div>
@@ -264,8 +290,43 @@ export default function ViewportsSection ({
             </div>
           ) : (
             <div className='w-full'>
-              {/* All Viewports - Display simultaneously */}
-              <div className='flex flex-wrap gap-4 justify-center items-start'>
+              {/* Mobile: Horizontal scroll carousel */}
+              <div className='sm:hidden'>
+                <div className='overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-6 px-6 pb-4'>
+                  <div className='flex gap-4 w-max'>
+                    {views.map((view: any, index: number) => (
+                      <div key={view.id} className='snap-center flex-shrink-0 w-[85vw]'>
+                        <WebsiteView
+                          view={view}
+                          refreshKey={refreshKey}
+                          globalZoom={globalZoom}
+                          onRemove={() => removeView(view.id)}
+                          onTypeChange={type => changeViewType(view.id, type)}
+                          onDuplicate={duplicateView}
+                          index={index}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Dot indicators */}
+                {views.length > 1 && (
+                  <div className='flex justify-center gap-2 mt-4'>
+                    {views.map((_: any, index: number) => (
+                      <div
+                        key={index}
+                        className={cn(
+                          'w-2 h-2 rounded-full transition-colors duration-200',
+                          index === 0 ? 'bg-accent' : 'bg-muted'
+                        )}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop: Flex wrap layout */}
+              <div className='hidden sm:flex flex-wrap gap-4 justify-center items-start'>
                 {views.map((view: any, index: number) => (
                   <WebsiteView
                     key={view.id}

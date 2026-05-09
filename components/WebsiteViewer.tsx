@@ -32,49 +32,50 @@ export default function WebsiteViewer () {
           <div className='container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 max-w-7xl'>
 
             {/* Hero Section */}
-            <div className="max-w-2xl mb-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/30 text-accent text-xs font-semibold mb-3">
-                <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
-                v2.0 Now Available
-              </div>
+            <div className="max-w-2xl mb-10 relative">
+              {/* Subtle animated background blobs */}
+              <div className="absolute -top-20 -left-20 w-72 h-72 bg-accent/5 rounded-full blur-3xl animate-subtle-pulse pointer-events-none" />
+              <div className="absolute -bottom-10 -right-10 w-56 h-56 bg-primary/5 rounded-full blur-3xl animate-subtle-pulse pointer-events-none" style={{ animationDelay: '1.5s' }} />
 
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-foreground mb-4 leading-[1.1]">
-                Ready to analyze <br/>
-                <span className="text-foreground relative">
-                    your next site?
-                    <svg className="absolute w-full h-3 -bottom-1 left-0 text-primary/20 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
-                       <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
-                    </svg>
-                </span>
-              </h1>
+              <div className="relative">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-foreground mb-4 leading-[1.1]">
+                  Ready to analyze <br/>
+                  <span className="text-foreground relative">
+                      your next site?
+                      <svg className="absolute w-full h-3 -bottom-1 left-0 text-accent/30 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
+                         <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
+                      </svg>
+                  </span>
+                </h1>
 
-              <p className="text-lg text-muted-foreground mb-6 max-w-lg leading-relaxed">
-                Preview across devices. Analyze SEO, metadata, and social previews. Built for developers who care about the details.
-              </p>
+                <p className="text-lg text-muted-foreground mb-6 max-w-lg leading-relaxed">
+                  Preview across devices. Analyze SEO, metadata, and social previews. Built for developers who care about the details.
+                </p>
 
-              {/* Search Bar */}
-              <div className="flex flex-col sm:flex-row gap-3 max-w-xl">
-                 <div className="relative flex-1 group z-40">
-                    <Search01Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-foreground transition-colors pointer-events-none" />
-                    <input
-                      type="text"
-                      placeholder="Enter website URL (e.g. apple.com)"
-                      className="w-full h-10 pl-12 pr-4 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-foreground/10 focus:border-foreground/30 transition-all shadow-sm text-foreground placeholder:text-muted-foreground"
-                      value={url}
-                      onChange={(e) => setUrl(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && loadSite()}
-                    />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden sm:block pointer-events-none">
-                       <Kbd className="bg-muted text-[10px] text-muted-foreground">↵</Kbd>
-                    </div>
-                 </div>
-                 <Button
-                    size="sm"
-                    className="h-10 px-6 font-semibold text-white bg-foreground hover:bg-foreground/85 shadow-md hover:shadow-lg transition-all duration-200"
-                    onClick={() => loadSite()}
-                 >
-                    Explore now
-                 </Button>
+                {/* Search Bar */}
+                <div className="flex flex-col sm:flex-row gap-3 max-w-xl">
+                   <div className="relative flex-1 group z-40">
+                      <Search01Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-accent transition-colors duration-200 pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder="Enter website URL (e.g. apple.com)"
+                        className="w-full h-12 pl-12 pr-4 rounded-xl border border-border bg-card/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/40 transition-all duration-200 shadow-sm hover:shadow-md text-foreground placeholder:text-muted-foreground text-base"
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && loadSite()}
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden sm:block pointer-events-none">
+                         <Kbd className="bg-muted text-[10px] text-muted-foreground">↵</Kbd>
+                      </div>
+                   </div>
+                   <Button
+                      size="sm"
+                      className="h-12 px-6 font-semibold text-primary-foreground bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-200"
+                      onClick={() => loadSite()}
+                   >
+                      Explore now
+                   </Button>
+                </div>
               </div>
             </div>
 
@@ -98,7 +99,7 @@ export default function WebsiteViewer () {
                      <p className="text-xs text-muted-foreground">URL searches will appear here for quick access.</p>
                   </div>
                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger">
                      {recentSites.map((siteUrl, index) => (
                         <SiteCard
                            key={`${siteUrl}-${index}`}
