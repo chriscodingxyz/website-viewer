@@ -16,6 +16,8 @@ import {
   Smartphone,
   TrendingUp
 } from 'lucide-react'
+import MetadataErrorCard from './MetadataErrorCard'
+import { getSEOScore } from '@/lib/scoring'
 
 interface SEOSectionProps {
   metadata?: WebsiteMetadata | null
@@ -24,23 +26,8 @@ interface SEOSectionProps {
 }
 
 export default function SEOSection ({ metadata, loading, error }: SEOSectionProps) {
-  // Show error state first
   if (error) {
-    return (
-      <div className='w-full min-h-[400px] flex items-center justify-center'>
-        <div className='text-center max-w-md'>
-          <div className='mx-auto mb-4 w-16 h-16 rounded-full bg-red-100 dark:bg-red-950/20 flex items-center justify-center'>
-            <AlertTriangle className='h-8 w-8 text-red-600 dark:text-red-400' />
-          </div>
-          <h3 className='text-base font-semibold mb-2 text-foreground'>
-            Failed to Load SEO Data
-          </h3>
-          <p className='text-sm text-muted-foreground mb-4'>
-            {error}
-          </p>
-        </div>
-      </div>
-    )
+    return <MetadataErrorCard sectionName='SEO' error={error} />
   }
 
   // Show loading state
@@ -83,19 +70,7 @@ export default function SEOSection ({ metadata, loading, error }: SEOSectionProp
   }
 
   const { seo, sitemap, icons, analytics } = metadata
-
-  const getSEOScore = () => {
-    let score = 0
-    const maxScore = 5
-    if (seo.title && seo.title.length >= 30 && seo.title.length <= 60) score += 1
-    if (seo.description && seo.description.length >= 120 && seo.description.length <= 160) score += 1
-    if (seo.canonical) score += 1
-    if (seo.language) score += 1
-    if (seo.viewport) score += 1
-    return { score, maxScore, percentage: Math.round((score / maxScore) * 100) }
-  }
-
-  const seoScore = getSEOScore()
+  const seoScore = getSEOScore(metadata)
 
   // Elegant card-based status indicator - inspired by reference design
   const StatusIndicator = ({ status, label, value, details }: {

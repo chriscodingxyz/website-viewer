@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useRe
 import { toast } from 'sonner'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { useHistory } from '@/contexts/HistoryContext'
-import { WebsiteMetadata } from '@/types/metadata'
+import { WebsiteMetadata, MetadataErrorCode } from '@/types/metadata'
 import { IframeStatus, IframeDetectionResult, iframeDetectionService } from '@/services/IframeDetectionService'
 
 
@@ -219,7 +219,9 @@ interface WebsiteViewerContextType {
   metadata: WebsiteMetadata | null
   metadataLoading: boolean
   metadataError: string | null
+  metadataErrorCode: MetadataErrorCode | null
   fetchMetadata: (url?: string) => Promise<void>
+  retryMetadata: () => Promise<void>
   clearMetadata: () => void
   // Iframe preview functionality
   updateViewIframeStatus: (id: number, status: IframeStatus, result?: IframeDetectionResult) => void
@@ -288,6 +290,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   const [metadata, setMetadata] = useState<WebsiteMetadata | null>(null)
   const [metadataLoading, setMetadataLoading] = useState(false)
   const [metadataError, setMetadataError] = useState<string | null>(null)
+  const [metadataErrorCode, setMetadataErrorCode] = useState<MetadataErrorCode | null>(null)
   const [isInitialLoad, setIsInitialLoad] = useState(false)
 
 
@@ -433,6 +436,11 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
 
   const loadSiteInternal = async (formattedUrl: string, initialMetadata?: WebsiteMetadata | null) => {
+    // Clear any stale metadata/error state from previous site before starting new fetch
+    setMetadata(null)
+    setMetadataError(null)
+    setMetadataErrorCode(null)
+
     const useProxy = iframeDetectionService.shouldUseProxyByDefault(formattedUrl)
 
     // Create 3 viewports for comprehensive device testing
@@ -649,6 +657,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
     setMetadataLoading(true)
     setMetadataError(null)
+    setMetadataErrorCode(null)
 
     // Check if this is a localhost URL when running in production
     const isLocalhost = targetUrl.includes('localhost') || targetUrl.includes('127.0.0.1')
@@ -819,18 +828,19 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
       if (data.success && data.data) {
         setMetadata(data.data)
       } else {
-        // Check if this is a 401 authentication error
         if (data.status === 401 && !username && !password) {
           setAuthDialogUrl(targetUrl)
           setShowAuthDialog(true)
           return
         }
         setMetadataError(data.error || 'Failed to extract metadata')
+        setMetadataErrorCode(data.errorCode || 'unknown')
         setMetadata(null)
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       setMetadataError(errorMessage)
+      setMetadataErrorCode('fetch_failed')
       setMetadata(null)
     } finally {
       setMetadataLoading(false)
@@ -838,9 +848,17 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     }
   }
 
+  const retryMetadata = async () => {
+    if (!currentSite) return
+    setMetadataError(null)
+    setMetadataErrorCode(null)
+    await fetchMetadata(currentSite)
+  }
+
   const clearMetadata = () => {
     setMetadata(null)
     setMetadataError(null)
+    setMetadataErrorCode(null)
     setMetadataLoading(false)
   }
 
@@ -870,7 +888,9 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     metadata,
     metadataLoading,
     metadataError,
+    metadataErrorCode,
     fetchMetadata,
+    retryMetadata,
     clearMetadata,
     updateViewIframeStatus,
     refreshView,
@@ -925,7 +945,9 @@ const defaultContextValue: WebsiteViewerContextType = {
   metadata: null,
   metadataLoading: false,
   metadataError: null,
+  metadataErrorCode: null,
   fetchMetadata: async () => {},
+  retryMetadata: async () => {},
   clearMetadata: () => {},
   updateViewIframeStatus: () => {},
   refreshView: () => {},

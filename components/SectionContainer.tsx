@@ -7,6 +7,7 @@ import AnalysisSection from './sections/AnalysisSection'
 import SEOSection from './metadata/SEOSection'
 import SocialPreview from './metadata/SocialPreview'
 import TechnicalSection from './metadata/TechnicalSection'
+import ReportSummary from './metadata/ReportSummary'
 import Image from 'next/image'
 import { getBestFavicon } from '@/lib/favicon'
 import { cn } from '@/lib/utils'
@@ -39,6 +40,7 @@ export default function SectionContainer () {
 
   return (
     <div className='w-full'>
+      {selectedTab !== 'viewports' && <ReportSummary />}
       {/* Tab Content - Smooth transitions between tabs */}
       <div className='w-full relative'>
         <div

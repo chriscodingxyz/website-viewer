@@ -26,8 +26,8 @@ const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://layoutlab.vercel.app'
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: 'Website Viewer | Layout Lab',
-    template: '%s | Website Viewer'
+    default: 'WebViewer — preview any site across all devices',
+    template: '%s | WebViewer'
   },
   description:
     'View websites in different device sizes - desktop, tablet, and mobile viewports all at once. Perfect for developers and designers testing responsive layouts.',
@@ -40,9 +40,9 @@ export const metadata: Metadata = {
     'layout testing',
     'device simulator'
   ],
-  authors: [{ name: 'Layout Lab' }],
-  creator: 'Layout Lab',
-  publisher: 'Layout Lab',
+  authors: [{ name: 'WebViewer' }],
+  creator: 'WebViewer',
+  publisher: 'WebViewer',
   formatDetection: {
     email: false,
     address: false,
@@ -52,26 +52,25 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: baseUrl,
-    title: 'Website Viewer | Layout Lab',
+    title: 'WebViewer — preview any site across all devices',
     description:
-      'View websites in different device sizes - desktop, tablet, and mobile viewports all at once. Perfect for developers and designers testing responsive layouts.',
-    siteName: 'Website Viewer',
+      'Preview any URL across desktop, tablet, and mobile in parallel. Inspect SEO, social cards, and technical metadata — all in one tab.',
+    siteName: 'WebViewer',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Website Viewer - View sites in multiple device sizes'
+        alt: 'WebViewer — preview any site across all devices'
       }
     ]
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Website Viewer | Layout Lab',
+    title: 'WebViewer — preview any site across all devices',
     description:
-      'View websites in different device sizes - desktop, tablet, and mobile viewports all at once.',
-    images: ['/og-image.png'],
-    creator: '@layoutlab'
+      'Preview any URL across desktop, tablet, and mobile in parallel. Inspect SEO, social cards, and technical metadata — all in one tab.',
+    images: ['/og-image.png']
   },
   robots: {
     index: true,
@@ -96,8 +95,8 @@ export const metadata: Metadata = {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
-    'apple-mobile-web-app-title': 'Website Viewer',
-    'application-name': 'Website Viewer',
+    'apple-mobile-web-app-title': 'WebViewer',
+    'application-name': 'WebViewer',
     'msapplication-TileColor': '#000000',
     'theme-color': '#000000'
   }

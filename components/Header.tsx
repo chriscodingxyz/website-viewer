@@ -50,6 +50,8 @@ import {
 } from '@/components/ui/command'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import ExportReportButton from './ExportReportButton'
+import ShareableLink from './ShareableLink'
 
 function Header () {
   const {
@@ -73,6 +75,7 @@ function Header () {
   } = useWebsiteViewer()
 
   const router = useRouter()
+  const pathname = usePathname()
   const { history } = useHistory()
 
   const [open, setOpen] = useState(false)
@@ -138,6 +141,8 @@ function Header () {
     return () => window.removeEventListener('keydown', handleKeyDown)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSite, tabs, selectedTab])
+
+  if (pathname?.startsWith('/report')) return null
 
   // Function to handle selection from combobox
   const onSelect = (selectedValue: string) => {
@@ -277,6 +282,19 @@ function Header () {
               >
                 <Search className='w-3.5 h-3.5 sm:w-4 sm:h-4' />
               </Button>
+
+              {/* Commercial actions */}
+              <div className='hidden sm:flex items-center gap-1.5 ml-1'>
+                <ShareableLink
+                  currentUrl={currentSite}
+                  section={(selectedTab as 'viewports' | 'seo' | 'social' | 'technical')}
+                  domainName={(() => {
+                    try { return new URL(currentSite).hostname.replace(/^www\./, '') } catch { return currentSite }
+                  })()}
+                  className='h-8 w-8'
+                />
+                <ExportReportButton />
+              </div>
             </>
           )}
 

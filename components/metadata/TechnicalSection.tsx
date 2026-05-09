@@ -16,6 +16,8 @@ import {
   Globe
 } from 'lucide-react'
 import SiteDiscovery from '@/components/SiteDiscovery'
+import MetadataErrorCard from './MetadataErrorCard'
+import { getTechnicalScore } from '@/lib/scoring'
 
 interface TechnicalSectionProps {
   metadata?: WebsiteMetadata | null
@@ -24,23 +26,8 @@ interface TechnicalSectionProps {
 }
 
 export default function TechnicalSection ({ metadata, loading, error }: TechnicalSectionProps) {
-  // Show error state first
   if (error) {
-    return (
-      <div className='w-full min-h-[400px] flex items-center justify-center'>
-        <div className='text-center max-w-md'>
-          <div className='mx-auto mb-4 w-16 h-16 rounded-full bg-red-100 dark:bg-red-950/20 flex items-center justify-center'>
-            <AlertTriangle className='h-8 w-8 text-red-600 dark:text-red-400' />
-          </div>
-          <h3 className='text-base font-semibold mb-2 text-foreground'>
-            Failed to Load Technical Data
-          </h3>
-          <p className='text-sm text-muted-foreground mb-4'>
-            {error}
-          </p>
-        </div>
-      </div>
-    )
+    return <MetadataErrorCard sectionName='Technical' error={error} />
   }
 
   // Show loading state
@@ -95,28 +82,7 @@ export default function TechnicalSection ({ metadata, loading, error }: Technica
     return isHTTPS ? 'good' : 'warning'
   }
 
-  const getTechnicalScore = () => {
-    let score = 0
-    const maxScore = 8
-
-    // Security checks
-    if (metadata.url.startsWith('https://')) score += 1
-    if (safeHeaders.contentSecurityPolicy) score += 1
-    if (safeHeaders.xFrameOptions) score += 1
-    if (safeHeaders.strictTransportSecurity) score += 1
-
-    // Performance checks
-    if (safeHeaders.contentEncoding) score += 1
-    if (safeHeaders.cacheControl) score += 1
-
-    // Configuration checks
-    if (metadata.seo.viewport) score += 1
-    if (technical?.charset) score += 1
-
-    return { score, maxScore, percentage: Math.round((score / maxScore) * 100) }
-  }
-
-  const technicalScore = getTechnicalScore()
+  const technicalScore = getTechnicalScore(metadata)
 
   // Elegant card-based status indicator - inspired by reference design
   const StatusIndicator = ({ status, label, value, details }: {

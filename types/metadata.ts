@@ -163,10 +163,20 @@ export type WebsiteMetadata = z.infer<typeof WebsiteMetadataSchema>
 
 
 // API response types
+export type MetadataErrorCode =
+  | 'fetch_failed'
+  | 'blocked'
+  | 'timeout'
+  | 'auth_required'
+  | 'invalid_html'
+  | 'invalid_url'
+  | 'unknown'
+
 export const MetadataAPIResponseSchema = z.object({
   success: z.boolean(),
   data: WebsiteMetadataSchema.optional(),
   error: z.string().optional(),
+  errorCode: z.enum(['fetch_failed', 'blocked', 'timeout', 'auth_required', 'invalid_html', 'invalid_url', 'unknown']).optional(),
   status: z.number().optional(),
 })
 

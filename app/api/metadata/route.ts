@@ -362,14 +362,22 @@ export async function GET (request: NextRequest) {
 
   if (!url) {
     return NextResponse.json(
-      { success: false, error: 'URL parameter is required' },
+      { success: false, error: 'URL parameter is required', errorCode: 'invalid_url' },
+      { status: 400 }
+    )
+  }
+
+  let targetUrl: URL
+  try {
+    targetUrl = new URL(url)
+  } catch {
+    return NextResponse.json(
+      { success: false, error: 'Invalid URL', errorCode: 'invalid_url' },
       { status: 400 }
     )
   }
 
   try {
-    // Validate and normalize URL
-    const targetUrl = new URL(url)
 
     // Make HTTP request with proper headers and SSL handling
     const startTime = Date.now()
@@ -567,17 +575,37 @@ export async function GET (request: NextRequest) {
   } catch (error) {
     console.error('Metadata extraction error:', error)
 
-    // Check if this is a 401 authentication error
-    if (error && typeof error === 'object' && 'response' in error) {
-      const axiosError = error as any
-      if (axiosError.response?.status === 401) {
-        const apiResponse: MetadataAPIResponse = {
-          success: false,
-          error: 'Authentication required',
-          status: 401
-        }
-        return NextResponse.json(apiResponse, { status: 200 }) // Return 200 so frontend can handle it
+    const axiosError = error as any
+    const status = axiosError?.response?.status as number | undefined
+    const code = axiosError?.code as string | undefined
+
+    if (status === 401) {
+      const apiResponse: MetadataAPIResponse = {
+        success: false,
+        error: 'Authentication required',
+        errorCode: 'auth_required',
+        status: 401
       }
+      return NextResponse.json(apiResponse, { status: 200 })
+    }
+
+    if (status === 403 || status === 429) {
+      const apiResponse: MetadataAPIResponse = {
+        success: false,
+        error: 'This site blocks automated requests',
+        errorCode: 'blocked',
+        status
+      }
+      return NextResponse.json(apiResponse, { status: 200 })
+    }
+
+    if (code === 'ECONNABORTED' || code === 'ETIMEDOUT') {
+      const apiResponse: MetadataAPIResponse = {
+        success: false,
+        error: 'Request timed out',
+        errorCode: 'timeout'
+      }
+      return NextResponse.json(apiResponse, { status: 200 })
     }
 
     const errorMessage =
@@ -585,10 +613,11 @@ export async function GET (request: NextRequest) {
 
     const apiResponse: MetadataAPIResponse = {
       success: false,
-      error: `Failed to extract metadata: ${errorMessage}`
+      error: `Failed to extract metadata: ${errorMessage}`,
+      errorCode: 'fetch_failed'
     }
 
-    return NextResponse.json(apiResponse, { status: 500 })
+    return NextResponse.json(apiResponse, { status: 200 })
   }
 }
 
