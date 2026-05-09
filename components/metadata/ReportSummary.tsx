@@ -9,13 +9,13 @@ function ScoreChip ({ label, score }: { label: string, score: SubScore }) {
   const tint =
     score.percentage >= 80 ? 'text-emerald-600' :
     score.percentage >= 50 ? 'text-amber-600' :
-    'text-red-600'
+    'text-red-500'
 
   return (
-    <div className='flex items-baseline gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border'>
-      <span className='text-xs font-semibold text-muted-foreground uppercase tracking-wide'>{label}</span>
-      <span className={cn('text-base font-black', tint)}>{score.percentage}%</span>
-      <span className='text-[10px] text-muted-foreground/70'>{score.score}/{score.maxScore}</span>
+    <div className='flex items-baseline gap-2'>
+      <span className='text-[10px] uppercase tracking-[0.18em] text-muted-foreground'>{label}</span>
+      <span className={cn('text-sm font-semibold tabular-nums', tint)}>{score.percentage}%</span>
+      <span className='text-[10px] text-muted-foreground/60 tabular-nums'>{score.score}/{score.maxScore}</span>
     </div>
   )
 }
@@ -51,32 +51,31 @@ export default function ReportSummary () {
 
   return (
     <div className='max-w-[1600px] mx-auto px-4 lg:px-8 pt-4'>
-      <div className='bg-card border border-border rounded-2xl px-5 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-sm'>
-        <div className='flex items-center gap-4'>
+      <div className='bg-card border border-border rounded-xl px-5 py-3.5 flex flex-col lg:flex-row lg:items-center justify-between gap-4'>
+        <div className='flex items-center gap-3.5'>
           <div className={cn(
-            'w-14 h-14 rounded-2xl flex items-center justify-center ring-4',
-            colors.bg,
-            colors.ring
+            'w-10 h-10 rounded-lg flex items-center justify-center',
+            colors.bg
           )}>
-            <span className={cn('text-3xl font-black leading-none', colors.text)}>
+            <span className={cn('text-lg font-semibold leading-none', colors.text)}>
               {overall.grade}
             </span>
           </div>
           <div>
             <div className='flex items-baseline gap-2'>
-              <h2 className='text-xl sm:text-2xl font-black text-foreground tracking-tight'>
+              <h2 className='text-base font-semibold text-foreground tracking-tight'>
                 {hostname}
               </h2>
-              <span className='text-sm font-semibold text-muted-foreground'>
-                {overall.percentage}%
+              <span className='text-xs text-muted-foreground tabular-nums'>
+                {overall.percentage}% · {overall.score}/{overall.maxScore}
               </span>
             </div>
-            <p className='text-xs text-muted-foreground'>
-              {overall.score} of {overall.maxScore} checks passed · audited {new Date(metadata.extractedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+            <p className='text-[11px] text-muted-foreground'>
+              Audited {new Date(metadata.extractedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
             </p>
           </div>
         </div>
-        <div className='flex flex-wrap gap-2'>
+        <div className='flex flex-wrap gap-x-6 gap-y-2'>
           <ScoreChip label='SEO' score={overall.breakdown.seo} />
           <ScoreChip label='Social' score={overall.breakdown.social} />
           <ScoreChip label='Technical' score={overall.breakdown.technical} />

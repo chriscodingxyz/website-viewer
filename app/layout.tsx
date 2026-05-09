@@ -4,7 +4,7 @@ import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { Analytics } from '@vercel/analytics/next'
 
-import { Outfit } from 'next/font/google'
+import { Inter, Instrument_Serif } from 'next/font/google'
 import Header from '@/components/Header'
 import AuthDialogWrapper from '@/components/AuthDialogWrapper'
 import { Toaster } from 'sonner'
@@ -15,9 +15,17 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import WebsiteViewerSidebar from '@/components/WebsiteViewerSidebar'
 import ClientOnly from '@/components/ClientOnly'
 
-const fontSans = Outfit({
+const fontSans = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
+  display: 'swap'
+})
+
+const fontSerif = Instrument_Serif({
+  subsets: ['latin'],
+  weight: '400',
+  style: ['normal', 'italic'],
+  variable: '--font-serif',
   display: 'swap'
 })
 
@@ -110,7 +118,7 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body
-        className={`${fontSans.variable} min-h-screen flex flex-col font-sans antialiased`}
+        className={`${fontSans.variable} ${fontSerif.variable} min-h-screen flex flex-col font-sans antialiased`}
       >
         <Toaster richColors />
         <ThemeProvider

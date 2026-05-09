@@ -4,13 +4,11 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Search01Icon, ArrowRight02Icon } from 'hugeicons-react'
 import Link from 'next/link'
-import { GitCompareArrows } from 'lucide-react'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useHistory } from '@/contexts/HistoryContext'
 import SectionContainer from './SectionContainer'
 import { Kbd } from '@/components/ui/kbd'
 import SiteCard from './SiteCard'
-import HeroPreview from './HeroPreview'
 import PopularSites from './PopularSites'
 import FeatureGrid from './FeatureGrid'
 import HowItWorks from './HowItWorks'
@@ -29,7 +27,7 @@ export default function WebsiteViewer () {
 
   if (currentSite) {
     return (
-      <div className='min-h-screen bg-background font-sans text-foreground selection:bg-primary/30'>
+      <div className='min-h-screen bg-background font-sans text-foreground'>
         <main>
           <SectionContainer />
         </main>
@@ -38,93 +36,61 @@ export default function WebsiteViewer () {
   }
 
   return (
-    <div className='min-h-screen bg-background font-sans text-foreground selection:bg-primary/30'>
-      <main className='container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-8 sm:py-12 space-y-16 sm:space-y-20'>
+    <div className='min-h-screen bg-background font-sans text-foreground'>
+      <main className='container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl py-16 sm:py-24 space-y-24 sm:space-y-28'>
 
-        {/* Hero */}
-        <section className='grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center pt-4 sm:pt-8'>
-          <div className='lg:col-span-7 relative'>
-            <span className='inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-semibold tracking-wide mb-6'>
-              <span className='w-1.5 h-1.5 rounded-full bg-accent animate-subtle-pulse' />
-              MULTI-VIEWPORT · SEO · SOCIAL
-            </span>
+        {/* Hero — centered, editorial */}
+        <section className='text-center max-w-3xl mx-auto'>
+          <Link
+            href='https://github.com/cherrydub/website-viewer'
+            target='_blank'
+            className='inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors mb-8'
+          >
+            Free tool · open source
+            <ArrowRight02Icon className='w-3 h-3' />
+          </Link>
 
-            <h1 className='text-5xl sm:text-6xl md:text-7xl font-black tracking-tight text-foreground mb-5 leading-[1.05]'>
-              See your site
-              <br />
-              <span className='relative inline-block'>
-                <span className='relative z-10'>everywhere</span>
-                <svg
-                  className='absolute left-0 -bottom-2 w-full h-3 text-accent/60 z-0'
-                  viewBox='0 0 100 10'
-                  preserveAspectRatio='none'
-                >
-                  <path d='M0 5 Q 25 0 50 5 T 100 5' stroke='currentColor' strokeWidth='6' fill='none' strokeLinecap='round' />
-                </svg>
-              </span>
-              {' '}at once.
-            </h1>
+          <h1 className='text-5xl sm:text-6xl md:text-7xl tracking-tight text-foreground leading-[1.05] mb-6'>
+            See your site rendered <span className='font-serif italic font-normal'>everywhere</span> — at once.
+          </h1>
 
-            <p className='text-lg sm:text-xl text-muted-foreground mb-7 max-w-xl leading-relaxed'>
-              Preview any URL across desktop, tablet, and mobile in parallel. Inspect SEO, social cards, and technical metadata — all in one tab.
-            </p>
+          <p className='text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed mb-10'>
+            Preview any URL across desktop, tablet, and mobile. Audit SEO, social cards, and technical setup. Get a grade your team can act on.
+          </p>
 
-            <div className='flex flex-col sm:flex-row gap-3 max-w-xl'>
-              <div className='relative flex-1 group'>
-                <Search01Icon className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-accent transition-colors duration-200 pointer-events-none' />
-                <input
-                  type='text'
-                  placeholder='Enter URL (e.g. apple.com)'
-                  className='w-full h-14 pl-12 pr-16 rounded-2xl border border-border bg-card focus:outline-none focus:ring-4 focus:ring-accent/20 focus:border-accent/60 transition-all duration-200 shadow-sm hover:shadow-md text-foreground placeholder:text-muted-foreground text-base'
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && loadSite()}
-                />
-                <div className='absolute right-4 top-1/2 -translate-y-1/2 hidden sm:block pointer-events-none'>
-                  <Kbd className='bg-muted text-[10px] text-muted-foreground'>↵</Kbd>
-                </div>
+          <div className='flex flex-col sm:flex-row gap-2 max-w-xl mx-auto'>
+            <div className='relative flex-1 group'>
+              <Search01Icon className='absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors duration-200 pointer-events-none' />
+              <input
+                type='text'
+                placeholder='Enter URL (e.g. apple.com)'
+                className='w-full h-12 pl-11 pr-14 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-foreground/10 focus:border-foreground/30 transition-all duration-200 text-foreground placeholder:text-muted-foreground text-[15px]'
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && loadSite()}
+              />
+              <div className='absolute right-3 top-1/2 -translate-y-1/2 hidden sm:block pointer-events-none'>
+                <Kbd className='bg-muted/60 text-[10px] text-muted-foreground'>↵</Kbd>
               </div>
-              <Button
-                size='lg'
-                className='h-14 px-7 font-semibold text-base text-primary-foreground bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 rounded-2xl gap-2'
-                onClick={() => loadSite()}
-              >
-                Preview site
-                <ArrowRight02Icon className='w-4 h-4' />
-              </Button>
             </div>
-
-            <div className='flex flex-wrap items-center gap-x-5 gap-y-2 mt-5 text-xs text-muted-foreground'>
-              <span className='flex items-center gap-1.5'>
-                <span className='w-1.5 h-1.5 rounded-full bg-emerald-500' />
-                No sign-up
-              </span>
-              <span className='flex items-center gap-1.5'>
-                <span className='w-1.5 h-1.5 rounded-full bg-emerald-500' />
-                Free forever
-              </span>
-              <span className='flex items-center gap-1.5'>
-                <span className='w-1.5 h-1.5 rounded-full bg-emerald-500' />
-                Works on localhost
-              </span>
-              <span className='flex items-center gap-1.5'>
-                <span className='w-1.5 h-1.5 rounded-full bg-emerald-500' />
-                Bypasses X-Frame blocks
-              </span>
-            </div>
-
-            <Link
-              href='/compare'
-              className='inline-flex items-center gap-2 mt-4 text-sm font-semibold text-foreground hover:text-accent transition-colors group'
+            <Button
+              size='lg'
+              className='h-12 px-5 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 transition-all duration-200 rounded-xl gap-2'
+              onClick={() => loadSite()}
             >
-              <GitCompareArrows className='w-4 h-4 text-accent' />
-              Or compare two sites side-by-side
-              <ArrowRight02Icon className='w-4 h-4 transition-transform group-hover:translate-x-0.5' />
-            </Link>
+              Preview site
+              <ArrowRight02Icon className='w-3.5 h-3.5' />
+            </Button>
           </div>
 
-          <div className='lg:col-span-5 relative'>
-            <HeroPreview />
+          <div className='flex items-center justify-center gap-6 mt-6 text-xs text-muted-foreground'>
+            <span>No sign-up</span>
+            <span className='w-1 h-1 rounded-full bg-muted-foreground/30' />
+            <span>Works on localhost</span>
+            <span className='w-1 h-1 rounded-full bg-muted-foreground/30' />
+            <Link href='/compare' className='hover:text-foreground transition-colors'>
+              Compare two sites →
+            </Link>
           </div>
         </section>
 
@@ -137,16 +103,16 @@ export default function WebsiteViewer () {
         {/* How it works */}
         <HowItWorks />
 
-        {/* Recent sites — only when history exists */}
+        {/* Recent sites */}
         {recentSites.length > 0 && (
-          <section className='space-y-4'>
+          <section className='space-y-6'>
             <div className='flex items-baseline justify-between'>
-              <h2 className='text-2xl sm:text-3xl font-black tracking-tight text-foreground'>
-                Pick up where you left off.
+              <h2 className='text-2xl sm:text-3xl text-foreground tracking-tight'>
+                Pick up <span className='font-serif italic'>where you left off</span>.
               </h2>
               <span className='text-xs text-muted-foreground'>{recentSites.length} recent</span>
             </div>
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
               {recentSites.map((siteUrl, index) => (
                 <SiteCard
                   key={`${siteUrl}-${index}`}

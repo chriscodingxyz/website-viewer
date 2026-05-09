@@ -20,31 +20,25 @@ export default function PopularSites () {
   const { loadSite } = useWebsiteViewer()
 
   return (
-    <section className='space-y-3'>
-      <div className='flex items-baseline gap-3'>
-        <h2 className='text-sm font-semibold text-muted-foreground uppercase tracking-wider'>
-          Try a popular site
-        </h2>
-        <span className='text-xs text-muted-foreground/60'>or paste your own above</span>
-      </div>
-      <div className='flex flex-wrap gap-2'>
+    <section className='text-center'>
+      <p className='text-[11px] uppercase tracking-[0.2em] text-muted-foreground mb-6'>
+        Try a popular site
+      </p>
+      <div className='flex flex-wrap items-center justify-center gap-x-8 gap-y-3'>
         {POPULAR.map(({ domain, label }) => (
           <button
             key={domain}
             onClick={() => loadSite(domain)}
-            className='group flex items-center gap-2 h-10 pl-2 pr-4 rounded-full bg-card border border-border hover:border-accent/60 hover:bg-accent/5 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5'
+            className='group inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors'
           >
-            <span className='w-6 h-6 rounded-full bg-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0'>
-              <Image
-                src={faviconUrl(domain)}
-                alt={label}
-                width={24}
-                height={24}
-                className='w-5 h-5 object-contain'
-              />
-            </span>
-            <span className='text-sm font-medium text-foreground'>{label}</span>
-            <span className='text-xs text-muted-foreground hidden sm:inline'>{domain}</span>
+            <Image
+              src={faviconUrl(domain)}
+              alt={label}
+              width={16}
+              height={16}
+              className='w-4 h-4 object-contain opacity-70 group-hover:opacity-100 transition-opacity'
+            />
+            <span>{label}</span>
           </button>
         ))}
       </div>

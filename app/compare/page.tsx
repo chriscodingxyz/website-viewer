@@ -66,16 +66,16 @@ function ComparePageInner () {
 
   return (
     <div className='container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl py-10 sm:py-14'>
-      <div className='mb-8'>
-        <span className='inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-semibold tracking-wide mb-4'>
-          <GitCompareArrows className='w-3.5 h-3.5' />
-          COMPARE TWO SITES
-        </span>
-        <h1 className='text-4xl sm:text-5xl font-black tracking-tight text-foreground mb-2 leading-[1.05]'>
-          Who&apos;s shipping a better site?
+      <div className='mb-10 text-center max-w-2xl mx-auto'>
+        <p className='text-[11px] uppercase tracking-[0.2em] text-muted-foreground mb-4 inline-flex items-center gap-2'>
+          <GitCompareArrows className='w-3 h-3' />
+          Compare two sites
+        </p>
+        <h1 className='text-4xl sm:text-5xl tracking-tight text-foreground mb-3 leading-[1.05]'>
+          Who&apos;s shipping a <span className='font-serif italic'>better site?</span>
         </h1>
-        <p className='text-base text-muted-foreground max-w-2xl'>
-          Stack two URLs side-by-side. Get a per-check breakdown of SEO, social, and technical setup. Hand the winner to your dev as a benchmark.
+        <p className='text-base text-muted-foreground'>
+          Stack two URLs side-by-side. Get a per-check breakdown of SEO, social, and technical setup.
         </p>
       </div>
 
