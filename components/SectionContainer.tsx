@@ -32,11 +32,74 @@ export default function SectionContainer () {
     ? getBestFavicon(currentSite, metadata)
     : '/seoseal.png'
 
-  // Determine if we should show the logo layout (for SEO, Social, Technical tabs)
-  const showLogoLayout =
-    selectedTab === 'seo' ||
-    selectedTab === 'social' ||
-    selectedTab === 'technical'
+  const hostname = (() => {
+    try {
+      return new URL(currentSite).hostname.replace(/^www\./, '')
+    } catch {
+      return currentSite
+    }
+  })()
+
+  const AnalysisShell = ({
+    eyebrow,
+    title,
+    description,
+    children
+  }: {
+    eyebrow: string
+    title: string
+    description: string
+    children: React.ReactNode
+  }) => (
+    <div className='max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10'>
+      <div className='grid grid-cols-1 lg:grid-cols-[164px_minmax(0,1fr)] xl:grid-cols-[188px_minmax(0,1fr)] gap-8 xl:gap-12'>
+        <aside className='hidden lg:block'>
+          <div className='sticky top-28 rounded-lg border border-border bg-card p-4 text-center'>
+            <div className='relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-lg border border-border bg-background overflow-hidden'>
+              <Image
+                src={faviconError ? '/seoseal.png' : faviconUrl}
+                alt={`${hostname} favicon`}
+                width={64}
+                height={64}
+                className={cn(
+                  'h-10 w-10 object-contain transition-opacity duration-300',
+                  faviconLoaded ? 'opacity-100' : 'opacity-0'
+                )}
+                onLoad={() => setFaviconLoaded(true)}
+                onError={() => {
+                  setFaviconError(true)
+                  setFaviconLoaded(true)
+                }}
+                priority
+              />
+              {!faviconLoaded && (
+                <div className='absolute h-10 w-10 rounded-md bg-muted animate-pulse' />
+              )}
+            </div>
+            <p className='text-sm font-semibold text-foreground truncate' title={hostname}>
+              {hostname}
+            </p>
+            <p className='mt-1 text-xs text-muted-foreground'>{eyebrow}</p>
+          </div>
+        </aside>
+
+        <div className='min-w-0 min-h-[calc(100svh-150px)]'>
+          <div className='mb-8 max-w-3xl'>
+            <p className='text-[11px] uppercase tracking-[0.2em] text-muted-foreground mb-3'>
+              {eyebrow}
+            </p>
+            <h1 className='text-3xl sm:text-4xl tracking-tight text-foreground leading-tight'>
+              {title}
+            </h1>
+            <p className='mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed'>
+              {description}
+            </p>
+          </div>
+          {children}
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <div className='w-full'>
@@ -67,6 +130,7 @@ export default function SectionContainer () {
 
         {/* SEO, Social, Technical - With Logo Layout */}
         <div
+          aria-hidden={selectedTab !== 'seo'}
           className={cn(
             'transition-all duration-300 ease-out',
             selectedTab === 'seo'
@@ -75,49 +139,17 @@ export default function SectionContainer () {
           )}
           style={selectedTab !== 'seo' ? { height: '1px' } : {}}
         >
-          <div className='max-w-[1600px] mx-auto px-4 lg:px-8 py-6'>
-            <div className='flex gap-8 lg:gap-16'>
-              {/* Sticky Logo - Hidden on mobile */}
-              <div className='hidden lg:block flex-shrink-0'>
-                <div className='sticky top-1/2 -translate-y-1/2'>
-                  {/* Container for favicon */}
-                  <div className='flex items-center justify-center relative overflow-hidden'>
-                    {/* Dynamic favicon image */}
-                    <Image
-                      src={faviconError ? '/seoseal.png' : faviconUrl}
-                      alt={currentSite ? `${currentSite} favicon` : 'Website Viewer Logo'}
-                      width={96}
-                      height={96}
-                      className={cn(
-                        'w-24 h-24 object-contain transition-opacity duration-300',
-                        faviconLoaded ? 'opacity-100' : 'opacity-0'
-                      )}
-                      onLoad={() => setFaviconLoaded(true)}
-                      onError={() => {
-                        setFaviconError(true)
-                        setFaviconLoaded(true)
-                      }}
-                      priority
-                    />
-
-                    {/* Loading skeleton */}
-                    {!faviconLoaded && (
-                      <div className='absolute flex items-center justify-center'>
-                        <div className='w-24 h-24 bg-muted/50 rounded-lg animate-pulse' />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {/* Content with min-height to prevent logo shift */}
-              <div className='flex-1 min-w-0 min-h-[calc(100svh-120px)]'>
-                <SEOSection metadata={metadata} loading={metadataLoading} error={metadataError} />
-              </div>
-            </div>
-          </div>
+          <AnalysisShell
+            eyebrow='SEO analysis'
+            title='Search essentials'
+            description='A focused audit of titles, descriptions, crawling signals, brand cues, and discovery files.'
+          >
+            <SEOSection metadata={metadata} loading={metadataLoading} error={metadataError} />
+          </AnalysisShell>
         </div>
 
         <div
+          aria-hidden={selectedTab !== 'social'}
           className={cn(
             'transition-all duration-300 ease-out',
             selectedTab === 'social'
@@ -126,49 +158,17 @@ export default function SectionContainer () {
           )}
           style={selectedTab !== 'social' ? { height: '1px' } : {}}
         >
-          <div className='max-w-[1600px] mx-auto px-4 lg:px-8 py-6'>
-            <div className='flex gap-8 lg:gap-16'>
-              {/* Sticky Logo - Hidden on mobile */}
-              <div className='hidden lg:block flex-shrink-0'>
-                <div className='sticky top-1/2 -translate-y-1/2'>
-                  {/* Container for favicon */}
-                  <div className='flex items-center justify-center relative overflow-hidden'>
-                    {/* Dynamic favicon image */}
-                    <Image
-                      src={faviconError ? '/seoseal.png' : faviconUrl}
-                      alt={currentSite ? `${currentSite} favicon` : 'Website Viewer Logo'}
-                      width={96}
-                      height={96}
-                      className={cn(
-                        'w-24 h-24 object-contain transition-opacity duration-300',
-                        faviconLoaded ? 'opacity-100' : 'opacity-0'
-                      )}
-                      onLoad={() => setFaviconLoaded(true)}
-                      onError={() => {
-                        setFaviconError(true)
-                        setFaviconLoaded(true)
-                      }}
-                      priority
-                    />
-
-                    {/* Loading skeleton */}
-                    {!faviconLoaded && (
-                      <div className='absolute flex items-center justify-center'>
-                        <div className='w-24 h-24 bg-muted/50 rounded-lg animate-pulse' />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {/* Content with min-height to prevent logo shift */}
-              <div className='flex-1 min-w-0 min-h-[calc(100svh-120px)]'>
-                <SocialPreview metadata={metadata} loading={metadataLoading} error={metadataError} />
-              </div>
-            </div>
-          </div>
+          <AnalysisShell
+            eyebrow='Social preview'
+            title='Share metadata'
+            description='Open Graph and Twitter card coverage, shown through calm preview surfaces that use the page metadata directly.'
+          >
+            <SocialPreview metadata={metadata} loading={metadataLoading} error={metadataError} />
+          </AnalysisShell>
         </div>
 
         <div
+          aria-hidden={selectedTab !== 'technical'}
           className={cn(
             'transition-all duration-300 ease-out',
             selectedTab === 'technical'
@@ -177,46 +177,13 @@ export default function SectionContainer () {
           )}
           style={selectedTab !== 'technical' ? { height: '1px' } : {}}
         >
-          <div className='max-w-[1600px] mx-auto px-4 lg:px-8 py-6'>
-            <div className='flex gap-8 lg:gap-16'>
-              {/* Sticky Logo - Hidden on mobile */}
-              <div className='hidden lg:block flex-shrink-0'>
-                <div className='sticky top-1/2 -translate-y-1/2'>
-                  {/* Container for favicon */}
-                  <div className='flex items-center justify-center relative overflow-hidden'>
-                    {/* Dynamic favicon image */}
-                    <Image
-                      src={faviconError ? '/seoseal.png' : faviconUrl}
-                      alt={currentSite ? `${currentSite} favicon` : 'Website Viewer Logo'}
-                      width={96}
-                      height={96}
-                      className={cn(
-                        'w-24 h-24 object-contain transition-opacity duration-300',
-                        faviconLoaded ? 'opacity-100' : 'opacity-0'
-                      )}
-                      onLoad={() => setFaviconLoaded(true)}
-                      onError={() => {
-                        setFaviconError(true)
-                        setFaviconLoaded(true)
-                      }}
-                      priority
-                    />
-
-                    {/* Loading skeleton */}
-                    {!faviconLoaded && (
-                      <div className='absolute flex items-center justify-center'>
-                        <div className='w-24 h-24 bg-muted/50 rounded-lg animate-pulse' />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {/* Content with min-height to prevent logo shift */}
-              <div className='flex-1 min-w-0 min-h-[calc(100svh-120px)]'>
-                <TechnicalSection metadata={metadata} loading={metadataLoading} error={metadataError} />
-              </div>
-            </div>
-          </div>
+          <AnalysisShell
+            eyebrow='Technical audit'
+            title='Headers and implementation'
+            description='Security headers, response behavior, document setup, structured data, and discoverable URLs.'
+          >
+            <TechnicalSection metadata={metadata} loading={metadataLoading} error={metadataError} />
+          </AnalysisShell>
         </div>
       </div>
     </div>

@@ -1,30 +1,32 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
+  AccordionTrigger
 } from '@/components/ui/accordion'
 import {
-  Globe,
-  ExternalLink,
-  Search,
-  FileText,
-  CheckCircle,
-  XCircle,
   AlertTriangle,
-  Link as LinkIcon,
   Calendar,
-  Database
+  CheckCircle,
+  Database,
+  ExternalLink,
+  FileText,
+  Globe,
+  Link as LinkIcon,
+  Search,
+  XCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  AuditSection,
+  MetadataPill
+} from '@/components/metadata/AnalysisPrimitives'
 
 interface SiteDiscoveryProps {
   metadata: WebsiteMetadata
@@ -41,7 +43,7 @@ interface DiscoveredPage {
   accessible?: boolean
 }
 
-export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscoveryProps) {
+export default function SiteDiscovery ({ metadata, onNavigateToPage }: SiteDiscoveryProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [discoveredPages, setDiscoveredPages] = useState<DiscoveredPage[]>([])
   const [loading, setLoading] = useState(false)
@@ -55,59 +57,48 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
     const pages: DiscoveredPage[] = []
 
     try {
-      // Extract pages from sitemaps
       if (metadata.sitemap?.sitemaps) {
         for (const sitemap of metadata.sitemap.sitemaps) {
           if (sitemap.accessible) {
-            try {
-              // In a real implementation, you'd fetch and parse the sitemap XML
-              // For now, we'll show the sitemap URL itself as a discoverable page
-              pages.push({
-                url: sitemap.url,
-                source: 'sitemap',
-                title: `Sitemap (${sitemap.source})`,
-                lastModified: sitemap.lastModified,
-                accessible: sitemap.accessible
-              })
-            } catch (error) {
-              console.error('Error processing sitemap:', error)
-            }
+            pages.push({
+              url: sitemap.url,
+              source: 'sitemap',
+              title: `Sitemap (${sitemap.source})`,
+              lastModified: sitemap.lastModified,
+              accessible: sitemap.accessible
+            })
           }
         }
       }
 
-      // Extract pages from robots.txt references
       if (metadata.sitemap?.robotsTxt?.accessible && metadata.sitemap.robotsTxt.content) {
         const robotsContent = metadata.sitemap.robotsTxt.content
-
-        // Look for sitemap URLs in robots.txt
         const sitemapMatches = robotsContent.match(/^Sitemap:\s*(.+)$/gim)
+
         if (sitemapMatches) {
-          sitemapMatches.forEach((match) => {
+          sitemapMatches.forEach(match => {
             const sitemapUrl = match.replace(/^Sitemap:\s*/i, '').trim()
-            if (!pages.find(p => p.url === sitemapUrl)) {
+            if (!pages.find(page => page.url === sitemapUrl)) {
               pages.push({
                 url: sitemapUrl,
                 source: 'robots',
-                title: 'Sitemap (from robots.txt)',
+                title: 'Sitemap from robots.txt',
                 accessible: true
               })
             }
           })
         }
 
-        // Look for disallowed paths (which indicates page existence)
         const disallowMatches = robotsContent.match(/^Disallow:\s*(.+)$/gim)
         if (disallowMatches) {
           const baseUrl = new URL(metadata.url).origin
-          disallowMatches.forEach((match) => {
+          disallowMatches.forEach(match => {
             const path = match.replace(/^Disallow:\s*/i, '').trim()
             if (path && path !== '/' && !path.includes('*')) {
-              const fullUrl = new URL(path, baseUrl).toString()
               pages.push({
-                url: fullUrl,
+                url: new URL(path, baseUrl).toString(),
                 source: 'robots',
-                title: `Page (restricted in robots.txt)`,
+                title: 'Restricted path',
                 accessible: false
               })
             }
@@ -115,12 +106,11 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
         }
       }
 
-      // Add common pages that are likely to exist
       const baseUrl = new URL(metadata.url).origin
       const commonPages = [
         { path: '/', title: 'Homepage' },
-        { path: '/about', title: 'About Page' },
-        { path: '/contact', title: 'Contact Page' },
+        { path: '/about', title: 'About' },
+        { path: '/contact', title: 'Contact' },
         { path: '/privacy', title: 'Privacy Policy' },
         { path: '/terms', title: 'Terms of Service' },
         { path: '/blog', title: 'Blog' },
@@ -130,12 +120,12 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
 
       commonPages.forEach(({ path, title }) => {
         const fullUrl = new URL(path, baseUrl).toString()
-        if (!pages.find(p => p.url === fullUrl)) {
+        if (!pages.find(page => page.url === fullUrl)) {
           pages.push({
             url: fullUrl,
             source: 'internal',
-            title: title,
-            accessible: undefined // Unknown, would need to check
+            title,
+            accessible: undefined
           })
         }
       })
@@ -155,125 +145,130 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
   )
 
   const pagesBySource = {
-    sitemap: filteredPages.filter(p => p.source === 'sitemap'),
-    robots: filteredPages.filter(p => p.source === 'robots'),
-    internal: filteredPages.filter(p => p.source === 'internal')
+    sitemap: filteredPages.filter(page => page.source === 'sitemap'),
+    robots: filteredPages.filter(page => page.source === 'robots'),
+    internal: filteredPages.filter(page => page.source === 'internal')
   }
 
   const handleNavigateToPage = (url: string) => {
     if (onNavigateToPage) {
       onNavigateToPage(url)
-    } else {
-      window.open(url, '_blank', 'noopener,noreferrer')
-      toast.success('Opened page in new tab')
+      return
     }
+
+    window.open(url, '_blank', 'noopener,noreferrer')
+    toast.success('Opened page in new tab')
   }
 
   const getStatusIcon = (accessible?: boolean) => {
     if (accessible === undefined) {
-      return <AlertTriangle className="h-2.5 w-2.5" style={{ color: 'hsl(var(--brand-orange))' }} />
+      return <AlertTriangle className='h-3.5 w-3.5 text-amber-600' />
     }
-    return accessible ?
-      <CheckCircle className="h-2.5 w-2.5" style={{ color: 'hsl(var(--brand-teal))' }} /> :
-      <XCircle className="h-2.5 w-2.5 text-red-500" />
+
+    return accessible
+      ? <CheckCircle className='h-3.5 w-3.5 text-emerald-600' />
+      : <XCircle className='h-3.5 w-3.5 text-red-600' />
   }
 
   const getSourceIcon = (source: string) => {
     switch (source) {
       case 'sitemap':
-        return <FileText className="h-3 w-3 text-blue-500" />
+        return <FileText className='h-4 w-4 text-muted-foreground' />
       case 'robots':
-        return <FileText className="h-3 w-3 text-purple-500" />
+        return <FileText className='h-4 w-4 text-muted-foreground' />
       case 'internal':
-        return <LinkIcon className="h-3 w-3 text-gray-500" />
+        return <LinkIcon className='h-4 w-4 text-muted-foreground' />
       default:
-        return <Globe className="h-3 w-3" />
+        return <Globe className='h-4 w-4 text-muted-foreground' />
     }
   }
 
   const sourceLabels = {
-    sitemap: 'Sitemap Pages',
-    robots: 'Robots.txt References',
-    internal: 'Common Pages'
+    sitemap: 'Sitemaps',
+    robots: 'Robots References',
+    internal: 'Common Paths'
   }
 
   return (
-    <div className="bg-card border border-border rounded-lg p-3">
-      <div className="mb-3">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-1.5">
-            <Database className="h-3 w-3" />
-            <div>
-              <h3 className="text-xs font-semibold text-foreground">Site Discovery</h3>
-            </div>
-          </div>
-          <Badge variant="outline" className="text-[10px] h-4 px-1.5">
-            {discoveredPages.length} pages found
-          </Badge>
-        </div>
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+    <AuditSection
+      icon={Database}
+      title='Site Discovery'
+      description='Sitemaps, robots references, and common paths that help reveal site structure.'
+      action={<MetadataPill>{filteredPages.length} pages</MetadataPill>}
+    >
+      <div className='rounded-lg border border-border bg-card p-4 space-y-4'>
+        <div className='relative'>
+          <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
           <Input
-            placeholder="Search pages..."
+            placeholder='Search discovered URLs'
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 h-7 text-xs"
+            onChange={event => setSearchTerm(event.target.value)}
+            className='h-10 pl-9 text-sm bg-background'
           />
         </div>
-      </div>
-      <div>
+
         {loading ? (
-          <div className="flex items-center justify-center py-4">
-            <div className="text-center">
-              <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-1.5"></div>
-              <p className="text-[10px] text-muted-foreground">Discovering pages...</p>
+          <div className='flex items-center justify-center py-10 text-center'>
+            <div>
+              <div className='mx-auto mb-3 h-5 w-5 rounded-full border-2 border-foreground border-t-transparent animate-spin' />
+              <p className='text-sm text-muted-foreground'>Discovering pages...</p>
             </div>
           </div>
         ) : discoveredPages.length === 0 ? (
-          <div className="text-center py-4 text-muted-foreground">
-            <Globe className="h-6 w-6 mx-auto mb-1.5 opacity-50" />
-            <p className="text-xs">No pages discovered</p>
-            <p className="text-[10px]">Try checking if the site has a sitemap.xml</p>
+          <div className='py-10 text-center text-muted-foreground'>
+            <Globe className='h-8 w-8 mx-auto mb-3 opacity-60' />
+            <p className='text-sm font-medium text-foreground'>No pages discovered</p>
+            <p className='text-sm mt-1'>Try checking whether the site exposes a sitemap.</p>
           </div>
         ) : (
-          <Accordion type="multiple" className="w-full" defaultValue={[]}>
+          <Accordion type='multiple' className='w-full'>
             {Object.entries(pagesBySource).map(([source, pages]) => {
               if (pages.length === 0) return null
 
               return (
-                <AccordionItem key={source} value={source}>
-                  <AccordionTrigger className="text-left py-2">
-                    <div className="flex items-center gap-1.5">
+                <AccordionItem key={source} value={source} className='border-border'>
+                  <AccordionTrigger className='py-3 hover:no-underline'>
+                    <div className='flex items-center gap-3 text-left'>
                       {getSourceIcon(source)}
-                      <span className="text-xs">{sourceLabels[source as keyof typeof sourceLabels]}</span>
-                      <Badge variant="outline" className="ml-auto mr-2 text-[10px] h-4 px-1.5">
+                      <span className='text-sm font-medium text-foreground'>
+                        {sourceLabels[source as keyof typeof sourceLabels]}
+                      </span>
+                      <span className='rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground'>
                         {pages.length}
-                      </Badge>
+                      </span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <ScrollArea className="h-48">
-                      <div className="space-y-1.5">
+                    <ScrollArea className='h-56 pr-3'>
+                      <div className='space-y-2'>
                         {pages.map((page, index) => (
-                          <div key={index} className="flex items-center justify-between p-1.5 border rounded-md hover:bg-muted/50">
-                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                          <div
+                            key={`${page.url}-${index}`}
+                            className='flex items-center gap-3 rounded-lg border border-border bg-background p-3 hover:border-foreground/20 transition-colors'
+                          >
+                            <div className='flex-shrink-0'>
                               {getStatusIcon(page.accessible)}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium truncate">{page.title || 'Untitled Page'}</p>
-                                <p className="text-[10px] text-muted-foreground truncate">{page.url}</p>
-                                {page.lastModified && (
-                                  <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground mt-0.5">
-                                    <Calendar className="h-2.5 w-2.5" />
-                                    {new Date(page.lastModified).toLocaleDateString()}
-                                  </div>
-                                )}
-                              </div>
+                            </div>
+                            <div className='min-w-0 flex-1'>
+                              <p className='text-sm font-medium text-foreground truncate'>
+                                {page.title || 'Untitled page'}
+                              </p>
+                              <p className='text-xs text-muted-foreground truncate mt-0.5'>
+                                {page.url}
+                              </p>
+                              {page.lastModified && (
+                                <div className='flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5'>
+                                  <Calendar className='h-3 w-3' />
+                                  {new Date(page.lastModified).toLocaleDateString()}
+                                </div>
+                              )}
                             </div>
                             <button
                               onClick={() => handleNavigateToPage(page.url)}
-                              className="shrink-0 hover:opacity-70 transition-opacity"
+                              className='h-8 w-8 rounded-md border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors'
+                              title='Open page'
                             >
-                              <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                              <ExternalLink className='h-3.5 w-3.5' />
                             </button>
                           </div>
                         ))}
@@ -286,6 +281,6 @@ export default function SiteDiscovery({ metadata, onNavigateToPage }: SiteDiscov
           </Accordion>
         )}
       </div>
-    </div>
+    </AuditSection>
   )
 }

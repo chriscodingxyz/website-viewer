@@ -18,8 +18,8 @@ const checks: Array<{
   pick: (m: WebsiteMetadata) => boolean | number
   better?: 'higher' | 'truthy'
 }> = [
-  { label: 'Title length 30–60', group: 'SEO', pick: m => !!(m.seo.title && m.seo.title.length >= 30 && m.seo.title.length <= 60) },
-  { label: 'Description length 120–160', group: 'SEO', pick: m => !!(m.seo.description && m.seo.description.length >= 120 && m.seo.description.length <= 160) },
+  { label: 'Title length 30 to 60', group: 'SEO', pick: m => !!(m.seo.title && m.seo.title.length >= 30 && m.seo.title.length <= 60) },
+  { label: 'Description length 120 to 160', group: 'SEO', pick: m => !!(m.seo.description && m.seo.description.length >= 120 && m.seo.description.length <= 160) },
   { label: 'Canonical URL', group: 'SEO', pick: m => !!m.seo.canonical },
   { label: 'Viewport meta', group: 'SEO', pick: m => !!m.seo.viewport },
   { label: 'Language declared', group: 'SEO', pick: m => !!m.seo.language },

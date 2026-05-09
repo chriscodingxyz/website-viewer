@@ -51,7 +51,7 @@ export default function WebsiteViewer () {
           </Link>
 
           <h1 className='text-5xl sm:text-6xl md:text-7xl tracking-tight text-foreground leading-[1.05] mb-6'>
-            See your site rendered <span className='font-serif italic font-normal'>everywhere</span> — at once.
+            See your site rendered <span className='font-serif italic font-normal'>everywhere</span>, at once.
           </h1>
 
           <p className='text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed mb-10'>

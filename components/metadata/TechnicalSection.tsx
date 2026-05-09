@@ -3,21 +3,26 @@
 import React from 'react'
 import { WebsiteMetadata } from '@/types/metadata'
 import {
-  CheckCircle,
-  AlertTriangle,
-  XCircle,
-  Settings,
-  Zap,
-  Shield,
+  Code2,
+  FileJson,
   Info,
-  BarChart3,
   Server,
-  Lock,
-  Globe
+  Settings,
+  Shield,
+  Zap
 } from 'lucide-react'
 import SiteDiscovery from '@/components/SiteDiscovery'
 import MetadataErrorCard from './MetadataErrorCard'
 import { getTechnicalScore } from '@/lib/scoring'
+import {
+  AuditCard,
+  AuditLoadingState,
+  AuditSection,
+  AuditStatus,
+  MetadataPill,
+  ScoreSummaryCard,
+  StatusPill
+} from './AnalysisPrimitives'
 
 interface TechnicalSectionProps {
   metadata?: WebsiteMetadata | null
@@ -25,430 +30,255 @@ interface TechnicalSectionProps {
   error?: string | null
 }
 
-export default function TechnicalSection ({ metadata, loading, error }: TechnicalSectionProps) {
+const formatBytes = (bytes?: number) => {
+  if (!bytes) return undefined
+  const units = ['Bytes', 'KB', 'MB', 'GB']
+  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
+  return `${parseFloat((bytes / Math.pow(1024, index)).toFixed(2))} ${units[index]}`
+}
+
+const getSizeStatus = (bytes?: number): AuditStatus => {
+  if (!bytes) return 'neutral'
+  if (bytes < 1000000) return 'good'
+  if (bytes < 5000000) return 'warning'
+  return 'error'
+}
+
+const getLoadStatus = (loadTime?: number): AuditStatus => {
+  if (!loadTime) return 'neutral'
+  if (loadTime < 1000) return 'good'
+  if (loadTime < 3000) return 'warning'
+  return 'error'
+}
+
+export default function TechnicalSection ({ metadata, error }: TechnicalSectionProps) {
   if (error) {
     return <MetadataErrorCard sectionName='Technical' error={error} />
   }
 
-  // Show loading state
   if (!metadata) {
     return (
-      <div className='w-full min-h-[400px] flex items-center justify-center'>
-        <div className='text-center max-w-md'>
-          {/* Clean spinner */}
-          <div className='flex justify-center items-center mb-8'>
-            <div className='w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin'></div>
-          </div>
-
-          <h3 className='text-base font-semibold mb-6 text-foreground'>
-            Analyzing Technical Data
-          </h3>
-
-          {/* Clean animated list */}
-          <div className='space-y-3 text-sm text-muted-foreground'>
-            <div className='flex items-center justify-center gap-3 px-4 py-2 bg-muted/50 rounded-full opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.1s_forwards]'>
-              <div className='w-1 h-1 rounded-full bg-foreground'></div>
-              <span>Checking server headers</span>
-            </div>
-            <div className='flex items-center justify-center gap-3 px-4 py-2 bg-muted/50 rounded-full opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.3s_forwards]'>
-              <div className='w-1 h-1 rounded-full bg-foreground'></div>
-              <span>Analyzing security settings</span>
-            </div>
-            <div className='flex items-center justify-center gap-3 px-4 py-2 bg-muted/50 rounded-full opacity-0 animate-[fadeIn_0.5s_ease-in-out_0.5s_forwards]'>
-              <div className='w-1 h-1 rounded-full bg-foreground'></div>
-              <span>Detecting analytics tools</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AuditLoadingState
+        title='Analyzing technical data'
+        items={[
+          'Reading server headers',
+          'Checking security policies',
+          'Reviewing performance signals',
+          'Inspecting structured data'
+        ]}
+      />
     )
   }
 
   const { technical, headers, structuredData, performance } = metadata
-
-  // Ensure headers object exists to prevent rendering issues
   const safeHeaders = headers || {}
-
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
-
-  const getSecurityStatus = () => {
-    const isHTTPS = metadata.url.startsWith('https://') || false
-    return isHTTPS ? 'good' : 'warning'
-  }
-
   const technicalScore = getTechnicalScore(metadata)
-
-  // Elegant card-based status indicator - inspired by reference design
-  const StatusIndicator = ({ status, label, value, details }: {
-    status: 'good' | 'warning' | 'error'
-    label: string
-    value?: string
-    details?: string
-  }) => {
-    const statusConfig = {
-      good: {
-        icon: <CheckCircle className="h-3.5 w-3.5 text-green-600" />,
-        bgClass: "bg-green-50 dark:bg-green-950/30"
-      },
-      warning: {
-        icon: <AlertTriangle className="h-3.5 w-3.5 text-orange-600" />,
-        bgClass: "bg-orange-50 dark:bg-orange-950/30"
-      },
-      error: {
-        icon: <XCircle className="h-3.5 w-3.5 text-red-600" />,
-        bgClass: "bg-red-50 dark:bg-red-950/30"
-      }
-    }
-
-    const config = statusConfig[status]
-
-    return (
-      <div className="bg-card border border-border/40 rounded-lg overflow-hidden shadow-sm">
-        {/* Header section with gray background */}
-        <div className="bg-muted/50 px-3 py-2 border-b border-border/40">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-medium text-foreground">{label}</h4>
-            {config.icon}
-          </div>
-        </div>
-
-        {/* Content section */}
-        <div className="p-3">
-          {value ? (
-            <>
-              <p className="text-xs text-foreground mb-1.5 break-words leading-relaxed">{value}</p>
-              {details && (
-                <p className="text-[11px] text-muted-foreground leading-relaxed">{details}</p>
-              )}
-            </>
-          ) : (
-            <p className="text-[11px] text-muted-foreground leading-relaxed">{details}</p>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  // Elegant Technical Score card - inspired by reference design
-  const TechnicalScoreDisplay = () => {
-    const getScoreColor = () => {
-      if (technicalScore.percentage >= 80) return 'bg-green-500'
-      if (technicalScore.percentage >= 60) return 'bg-orange-500'
-      return 'bg-red-500'
-    }
-
-    return (
-      <div className="bg-card border border-border/40 rounded-lg overflow-hidden shadow-sm">
-        {/* Header section with gray background */}
-        <div className="bg-muted/50 px-3 py-2 border-b border-border/40">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-              <h3 className="text-xs font-medium text-foreground">Technical Health Score</h3>
-            </div>
-            <div className="text-right">
-              <span className="text-sm font-semibold text-foreground">{technicalScore.percentage}%</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Content section */}
-        <div className="p-3">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[11px] text-muted-foreground">Security and configuration status</p>
-            <p className="text-[11px] text-muted-foreground">{technicalScore.score}/{technicalScore.maxScore} checks passed</p>
-          </div>
-
-          <div className="h-2 bg-muted/60 rounded-full overflow-hidden">
-            <div
-              className={`h-full ${getScoreColor()} transition-all duration-300`}
-              style={{ width: `${technicalScore.percentage}%` }}
-            />
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const responseHeaderCount = Object.keys(safeHeaders).length
 
   return (
-    <div className="space-y-4">
-      {/* Technical Score Header */}
-      <TechnicalScoreDisplay />
+    <div className='space-y-8'>
+      <ScoreSummaryCard
+        icon={Settings}
+        label='Technical Health'
+        score={technicalScore}
+        description='Transport security, HTTP headers, performance hints, and document setup.'
+      >
+        <StatusPill status={technicalScore.percentage >= 80 ? 'good' : technicalScore.percentage >= 60 ? 'warning' : 'error'}>
+          {technicalScore.percentage >= 80 ? 'Well configured' : technicalScore.percentage >= 60 ? 'Partially configured' : 'Needs hardening'}
+        </StatusPill>
+      </ScoreSummaryCard>
 
-      {/* Performance Section */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 mb-3">
-          <Zap className="h-3.5 w-3.5 text-muted-foreground" />
-          <div>
-            <h2 className="text-xs font-semibold text-foreground">Performance Metrics</h2>
-            <p className="text-[11px] text-muted-foreground">Website speed and optimization indicators</p>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-2.5">
-          {performance?.contentLength && (
-            <StatusIndicator
-              status={
-                performance.contentLength < 1000000
-                  ? 'good'
+      <AuditSection
+        icon={Zap}
+        title='Performance Signals'
+        description='Lightweight measurements and transfer hints from the metadata request.'
+      >
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+          <AuditCard
+            status={getSizeStatus(performance?.contentLength)}
+            label='Page size'
+            value={formatBytes(performance?.contentLength)}
+            detail={
+              performance?.contentLength
+                ? performance.contentLength < 1000000
+                  ? 'Compact transfer size for the initial HTML response.'
                   : performance.contentLength < 5000000
-                  ? 'warning'
-                  : 'error'
-              }
-              label="Page Size"
-              value={formatBytes(performance.contentLength)}
-              details={
-                performance.contentLength < 1000000
-                  ? 'Optimized size for fast loading'
-                  : performance.contentLength < 5000000
-                  ? 'Acceptable but could be optimized'
-                  : 'Large page size may impact loading speed'
-              }
-            />
-          )}
-
-          {performance?.loadTime && (
-            <StatusIndicator
-              status={
-                performance.loadTime < 1000
-                  ? 'good'
+                    ? 'Usable, but worth reviewing assets and payload weight.'
+                    : 'Large response size can slow down first load.'
+                : 'Content length was not available from the response.'
+            }
+          />
+          <AuditCard
+            status={getLoadStatus(performance?.loadTime)}
+            label='Metadata fetch time'
+            value={performance?.loadTime ? `${performance.loadTime}ms` : undefined}
+            detail={
+              performance?.loadTime
+                ? performance.loadTime < 1000
+                  ? 'Fast response during this audit.'
                   : performance.loadTime < 3000
-                  ? 'warning'
-                  : 'error'
-              }
-              label="Load Time"
-              value={`${performance.loadTime}ms`}
-              details={
-                performance.loadTime < 1000
-                  ? 'Excellent loading performance'
-                  : performance.loadTime < 3000
-                  ? 'Good loading time'
-                  : 'Slow loading may affect user experience'
-              }
-            />
-          )}
-
-          <StatusIndicator
+                    ? 'Acceptable response time, with room to improve.'
+                    : 'Slow response during this audit.'
+                : 'Load time was not available for this request.'
+            }
+          />
+          <AuditCard
             status={safeHeaders.contentEncoding ? 'good' : 'warning'}
-            label="Content Compression"
-            value={safeHeaders.contentEncoding || 'Not enabled'}
-            details={safeHeaders.contentEncoding ? 'Content compression is active for faster transfers' : 'Enable gzip or brotli compression to reduce bandwidth usage'}
+            label='Content compression'
+            value={safeHeaders.contentEncoding}
+            detail={safeHeaders.contentEncoding ? 'Compression is enabled for smaller transfers.' : 'Enable gzip or Brotli where possible.'}
           />
-
-          <StatusIndicator
+          <AuditCard
             status={safeHeaders.cacheControl ? 'good' : 'warning'}
-            label="Cache Control"
-            value={safeHeaders.cacheControl || 'Not configured'}
-            details={safeHeaders.cacheControl ? 'Caching headers configured for better performance' : 'Configure cache headers to improve repeat visit performance'}
+            label='Cache control'
+            value={safeHeaders.cacheControl}
+            detail={safeHeaders.cacheControl ? 'Caching rules are present.' : 'Add cache headers for better repeat visits.'}
           />
         </div>
-      </div>
+      </AuditSection>
 
-      {/* Security & Headers Section */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 mb-3">
-          <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-          <div>
-            <h2 className="text-xs font-semibold text-foreground">Security & Headers</h2>
-            <p className="text-[11px] text-muted-foreground">Security configuration and HTTP headers</p>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-2.5">
-          <StatusIndicator
+      <AuditSection
+        icon={Shield}
+        title='Security Headers'
+        description='Browser-level protections that reduce common security and embedding risks.'
+      >
+        <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3'>
+          <AuditCard
             status={metadata.url.startsWith('https://') ? 'good' : 'error'}
-            label="HTTPS Security"
-            value={metadata.url.startsWith('https://') ? 'Secure (HTTPS)' : 'Insecure (HTTP)'}
-            details={metadata.url.startsWith('https://') ? 'Site uses encrypted HTTPS connection' : 'Critical - switch to HTTPS for security and SEO benefits'}
+            label='HTTPS'
+            value={metadata.url.startsWith('https://') ? 'Secure connection' : 'HTTP connection'}
+            detail={metadata.url.startsWith('https://') ? 'Traffic is encrypted.' : 'Switch to HTTPS for security, trust, and SEO.'}
           />
-
-          <StatusIndicator
+          <AuditCard
             status={safeHeaders.contentSecurityPolicy ? 'good' : 'warning'}
-            label="Content Security Policy"
-            value={safeHeaders.contentSecurityPolicy ? 'Configured' : 'Not configured'}
-            details={safeHeaders.contentSecurityPolicy ? 'CSP helps prevent XSS and injection attacks' : 'Consider adding CSP header to prevent code injection attacks'}
+            label='Content Security Policy'
+            value={safeHeaders.contentSecurityPolicy ? 'Configured' : undefined}
+            detail={safeHeaders.contentSecurityPolicy ? 'CSP helps limit script and injection risks.' : 'Add a CSP to reduce script injection exposure.'}
           />
-
-          <StatusIndicator
+          <AuditCard
             status={safeHeaders.xFrameOptions ? 'good' : 'warning'}
-            label="X-Frame-Options"
-            value={safeHeaders.xFrameOptions || 'Not set'}
-            details={safeHeaders.xFrameOptions ? 'Protection against clickjacking attacks' : 'Add X-Frame-Options header to prevent clickjacking'}
+            label='X-Frame-Options'
+            value={safeHeaders.xFrameOptions}
+            detail={safeHeaders.xFrameOptions ? 'Clickjacking protection is declared.' : 'Add frame protections if the page should not be embedded.'}
           />
-
-          <StatusIndicator
+          <AuditCard
             status={safeHeaders.strictTransportSecurity ? 'good' : 'warning'}
-            label="HSTS"
-            value={safeHeaders.strictTransportSecurity ? 'Enabled' : 'Not enabled'}
-            details={safeHeaders.strictTransportSecurity ? 'HTTP Strict Transport Security enforces HTTPS' : 'Enable HSTS to force HTTPS connections'}
+            label='HSTS'
+            value={safeHeaders.strictTransportSecurity ? 'Enabled' : undefined}
+            detail={safeHeaders.strictTransportSecurity ? 'Browsers are instructed to use HTTPS.' : 'Enable HSTS after HTTPS is stable.'}
           />
-
-          <StatusIndicator
+          <AuditCard
             status={safeHeaders.xContentTypeOptions ? 'good' : 'warning'}
-            label="X-Content-Type-Options"
-            value={safeHeaders.xContentTypeOptions || 'Not set'}
-            details={safeHeaders.xContentTypeOptions ? 'Prevents MIME type sniffing attacks' : 'Add header to prevent MIME type confusion attacks'}
+            label='X-Content-Type-Options'
+            value={safeHeaders.xContentTypeOptions}
+            detail={safeHeaders.xContentTypeOptions ? 'MIME sniffing protection is present.' : 'Add nosniff to reduce content type confusion.'}
           />
-
-          <StatusIndicator
-            status={safeHeaders.server ? 'good' : 'warning'}
-            label="Server Information"
-            value={safeHeaders.server || 'Not disclosed'}
-            details={safeHeaders.server ? 'Server type identified' : 'Server information not disclosed (security by obscurity)'}
+          <AuditCard
+            status={safeHeaders.referrerPolicy ? 'good' : 'neutral'}
+            label='Referrer policy'
+            value={safeHeaders.referrerPolicy}
+            detail={safeHeaders.referrerPolicy ? 'Referrer sharing behavior is explicit.' : 'Optional, but recommended for privacy-sensitive pages.'}
           />
         </div>
-      </div>
+      </AuditSection>
 
-      {/* Technical Configuration */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 mb-3">
-          <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-          <div>
-            <h2 className="text-xs font-semibold text-foreground">Technical Configuration</h2>
-            <p className="text-[11px] text-muted-foreground">Core technical settings and metadata</p>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-2.5">
-          <StatusIndicator
+      <AuditSection
+        icon={Code2}
+        title='Document Setup'
+        description='HTML-level declarations and app metadata that affect rendering and install surfaces.'
+      >
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+          <AuditCard
             status={metadata.seo.viewport ? 'good' : 'error'}
-            label="Mobile Viewport"
-            value={metadata.seo.viewport || 'Not configured'}
-            details={metadata.seo.viewport ? 'Mobile-responsive viewport meta tag detected' : 'Critical - add viewport meta tag for mobile compatibility'}
+            label='Mobile viewport'
+            value={metadata.seo.viewport}
+            detail={metadata.seo.viewport ? 'Responsive viewport meta tag is present.' : 'Required for reliable mobile rendering.'}
           />
-
-          {technical?.charset && (
-            <StatusIndicator
-              status="good"
-              label="Character Encoding"
-              value={technical.charset}
-              details="Character encoding properly declared"
-            />
-          )}
-
-          {technical?.doctype && (
-            <StatusIndicator
-              status="good"
-              label="Document Type"
-              value={technical.doctype}
-              details="HTML document type declared"
-            />
-          )}
-
-          {technical?.themeColor && (
-            <StatusIndicator
-              status="good"
-              label="Theme Color"
-              value={technical.themeColor}
-              details="Browser theme color configured"
-            />
-          )}
+          <AuditCard
+            status={technical?.charset ? 'good' : 'warning'}
+            label='Character encoding'
+            value={technical?.charset}
+            detail={technical?.charset ? 'Character set is declared.' : 'Declare a charset to avoid text rendering ambiguity.'}
+          />
+          <AuditCard
+            status={technical?.doctype ? 'good' : 'warning'}
+            label='Document type'
+            value={technical?.doctype}
+            detail={technical?.doctype ? 'HTML document type is declared.' : 'Declare a doctype to ensure standards mode.'}
+          />
+          <AuditCard
+            status={technical?.themeColor ? 'good' : 'neutral'}
+            label='Theme color'
+            value={technical?.themeColor}
+            detail={technical?.themeColor ? 'Browser UI theme color is configured.' : 'Optional. Useful for mobile browser polish.'}
+          />
+          <AuditCard
+            status={technical?.manifestUrl ? 'good' : 'neutral'}
+            label='Web app manifest'
+            value={technical?.manifestUrl}
+            detail={technical?.manifestUrl ? 'Manifest is linked for install and app metadata.' : 'Optional unless the site supports installable app behavior.'}
+          />
+          <AuditCard
+            status='neutral'
+            label='Server'
+            value={safeHeaders.server}
+            detail={safeHeaders.server ? 'Server signature is visible in response headers.' : 'Server signature is not exposed.'}
+          />
         </div>
-      </div>
+      </AuditSection>
 
-      {/* Structured Data */}
       {structuredData && structuredData.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 mb-3">
-            <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-            <div>
-              <h2 className="text-xs font-semibold text-foreground">Structured Data</h2>
-              <p className="text-[11px] text-muted-foreground">JSON-LD schemas for search engine understanding</p>
+        <AuditSection
+          icon={FileJson}
+          title='Structured Data'
+          description='JSON-LD schemas that help search engines classify page content.'
+        >
+          <AuditCard
+            status='good'
+            label='JSON-LD schemas'
+            detail={`${structuredData.length} schema${structuredData.length === 1 ? '' : 's'} detected.`}
+          >
+            <div className='mt-4 flex flex-wrap gap-2'>
+              {structuredData.slice(0, 8).map((schema, index) => (
+                <MetadataPill key={`${schema.type}-${index}`}>
+                  {schema.type || 'Schema'}
+                </MetadataPill>
+              ))}
+              {structuredData.length > 8 && (
+                <MetadataPill>+{structuredData.length - 8} more</MetadataPill>
+              )}
             </div>
-          </div>
-
-          <div className="bg-card border border-border/40 rounded-lg overflow-hidden shadow-sm">
-            {/* Header section with gray background */}
-            <div className="bg-muted/50 px-3 py-2 border-b border-border/40">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-medium text-foreground">JSON-LD Schemas</h3>
-                  <span className="text-[11px] text-muted-foreground">
-                    {structuredData.length} detected
-                  </span>
-                </div>
-                <CheckCircle className="h-3.5 w-3.5 text-green-600" />
-              </div>
-            </div>
-
-            {/* Content section */}
-            <div className="p-3">
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-1.5">
-                  {structuredData.slice(0, 6).map((schema, index) => (
-                    <div
-                      key={index}
-                      className="bg-muted/30 rounded px-2 py-1.5 border border-border/40 text-[11px] font-medium text-foreground"
-                    >
-                      {schema.type || 'Schema'}
-                    </div>
-                  ))}
-                  {structuredData.length > 6 && (
-                    <div className="text-[11px] text-muted-foreground px-2 py-1.5">
-                      +{structuredData.length - 6} more
-                    </div>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Structured data helps search engines understand your content for rich snippets and better SEO.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+          </AuditCard>
+        </AuditSection>
       )}
 
-      {/* HTTP Headers Details */}
-      {Object.keys(safeHeaders).length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 mb-3">
-            <Server className="h-3.5 w-3.5 text-muted-foreground" />
-            <div>
-              <h2 className="text-xs font-semibold text-foreground">HTTP Response Headers</h2>
-              <p className="text-[11px] text-muted-foreground">Server response headers for debugging and optimization</p>
-            </div>
+      {responseHeaderCount > 0 && (
+        <AuditSection
+          icon={Server}
+          title='Response Headers'
+          description='Raw response headers for debugging, caching, policy checks, and deployment verification.'
+          action={
+            <MetadataPill>
+              <Info className='h-3.5 w-3.5 text-muted-foreground' />
+              {responseHeaderCount} headers
+            </MetadataPill>
+          }
+        >
+          <div className='rounded-lg border border-border bg-card overflow-hidden'>
+            <details>
+              <summary className='cursor-pointer px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/30 transition-colors'>
+                View all HTTP headers
+              </summary>
+              <pre className='max-h-72 overflow-auto border-t border-border bg-muted/20 p-4 text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap'>
+                {Object.entries(safeHeaders)
+                  .map(([key, value]) => `${key}: ${value}`)
+                  .join('\n')}
+              </pre>
+            </details>
           </div>
-
-          <div className="bg-card border border-border/40 rounded-lg overflow-hidden shadow-sm">
-            {/* Header section with gray background */}
-            <div className="bg-muted/50 px-3 py-2 border-b border-border/40">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-medium text-foreground">Response Headers</h3>
-                  <span className="text-[11px] text-muted-foreground">
-                    {Object.keys(safeHeaders).length} received
-                  </span>
-                </div>
-                <Info className="h-3.5 w-3.5 text-blue-600" />
-              </div>
-            </div>
-
-            {/* Content section */}
-            <div className="p-3">
-              <details className="bg-muted/30 rounded p-2 border border-border/40">
-                <summary className="text-[11px] font-medium cursor-pointer hover:text-foreground">
-                  View All HTTP Headers
-                </summary>
-                <div className="mt-2 bg-muted/20 rounded p-2">
-                  <pre className="text-[10px] text-muted-foreground overflow-x-auto whitespace-pre-wrap max-h-40 overflow-y-auto font-mono leading-relaxed">
-                    {Object.entries(safeHeaders)
-                      .map(([key, value]) => `${key}: ${value}`)
-                      .join('\n')}
-                  </pre>
-                </div>
-              </details>
-            </div>
-          </div>
-        </div>
+        </AuditSection>
       )}
 
-      {/* Site Discovery */}
       <SiteDiscovery metadata={metadata} />
     </div>
   )

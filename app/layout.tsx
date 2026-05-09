@@ -34,7 +34,7 @@ const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://layoutlab.vercel.app'
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: 'WebViewer — preview any site across all devices',
+    default: 'WebViewer. Preview any site across all devices.',
     template: '%s | WebViewer'
   },
   description:
@@ -60,24 +60,24 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: baseUrl,
-    title: 'WebViewer — preview any site across all devices',
+    title: 'WebViewer. Preview any site across all devices.',
     description:
-      'Preview any URL across desktop, tablet, and mobile in parallel. Inspect SEO, social cards, and technical metadata — all in one tab.',
+      'Preview any URL across desktop, tablet, and mobile in parallel. Inspect SEO, social cards, and technical metadata, all in one tab.',
     siteName: 'WebViewer',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'WebViewer — preview any site across all devices'
+        alt: 'WebViewer. Preview any site across all devices.'
       }
     ]
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'WebViewer — preview any site across all devices',
+    title: 'WebViewer. Preview any site across all devices.',
     description:
-      'Preview any URL across desktop, tablet, and mobile in parallel. Inspect SEO, social cards, and technical metadata — all in one tab.',
+      'Preview any URL across desktop, tablet, and mobile in parallel. Inspect SEO, social cards, and technical metadata, all in one tab.',
     images: ['/og-image.png']
   },
   robots: {

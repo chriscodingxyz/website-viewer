@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { CheckCircle2, XCircle, AlertTriangle } from 'lucide-react'
@@ -101,18 +101,18 @@ function ReportContent ({ metadata }: { metadata: WebsiteMetadata }) {
             status={seo.title && seo.title.length >= 30 && seo.title.length <= 60 ? 'pass' : seo.title ? 'warn' : 'fail'}
             label='Page title'
             value={seo.title || '—'}
-            hint={seo.title ? `${seo.title.length} chars (optimal 30–60)` : 'Add a descriptive title.'}
+            hint={seo.title ? `${seo.title.length} chars (optimal 30 to 60)` : 'Add a descriptive title.'}
           />
           <Check
             status={seo.description && seo.description.length >= 120 && seo.description.length <= 160 ? 'pass' : seo.description ? 'warn' : 'fail'}
             label='Meta description'
-            value={seo.description || '—'}
-            hint={seo.description ? `${seo.description.length} chars (optimal 120–160)` : 'Add a meta description.'}
+            value={seo.description || 'Not set'}
+            hint={seo.description ? `${seo.description.length} chars (optimal 120 to 160)` : 'Add a meta description.'}
           />
-          <Check status={seo.canonical ? 'pass' : 'warn'} label='Canonical URL' value={seo.canonical || '—'} />
-          <Check status={seo.viewport ? 'pass' : 'fail'} label='Viewport meta' value={seo.viewport || '—'} />
-          <Check status={seo.language ? 'pass' : 'warn'} label='Language' value={seo.language || '—'} />
-          <Check status={seo.robots ? 'pass' : 'warn'} label='Robots directive' value={seo.robots || '—'} />
+          <Check status={seo.canonical ? 'pass' : 'warn'} label='Canonical URL' value={seo.canonical || 'Not set'} />
+          <Check status={seo.viewport ? 'pass' : 'fail'} label='Viewport meta' value={seo.viewport || 'Not set'} />
+          <Check status={seo.language ? 'pass' : 'warn'} label='Language' value={seo.language || 'Not set'} />
+          <Check status={seo.robots ? 'pass' : 'warn'} label='Robots directive' value={seo.robots || 'Not set'} />
         </div>
       </section>
 
@@ -153,7 +153,7 @@ function ReportContent ({ metadata }: { metadata: WebsiteMetadata }) {
   )
 }
 
-export default function ReportPage () {
+function ReportPageInner () {
   const params = useSearchParams()
   const site = params?.get('site')
   const autoprint = params?.get('autoprint') === '1'
@@ -207,5 +207,21 @@ export default function ReportPage () {
     <div className='report-page'>
       <ReportContent metadata={metadata} />
     </div>
+  )
+}
+
+export default function ReportPage () {
+  return (
+    <Suspense
+      fallback={
+        <div className='report-page'>
+          <div className='report-doc'>
+            <p className='text-sm text-muted-foreground'>Preparing report...</p>
+          </div>
+        </div>
+      }
+    >
+      <ReportPageInner />
+    </Suspense>
   )
 }

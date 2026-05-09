@@ -7,12 +7,12 @@ const FEATURES = [
   {
     icon: Devices,
     title: 'All viewports',
-    desc: 'Desktop, tablet, mobile — rendered side-by-side, in parallel.'
+    desc: 'Desktop, tablet, and mobile rendered side-by-side, in parallel.'
   },
   {
     icon: MagnifyingGlass,
     title: 'SEO insights',
-    desc: 'Title, meta, robots, sitemap, analytics — all surfaced at once.'
+    desc: 'Title, meta, robots, sitemap, and analytics. All surfaced at once.'
   },
   {
     icon: ShareNetwork,
