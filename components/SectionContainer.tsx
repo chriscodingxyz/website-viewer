@@ -43,14 +43,24 @@ export default function SectionContainer () {
       {selectedTab !== 'viewports' && <ReportSummary />}
       {/* Tab Content - Smooth transitions between tabs */}
       <div className='w-full relative'>
+        {/*
+          Viewports are mounted full-size always so iframes (and the videos
+          inside them) start fetching the moment a site is analyzed, not when
+          the user opens this tab. When inactive we move the container off
+          the visual page with `left: -100vw` and mark it inert — the iframes
+          stay rendered at real size, so the browser preloads media.
+        */}
         <div
+          aria-hidden={selectedTab !== 'viewports'}
           className={cn(
-            'transition-all duration-300 ease-out',
+            'transition-opacity duration-300 ease-out',
             selectedTab === 'viewports'
-              ? 'opacity-100 translate-y-0 relative'
-              : 'opacity-0 translate-y-2 absolute top-0 left-0 w-full pointer-events-none overflow-hidden'
+              ? 'opacity-100 relative'
+              : 'opacity-0 fixed top-0 pointer-events-none'
           )}
-          style={selectedTab !== 'viewports' ? { height: '1px' } : {}}
+          style={selectedTab !== 'viewports'
+            ? { left: '-100vw', width: '100vw', visibility: 'hidden' }
+            : {}}
         >
           <ViewportsSection expanded={true} onToggle={() => {}} />
         </div>
