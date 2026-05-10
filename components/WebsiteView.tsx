@@ -95,25 +95,24 @@ export default function WebsiteView ({
   useEffect(() => {
     const updateScale = () => {
       if (containerRef.current) {
-        const containerWidth = containerRef.current.offsetWidth
+        // Measure parent slot width so the card scales to fit its container
+        // rather than circularly measuring its own explicit style width
+        const parent = containerRef.current.parentElement
+        const availableWidth = parent ? parent.clientWidth : containerRef.current.offsetWidth
         const displayWidth = displayDimensions[view.type].width
 
-        // For zoom levels 100% and below, fit to container
-        // For zoom levels above 100%, expand to show full content
         let baseScale
         if (globalZoom <= 1) {
-          baseScale = Math.min(1, containerWidth / displayWidth)
+          baseScale = Math.min(1, availableWidth / displayWidth)
         } else {
-          // At zoom levels above 100%, always show full content
           baseScale = 1
         }
 
         const finalScale = baseScale * globalZoom
         setScale(finalScale)
 
-        // Determine if view should be in compact mode based on final width
         const currentScaledWidth = displayWidth * finalScale
-        setIsCompactView(currentScaledWidth < 320) // Optimized threshold for mobile
+        setIsCompactView(currentScaledWidth < 320)
       }
     }
 
