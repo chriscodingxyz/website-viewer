@@ -37,7 +37,7 @@ export default function WebsiteViewer () {
 
   return (
     <div className='min-h-screen bg-background font-sans text-foreground'>
-      <main className='container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl py-16 sm:py-24 space-y-24 sm:space-y-28'>
+      <main className='container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl py-12 sm:py-24 space-y-16 sm:space-y-24 lg:space-y-28'>
 
         {/* Hero — centered, editorial */}
         <section className='text-center max-w-3xl mx-auto'>
@@ -50,7 +50,7 @@ export default function WebsiteViewer () {
             <ArrowRight02Icon className='w-3 h-3' />
           </Link>
 
-          <h1 className='text-5xl sm:text-6xl md:text-7xl tracking-tight text-foreground leading-[1.05] mb-6'>
+          <h1 className='text-[2.5rem] sm:text-5xl md:text-7xl tracking-tight text-foreground leading-[1.05] mb-6'>
             See your site rendered <span className='font-serif italic font-normal'>everywhere</span>, at once.
           </h1>
 
@@ -83,7 +83,7 @@ export default function WebsiteViewer () {
             </Button>
           </div>
 
-          <div className='flex items-center justify-center gap-6 mt-6 text-xs text-muted-foreground'>
+          <div className='flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-6 text-xs text-muted-foreground'>
             <span>No sign-up</span>
             <span className='w-1 h-1 rounded-full bg-muted-foreground/30' />
             <span>Works on localhost</span>
