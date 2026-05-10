@@ -289,57 +289,19 @@ export default function ViewportsSection ({
               </div>
             </div>
           ) : (
-            <div className='w-full'>
-              {/* Mobile: Horizontal scroll carousel */}
-              <div className='sm:hidden'>
-                <div className='overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-6 px-6 pb-4'>
-                  <div className='flex gap-4 w-max'>
-                    {views.map((view: any, index: number) => (
-                      <div key={view.id} className='snap-center flex-shrink-0 w-[85vw]'>
-                        <WebsiteView
-                          view={view}
-                          refreshKey={refreshKey}
-                          globalZoom={globalZoom}
-                          onRemove={() => removeView(view.id)}
-                          onTypeChange={type => changeViewType(view.id, type)}
-                          onDuplicate={duplicateView}
-                          index={index}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {/* Dot indicators */}
-                {views.length > 1 && (
-                  <div className='flex justify-center gap-2 mt-4'>
-                    {views.map((_: any, index: number) => (
-                      <div
-                        key={index}
-                        className={cn(
-                          'w-2 h-2 rounded-full transition-colors duration-200',
-                          index === 0 ? 'bg-accent' : 'bg-muted'
-                        )}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Desktop: Flex wrap layout */}
-              <div className='hidden sm:flex flex-wrap gap-4 justify-center items-start'>
-                {views.map((view: any, index: number) => (
-                  <WebsiteView
-                    key={view.id}
-                    view={view}
-                    refreshKey={refreshKey}
-                    globalZoom={globalZoom}
-                    onRemove={() => removeView(view.id)}
-                    onTypeChange={type => changeViewType(view.id, type)}
-                    onDuplicate={duplicateView}
-                    index={index}
-                  />
-                ))}
-              </div>
+            <div className='flex flex-wrap gap-4 justify-center items-start'>
+              {views.map((view: any, index: number) => (
+                <WebsiteView
+                  key={view.id}
+                  view={view}
+                  refreshKey={refreshKey}
+                  globalZoom={globalZoom}
+                  onRemove={() => removeView(view.id)}
+                  onTypeChange={type => changeViewType(view.id, type)}
+                  onDuplicate={duplicateView}
+                  index={index}
+                />
+              ))}
             </div>
           )}
         </div>
