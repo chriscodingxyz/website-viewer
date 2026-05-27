@@ -29,7 +29,8 @@ export default function FeedbackPanel() {
     removePin,
     selectedPinId,
     setSelectedPinId,
-    setExportOpen
+    setExportOpen,
+    canEdit
   } = useFeedback()
 
   return (
@@ -57,7 +58,9 @@ export default function FeedbackPanel() {
         <div className='flex-1 overflow-y-auto px-6 py-4 space-y-3'>
           {pins.length === 0 && (
             <div className='text-sm text-muted-foreground text-center py-12'>
-              Enable feedback mode, choose Comment or Inspect/Edit, then click inside a viewport.
+              {canEdit
+                ? 'Enable feedback mode, choose Comment or Inspect/Edit, then click inside a viewport.'
+                : 'No feedback has been added yet.'}
             </div>
           )}
 
@@ -97,38 +100,46 @@ export default function FeedbackPanel() {
                       </code>
                     )}
                   </div>
-                  <button
-                    onClick={e => {
-                      e.stopPropagation()
-                      removePin(pin.id)
-                    }}
-                    className='text-muted-foreground hover:text-red-600 p-1 rounded transition-colors flex-shrink-0'
-                    aria-label='Delete pin'
-                  >
-                    <Trash2 className='h-3.5 w-3.5' />
-                  </button>
-                </div>
-
-                <div className='flex gap-1 mb-2'>
-                  {(['low', 'medium', 'high'] as Severity[]).map(s => (
+                  {canEdit && (
                     <button
-                      key={s}
                       onClick={e => {
                         e.stopPropagation()
-                        updatePin(pin.id, { severity: s })
+                        removePin(pin.id)
                       }}
-                      className={cn(
-                        'text-[10px] px-2 py-0.5 rounded border transition-all capitalize',
-                        pin.severity === s
-                          ? 'border-foreground/40 bg-foreground/5 font-medium'
-                          : 'border-border/40 text-muted-foreground hover:border-border'
-                      )}
+                      className='text-muted-foreground hover:text-red-600 p-1 rounded transition-colors flex-shrink-0'
+                      aria-label='Delete pin'
                     >
-                      <span className={cn('inline-block w-1 h-1 rounded-full mr-1 align-middle', severityDot[s])} />
-                      {s}
+                      <Trash2 className='h-3.5 w-3.5' />
                     </button>
-                  ))}
+                  )}
                 </div>
+
+                {canEdit ? (
+                  <div className='flex gap-1 mb-2'>
+                    {(['low', 'medium', 'high'] as Severity[]).map(s => (
+                      <button
+                        key={s}
+                        onClick={e => {
+                          e.stopPropagation()
+                          updatePin(pin.id, { severity: s })
+                        }}
+                        className={cn(
+                          'text-[10px] px-2 py-0.5 rounded border transition-all capitalize',
+                          pin.severity === s
+                            ? 'border-foreground/40 bg-foreground/5 font-medium'
+                            : 'border-border/40 text-muted-foreground hover:border-border'
+                        )}
+                      >
+                        <span className={cn('inline-block w-1 h-1 rounded-full mr-1 align-middle', severityDot[s])} />
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className='mb-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground'>
+                    {pin.severity} priority
+                  </div>
+                )}
 
                 <Textarea
                   value={pin.comment}
@@ -136,6 +147,7 @@ export default function FeedbackPanel() {
                   onClick={e => e.stopPropagation()}
                   placeholder={pin.kind === 'inspect' ? 'Optional note for this edit' : 'What needs to change?'}
                   className='min-h-[60px] text-sm resize-none'
+                  readOnly={!canEdit}
                 />
 
                 {pin.kind === 'inspect' && (
@@ -156,6 +168,7 @@ export default function FeedbackPanel() {
                       onClick={e => e.stopPropagation()}
                       placeholder='Replace selected text with...'
                       className='min-h-[64px] text-sm resize-none'
+                      readOnly={!canEdit}
                     />
                     <Textarea
                       value={pin.editInstruction || ''}
@@ -163,6 +176,7 @@ export default function FeedbackPanel() {
                       onClick={e => e.stopPropagation()}
                       placeholder='Optional: style/layout instruction for this element'
                       className='min-h-[52px] text-xs resize-none'
+                      readOnly={!canEdit}
                     />
                   </div>
                 )}

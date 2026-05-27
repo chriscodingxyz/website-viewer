@@ -143,7 +143,13 @@ function Header () {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSite, tabs, selectedTab])
 
-  if (pathname?.startsWith('/report')) return null
+  if (
+    pathname === '/' ||
+    pathname?.startsWith('/report') ||
+    pathname?.startsWith('/dashboard') ||
+    pathname?.startsWith('/projects') ||
+    pathname?.startsWith('/p/')
+  ) return null
 
   // Function to handle selection from combobox
   const onSelect = (selectedValue: string) => {

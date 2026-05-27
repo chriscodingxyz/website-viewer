@@ -20,7 +20,7 @@ export default function FeedbackOverlay({
   viewportWidth,
   viewportHeight
 }: Props) {
-  const { feedbackMode, pins, addPin, activeTool } = useFeedback()
+  const { feedbackMode, pins, addPin, activeTool, canEdit } = useFeedback()
   const { currentSite } = useWebsiteViewer()
   const [autoOpenPinId, setAutoOpenPinId] = useState<string | null>(null)
   const [iframeScroll, setIframeScroll] = useState({ x: 0, y: 0 })
@@ -32,7 +32,9 @@ export default function FeedbackOverlay({
     label: string
   } | null>(null)
   const lastHoverReadRef = useRef(0)
-  const pinsForView = pins.filter(p => p.viewportId === view.id)
+  const pinsForView = pins.filter(
+    p => p.viewportId === view.id && p.url === view.url
+  )
   const hasDocumentPins = pinsForView.some(
     p => typeof p.documentX === 'number' && typeof p.documentY === 'number'
   )
@@ -82,7 +84,7 @@ export default function FeedbackOverlay({
   }, [activeTool, feedbackMode])
 
   const handleClick = (e: MouseEvent<HTMLDivElement>) => {
-    if (!feedbackMode || !iframeRef.current) return
+    if (!canEdit || !feedbackMode || !iframeRef.current) return
     const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect()
     if (rect.width === 0 || rect.height === 0) return
     const xPct = ((e.clientX - rect.left) / rect.width) * 100
@@ -92,7 +94,7 @@ export default function FeedbackOverlay({
 
     const created = addPin({
       kind: activeTool,
-      url: currentSite || view.url,
+      url: view.url || currentSite || '',
       viewportId: view.id,
       viewportType: view.type,
       viewportWidth,
@@ -128,7 +130,7 @@ export default function FeedbackOverlay({
   }
 
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (!feedbackMode || activeTool !== 'inspect' || !iframeRef.current) {
+    if (!canEdit || !feedbackMode || activeTool !== 'inspect' || !iframeRef.current) {
       if (hoverTarget) setHoverTarget(null)
       return
     }
@@ -172,7 +174,7 @@ export default function FeedbackOverlay({
   }
 
   const handleWheel = (e: WheelEvent<HTMLDivElement>) => {
-    if (!feedbackMode || !iframeRef.current) return
+    if (!canEdit || !feedbackMode || !iframeRef.current) return
 
     try {
       const win = iframeRef.current.contentWindow
@@ -202,14 +204,14 @@ export default function FeedbackOverlay({
       onMouseLeave={() => setHoverTarget(null)}
       onWheel={handleWheel}
       className={`absolute inset-0 z-20 ${
-        feedbackMode ? 'cursor-crosshair pointer-events-auto' : 'pointer-events-none'
+        canEdit && feedbackMode ? 'cursor-crosshair pointer-events-auto' : 'pointer-events-none'
       }`}
       data-feedback-overlay
     >
-      {feedbackMode && (
+      {canEdit && feedbackMode && (
         <div className='absolute inset-0 ring-2 ring-inset ring-accent/40 pointer-events-none animate-pulse' />
       )}
-      {feedbackMode && activeTool === 'inspect' && hoverTarget && (
+      {canEdit && feedbackMode && activeTool === 'inspect' && hoverTarget && (
         <div
           className='absolute z-20 pointer-events-none rounded-sm border border-foreground bg-foreground/5 shadow-[0_0_0_9999px_rgba(0,0,0,0.03)]'
           style={{

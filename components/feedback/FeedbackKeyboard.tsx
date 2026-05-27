@@ -20,7 +20,8 @@ export default function FeedbackKeyboard() {
     setFeedbackMode,
     setExportOpen,
     setActiveTool,
-    pins
+    pins,
+    canEdit
   } = useFeedback()
 
   useEffect(() => {
@@ -29,16 +30,16 @@ export default function FeedbackKeyboard() {
       if (isTypingTarget(e.target)) return
       if (!currentSite) return
 
-      if (e.key === 'f' || e.key === 'F') {
+      if (canEdit && (e.key === 'f' || e.key === 'F')) {
         e.preventDefault()
         toggleFeedbackMode()
-      } else if (e.key === 'Escape' && feedbackMode) {
+      } else if (canEdit && e.key === 'Escape' && feedbackMode) {
         e.preventDefault()
         setFeedbackMode(false)
-      } else if ((e.key === 'c' || e.key === 'C') && feedbackMode) {
+      } else if (canEdit && (e.key === 'c' || e.key === 'C') && feedbackMode) {
         e.preventDefault()
         setActiveTool('comment')
-      } else if ((e.key === 'i' || e.key === 'I') && feedbackMode) {
+      } else if (canEdit && (e.key === 'i' || e.key === 'I') && feedbackMode) {
         e.preventDefault()
         setActiveTool('inspect')
       } else if ((e.key === 'e' || e.key === 'E') && pins.length > 0) {
@@ -55,7 +56,8 @@ export default function FeedbackKeyboard() {
     setFeedbackMode,
     setExportOpen,
     setActiveTool,
-    pins.length
+    pins.length,
+    canEdit
   ])
 
   return null

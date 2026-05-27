@@ -208,18 +208,90 @@ export async function GET (request: NextRequest) {
         }
       })
 
-      // Framebusting protection
+      // Framebusting protection + in-iframe navigation interceptor.
+      // Keeps anchor clicks, history.pushState/replaceState, and meta
+      // refreshes routed back through the proxy so navigation stays
+      // inside the rendered preview.
+      const targetOrigin = new URL(targetUrl).origin
       const framebusterScript = `
         <script>
           (function() {
+            var PROXY_PREFIX = '/api/proxy?url=';
+            var TARGET_ORIGIN = ${JSON.stringify(targetOrigin)};
+
+            function toProxy(url) {
+              if (url == null) return url;
+              try { url = String(url); } catch (e) { return url; }
+              if (!url || url.indexOf(PROXY_PREFIX) === 0) return url;
+              if (url.indexOf('data:') === 0 || url.indexOf('blob:') === 0 || url.indexOf('javascript:') === 0 || url.indexOf('mailto:') === 0 || url.indexOf('tel:') === 0 || url.charAt(0) === '#') return url;
+              try {
+                var abs = new URL(url, TARGET_ORIGIN).toString();
+                return PROXY_PREFIX + encodeURIComponent(abs);
+              } catch (e) { return url; }
+            }
+
             try {
               window.frameElement = { "id": "proxied-frame", "nodeName": "IFRAME" };
               Object.defineProperty(window, 'top', { get: function() { return window.self; } });
               Object.defineProperty(window, 'parent', { get: function() { return window.self; } });
               window.onbeforeunload = function() { return null; };
               window.onunload = function() {};
-              window.self.location.replace = function(url) { console.log('Blocked redirect'); };
             } catch (e) {}
+
+            // Intercept anchor clicks (capture phase before site handlers).
+            document.addEventListener('click', function(e) {
+              if (e.defaultPrevented || e.button !== 0) return;
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+              var node = e.target;
+              while (node && node !== document) {
+                if (node.tagName === 'A' && node.getAttribute('href')) {
+                  var href = node.getAttribute('href');
+                  if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0 || href.indexOf('mailto:') === 0 || href.indexOf('tel:') === 0) return;
+                  if (node.target && node.target !== '_self') return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.location.href = toProxy(href);
+                  return;
+                }
+                node = node.parentNode;
+              }
+            }, true);
+
+            // Wrap history navigation so SPA routes stay proxied.
+            try {
+              var _push = history.pushState;
+              history.pushState = function(state, title, url) {
+                if (url != null) url = toProxy(url);
+                return _push.call(this, state, title, url);
+              };
+              var _replace = history.replaceState;
+              history.replaceState = function(state, title, url) {
+                if (url != null) url = toProxy(url);
+                return _replace.call(this, state, title, url);
+              };
+            } catch (e) {}
+
+            // Intercept window.location.assign / replace.
+            try {
+              var _assign = window.location.assign && window.location.assign.bind(window.location);
+              if (_assign) {
+                window.location.assign = function(url) { return _assign(toProxy(url)); };
+              }
+              var _locReplace = window.location.replace && window.location.replace.bind(window.location);
+              if (_locReplace) {
+                window.location.replace = function(url) { return _locReplace(toProxy(url)); };
+              }
+            } catch (e) {}
+
+            // Form submissions with action attribute.
+            document.addEventListener('submit', function(e) {
+              var form = e.target;
+              if (!form || form.tagName !== 'FORM') return;
+              var action = form.getAttribute('action');
+              if (action && action.indexOf(PROXY_PREFIX) !== 0) {
+                form.setAttribute('action', toProxy(action));
+              }
+            }, true);
           })();
         </script>
       `

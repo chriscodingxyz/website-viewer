@@ -73,6 +73,8 @@ interface FeedbackContextValue {
   setExportOpen: (open: boolean) => void
   syncEnabled: boolean
   isSyncing: boolean
+  canEdit: boolean
+  projectMode: boolean
   createShareLink: () => Promise<string | null>
 }
 
@@ -83,9 +85,18 @@ const FeedbackContext = createContext<FeedbackContextValue | undefined>(
 interface ProviderProps {
   children: ReactNode
   currentUrl: string | null
+  projectId?: string
+  initialSession?: FeedbackSession | null
+  canEdit?: boolean
 }
 
-export function FeedbackProvider({ children, currentUrl }: ProviderProps) {
+export function FeedbackProvider({
+  children,
+  currentUrl,
+  projectId,
+  initialSession,
+  canEdit = true
+}: ProviderProps) {
   const [feedbackMode, setFeedbackModeState] = useState(false)
   const [activeTool, setActiveTool] = useState<FeedbackTool>('comment')
   const [session, setSession] = useState<FeedbackSession | null>(null)
@@ -93,8 +104,27 @@ export function FeedbackProvider({ children, currentUrl }: ProviderProps) {
   const [isPanelOpen, setPanelOpen] = useState(false)
   const [isExportOpen, setExportOpen] = useState(false)
   const lastUrlRef = useRef<string | null>(null)
+  const projectMode = Boolean(projectId)
+  const skipNextProjectSyncRef = useRef(false)
 
   useEffect(() => {
+    if (projectMode) {
+      if (!currentUrl) {
+        setSession(null)
+        lastUrlRef.current = null
+        return
+      }
+
+      const seededSession = initialSession ?? {
+        ...emptySession(currentUrl),
+        projectId
+      }
+      setSession(seededSession)
+      lastUrlRef.current = currentUrl
+      skipNextProjectSyncRef.current = true
+      return
+    }
+
     if (!currentUrl) {
       setSession(null)
       lastUrlRef.current = null
@@ -114,26 +144,37 @@ export function FeedbackProvider({ children, currentUrl }: ProviderProps) {
     } catch {
       setSession(emptySession(currentUrl))
     }
-  }, [currentUrl])
+  }, [currentUrl, initialSession, projectId, projectMode])
 
   useEffect(() => {
-    if (!session) return
+    if (!session || projectMode) return
     try {
       window.localStorage.setItem(sessionKey(session.url), JSON.stringify(session))
     } catch {
       // localStorage full or unavailable; silent fail
     }
-  }, [session])
+  }, [session, projectMode])
 
   const toggleFeedbackMode = useCallback(() => {
+    if (!canEdit) return
     setFeedbackModeState(v => !v)
-  }, [])
+  }, [canEdit])
 
   const setFeedbackMode = useCallback((on: boolean) => {
+    if (!canEdit && on) return
     setFeedbackModeState(on)
-  }, [])
+  }, [canEdit])
 
   const addPin: FeedbackContextValue['addPin'] = useCallback(input => {
+    if (!canEdit) {
+      return {
+        ...input,
+        id: '',
+        number: 0,
+        createdAt: new Date().toISOString()
+      }
+    }
+
     const created: Pin = {
       ...input,
       id: newId(),
@@ -147,32 +188,35 @@ export function FeedbackProvider({ children, currentUrl }: ProviderProps) {
     })
     setSelectedPinId(created.id)
     return created
-  }, [])
+  }, [canEdit])
 
   const updatePin = useCallback((id: string, patch: Partial<Pin>) => {
+    if (!canEdit) return
     setSession(prev => {
       if (!prev) return prev
       const pins = prev.pins.map(p => (p.id === id ? { ...p, ...patch } : p))
       return { ...prev, pins, updatedAt: new Date().toISOString() }
     })
-  }, [])
+  }, [canEdit])
 
   const removePin = useCallback((id: string) => {
+    if (!canEdit) return
     setSession(prev => {
       if (!prev) return prev
       const pins = renumber(prev.pins.filter(p => p.id !== id))
       return { ...prev, pins, updatedAt: new Date().toISOString() }
     })
     setSelectedPinId(curr => (curr === id ? null : curr))
-  }, [])
+  }, [canEdit])
 
   const clearPins = useCallback(() => {
+    if (!canEdit) return
     setSession(prev => {
       if (!prev) return prev
       return { ...prev, pins: [], updatedAt: new Date().toISOString() }
     })
     setSelectedPinId(null)
-  }, [])
+  }, [canEdit])
 
   const pins = useMemo(() => session?.pins ?? [], [session])
 
@@ -183,20 +227,35 @@ export function FeedbackProvider({ children, currentUrl }: ProviderProps) {
     activeProject.data?.id ??
     authSession.data?.session.activeOrganizationId ??
     null
-  const canSync = SYNC_ENABLED && !!signedInUser && !!activeProjectId
+  const canSync = projectMode
+    ? Boolean(projectId && canEdit)
+    : SYNC_ENABLED && !!signedInUser && !!activeProjectId
   const [isSyncing, setIsSyncing] = useState(false)
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    if (!canSync || !session || session.pins.length === 0) return
+    if (!canSync || !session) return
+    if (!projectMode && session.pins.length === 0) return
+    if (projectMode && skipNextProjectSyncRef.current) {
+      skipNextProjectSyncRef.current = false
+      return
+    }
+
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current)
     syncTimerRef.current = setTimeout(async () => {
       try {
         setIsSyncing(true)
-        await fetch(`/api/feedback/sessions/${session.id}`, {
+        const syncUrl = projectMode && projectId
+          ? `/api/projects/${projectId}/feedback`
+          : `/api/feedback/sessions/${session.id}`
+
+        await fetch(syncUrl, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...session, projectId: activeProjectId })
+          body: JSON.stringify({
+            ...session,
+            projectId: projectMode ? projectId : activeProjectId
+          })
         })
       } catch {
         // silent — localStorage still holds truth
@@ -207,9 +266,24 @@ export function FeedbackProvider({ children, currentUrl }: ProviderProps) {
     return () => {
       if (syncTimerRef.current) clearTimeout(syncTimerRef.current)
     }
-  }, [session, canSync, activeProjectId])
+  }, [session, canSync, activeProjectId, projectId, projectMode])
 
   const createShareLink = useCallback(async (): Promise<string | null> => {
+    if (projectMode && projectId) {
+      if (canEdit && session) {
+        try {
+          await fetch(`/api/projects/${projectId}/feedback`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...session, projectId })
+          })
+        } catch {
+          // Link is still useful; sync failures are reflected by stale content.
+        }
+      }
+      return `${window.location.origin}/p/${projectId}`
+    }
+
     if (!canSync || !session || !activeProjectId) return null
     try {
       const res = await fetch(`/api/feedback/sessions/${session.id}`, {
@@ -227,7 +301,7 @@ export function FeedbackProvider({ children, currentUrl }: ProviderProps) {
     } catch {
       return null
     }
-  }, [canSync, session, activeProjectId])
+  }, [canSync, session, activeProjectId, projectId, projectMode, canEdit])
 
   const value: FeedbackContextValue = {
     feedbackMode,
@@ -247,8 +321,10 @@ export function FeedbackProvider({ children, currentUrl }: ProviderProps) {
     setPanelOpen,
     isExportOpen,
     setExportOpen,
-    syncEnabled: canSync,
+    syncEnabled: projectMode || canSync,
     isSyncing,
+    canEdit,
+    projectMode,
     createShareLink
   }
 
@@ -296,6 +372,8 @@ export function useFeedback(): FeedbackContextValue {
       setExportOpen: () => {},
       syncEnabled: false,
       isSyncing: false,
+      canEdit: false,
+      projectMode: false,
       createShareLink: async () => null
     }
   }

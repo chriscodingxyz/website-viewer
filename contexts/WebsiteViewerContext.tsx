@@ -190,7 +190,7 @@ interface WebsiteViewerContextType {
   handleKeyDown: (e: React.KeyboardEvent) => void
   selectSuggestion: (suggestion: string) => void
   formatUrl: (url: string) => string | null
-  loadSite: (urlOverride?: string) => void
+  loadSite: (urlOverride?: string, options?: { silent?: boolean }) => void
   setUrlWithHighlight: (url: string) => void
   removeView: (id: number) => void
   changeViewType: (id: number, type: ViewType) => void
@@ -383,6 +383,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   // Update URL parameters when URL input changes
   useEffect(() => {
     if (typeof window === 'undefined') return
+    if (window.location.pathname.startsWith('/p/')) return
 
     const timeoutId = setTimeout(() => {
       const urlParams = new URLSearchParams(window.location.search)
@@ -480,6 +481,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
 
   const updateUrlParams = () => {
     if (typeof window === 'undefined') return
+    if (window.location.pathname.startsWith('/p/')) return
 
     const urlParams = new URLSearchParams(window.location.search)
 
@@ -502,14 +504,16 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
     window.history.pushState({}, '', finalUrl)
   }
 
-  const loadSite = (urlOverride?: string) => {
+  const loadSite = (urlOverride?: string, options?: { silent?: boolean }) => {
     const urlToUse = urlOverride || url
     const formattedUrl = formatUrl(urlToUse, username, password)
     if (formattedUrl) {
       loadSiteInternal(formattedUrl)
       updateUrlParams()
-      toast.success('Site loaded - analyzing...')
-    } else {
+      if (!options?.silent) {
+        toast.success('Site loaded - analyzing...')
+      }
+    } else if (!options?.silent) {
       toast.error('Please enter a valid URL')
     }
   }

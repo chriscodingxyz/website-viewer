@@ -12,9 +12,7 @@ import { FavoritesProvider } from '@/contexts/FavoritesContext'
 import { HistoryProvider } from '@/contexts/HistoryContext'
 import { WebsiteViewerProvider } from '@/contexts/WebsiteViewerContext'
 import FeedbackProviderWrapper from '@/components/FeedbackProviderWrapper'
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
-import WebsiteViewerSidebar from '@/components/WebsiteViewerSidebar'
-import ClientOnly from '@/components/ClientOnly'
+import AppMain from '@/components/AppMain'
 
 const fontSans = Inter({
   subsets: ['latin'],
@@ -133,7 +131,7 @@ export default function RootLayout({
               <WebsiteViewerProvider>
                 <FeedbackProviderWrapper>
                   <Header />
-                  <main className='flex-1 pt-16'>{children}</main>
+                  <AppMain>{children}</AppMain>
                   <AuthDialogWrapper />
                 </FeedbackProviderWrapper>
               </WebsiteViewerProvider>

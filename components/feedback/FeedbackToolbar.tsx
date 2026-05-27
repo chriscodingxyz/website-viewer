@@ -19,7 +19,8 @@ export default function FeedbackToolbar() {
     setPanelOpen,
     setExportOpen,
     activeTool,
-    setActiveTool
+    setActiveTool,
+    canEdit
   } = useFeedback()
 
   if (!currentSite) return null
@@ -40,35 +41,39 @@ export default function FeedbackToolbar() {
           feedbackMode && 'border-accent/60 shadow-accent/20'
         )}
       >
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              size='sm'
-              variant={feedbackMode ? 'default' : 'ghost'}
-              onClick={toggleFeedbackMode}
-              className='rounded-full gap-2 h-8 px-3'
-            >
-              {feedbackMode ? (
-                <>
-                  <X className='h-3.5 w-3.5' />
-                  <span className='text-xs'>Exit feedback</span>
-                </>
-              ) : (
-                <>
-                  <MessageSquarePlus className='h-3.5 w-3.5' />
-                  <span className='text-xs'>Feedback mode</span>
-                </>
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <kbd className='text-[10px]'>F</kbd> Toggle feedback mode
-          </TooltipContent>
-        </Tooltip>
+        {canEdit && (
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size='sm'
+                  variant={feedbackMode ? 'default' : 'ghost'}
+                  onClick={toggleFeedbackMode}
+                  className='rounded-full gap-2 h-8 px-3'
+                >
+                  {feedbackMode ? (
+                    <>
+                      <X className='h-3.5 w-3.5' />
+                      <span className='text-xs'>Exit feedback</span>
+                    </>
+                  ) : (
+                    <>
+                      <MessageSquarePlus className='h-3.5 w-3.5' />
+                      <span className='text-xs'>Feedback mode</span>
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <kbd className='text-[10px]'>F</kbd> Toggle feedback mode
+              </TooltipContent>
+            </Tooltip>
 
-        <div className='w-px h-5 bg-border/60 mx-0.5' />
+            <div className='w-px h-5 bg-border/60 mx-0.5' />
+          </>
+        )}
 
-        {feedbackMode && (
+        {canEdit && feedbackMode && (
           <>
             <div className='flex items-center gap-1 rounded-full bg-muted/60 p-0.5'>
               <Tooltip>
@@ -139,20 +144,22 @@ export default function FeedbackToolbar() {
           </TooltipContent>
         </Tooltip>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              size='sm'
-              variant='ghost'
-              onClick={handleClear}
-              className='rounded-full h-8 w-8 p-0 text-muted-foreground hover:text-red-600'
-              disabled={pins.length === 0}
-            >
-              <Trash2 className='h-3.5 w-3.5' />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Clear all pins</TooltipContent>
-        </Tooltip>
+        {canEdit && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size='sm'
+                variant='ghost'
+                onClick={handleClear}
+                className='rounded-full h-8 w-8 p-0 text-muted-foreground hover:text-red-600'
+                disabled={pins.length === 0}
+              >
+                <Trash2 className='h-3.5 w-3.5' />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Clear all pins</TooltipContent>
+          </Tooltip>
+        )}
       </div>
     </TooltipProvider>
   )

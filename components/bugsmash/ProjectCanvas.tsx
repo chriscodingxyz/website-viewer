@@ -1,0 +1,498 @@
+'use client'
+
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useFeedback } from '@/contexts/FeedbackContext'
+import type { View, ViewType } from '@/contexts/WebsiteViewerContext'
+import FeedbackOverlay from '@/components/feedback/FeedbackOverlay'
+import { iframeDetectionService } from '@/services/IframeDetectionService'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from '@/components/ui/tooltip'
+import {
+  ArrowClockwise,
+  ArrowsOut,
+  ArrowSquareOut,
+  ChatText,
+  Cursor,
+  DeviceMobile,
+  DeviceTablet,
+  Monitor,
+  Shield,
+  ShieldSlash,
+  Warning
+} from '@phosphor-icons/react'
+import { cn } from '@/lib/utils'
+
+export type CanvasViewport = 'desktop' | 'tablet' | 'mobile' | 'fullscreen'
+
+const PRESETS: Record<
+  Exclude<CanvasViewport, 'fullscreen'>,
+  { id: number; type: ViewType; width: number; height: number }
+> = {
+  desktop: { id: 1, type: 'desktop', width: 1440, height: 900 },
+  tablet: { id: 2, type: 'tablet', width: 768, height: 1024 },
+  mobile: { id: 3, type: 'mobile', width: 375, height: 812 }
+}
+
+const VIEWPORT_OPTIONS: { id: CanvasViewport; label: string; icon: typeof Monitor }[] = [
+  { id: 'desktop', label: 'Desktop', icon: Monitor },
+  { id: 'tablet', label: 'Tablet', icon: DeviceTablet },
+  { id: 'mobile', label: 'Mobile', icon: DeviceMobile },
+  { id: 'fullscreen', label: 'Fullscreen', icon: ArrowsOut }
+]
+
+type FrameStatus = 'loading' | 'loaded' | 'blocked' | 'error'
+
+interface Props {
+  websiteUrl: string
+  onPageUrlChange?: (url: string) => void
+  jumpToPin?: import('@/types/feedback').Pin | null
+  onJumpHandled?: () => void
+}
+
+export default function ProjectCanvas({
+  websiteUrl,
+  onPageUrlChange,
+  jumpToPin,
+  onJumpHandled
+}: Props) {
+  const [viewport, setViewport] = useState<CanvasViewport>('desktop')
+  // Default to proxy so links inside the iframe stay rewritten and navigation works
+  // for sites that block embedding or use _top links.
+  const [useProxy, setUseProxy] = useState<boolean>(true)
+  const [frameStatus, setFrameStatus] = useState<FrameStatus>('loading')
+  const [refreshCount, setRefreshCount] = useState(0)
+  const [targetPageUrl, setTargetPageUrl] = useState<string>(websiteUrl)
+  const [currentPageUrl, setCurrentPageUrl] = useState<string>(websiteUrl)
+  const pendingScrollRef = useRef<import('@/types/feedback').Pin | null>(null)
+  const proxyAutoTriedRef = useRef(false)
+  const detectionRanRef = useRef<string | null>(null)
+
+  const { feedbackMode, setFeedbackMode, setActiveTool, canEdit, pins } = useFeedback()
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const detectionContainerRef = useRef<HTMLDivElement>(null)
+
+  const preset = viewport === 'fullscreen' ? PRESETS.desktop : PRESETS[viewport]
+  const isFullscreen = viewport === 'fullscreen'
+
+  const pinsOnThisPage = pins.filter(
+    p => p.url === currentPageUrl && p.viewportId === preset.id
+  )
+
+  const pathHint = (() => {
+    try {
+      const u = new URL(currentPageUrl)
+      return (u.pathname + (u.search ?? '')) || '/'
+    } catch {
+      return currentPageUrl
+    }
+  })()
+
+  const canvasAreaRef = useRef<HTMLDivElement>(null)
+  const [canvasWidth, setCanvasWidth] = useState(0)
+
+  useEffect(() => {
+    if (!canvasAreaRef.current) return
+    const observer = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        setCanvasWidth(entry.contentRect.width)
+      }
+    })
+    observer.observe(canvasAreaRef.current)
+    return () => observer.disconnect()
+  }, [])
+
+  const horizontalPadding = 48
+  const scale = isFullscreen
+    ? 1
+    : Math.min(1, Math.max(0.3, (canvasWidth - horizontalPadding) / preset.width || 1))
+
+  const view: View = useMemo(
+    () => ({
+      id: preset.id,
+      url: currentPageUrl,
+      type: preset.type,
+      iframeStatus: frameStatus === 'loaded' ? 'loaded' : 'loading',
+      useProxy
+    }),
+    [preset.id, preset.type, currentPageUrl, frameStatus, useProxy]
+  )
+
+  const iframeSrc = useProxy
+    ? `/api/proxy?url=${encodeURIComponent(targetPageUrl)}`
+    : targetPageUrl
+
+  const iframeKey = `${targetPageUrl}-${useProxy ? 'proxy' : 'direct'}-${refreshCount}`
+
+  useEffect(() => {
+    setFrameStatus('loading')
+    setCurrentPageUrl(targetPageUrl)
+  }, [iframeKey, targetPageUrl])
+
+  // Reset target URL if project changes.
+  useEffect(() => {
+    setTargetPageUrl(websiteUrl)
+  }, [websiteUrl])
+
+  // Handle jump-to-pin requests from the comment panel.
+  useEffect(() => {
+    if (!jumpToPin) return
+    pendingScrollRef.current = jumpToPin
+    if (jumpToPin.url !== currentPageUrl) {
+      setTargetPageUrl(jumpToPin.url)
+    } else {
+      // Already on the right page — scroll immediately.
+      scrollToPin(jumpToPin)
+      pendingScrollRef.current = null
+      onJumpHandled?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jumpToPin])
+
+  const scrollToPin = (pin: import('@/types/feedback').Pin) => {
+    const iframe = iframeRef.current
+    if (!iframe) return
+    try {
+      const doc = iframe.contentDocument
+      const win = iframe.contentWindow
+      if (!doc || !win) return
+
+      let target: Element | null = null
+      if (pin.cssSelector) {
+        try {
+          target = doc.querySelector(pin.cssSelector)
+        } catch {
+          target = null
+        }
+      }
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        return
+      }
+      if (typeof pin.documentY === 'number') {
+        win.scrollTo({
+          left: pin.documentX ?? 0,
+          top: Math.max(0, pin.documentY - 200),
+          behavior: 'smooth'
+        })
+      }
+    } catch {
+      // cross-origin
+    }
+  }
+
+  useEffect(() => {
+    onPageUrlChange?.(currentPageUrl)
+  }, [currentPageUrl, onPageUrlChange])
+
+  // Read the iframe's actual page URL on load. With proxy mode the iframe URL is
+  // /api/proxy?url=<target>, so we extract the target. With direct mode we can't
+  // read it cross-origin and fall back to websiteUrl.
+  const readIframeUrl = () => {
+    const iframe = iframeRef.current
+    if (!iframe) return
+    try {
+      const href = iframe.contentWindow?.location.href
+      if (!href) return
+      if (href.includes('/api/proxy')) {
+        const parsed = new URL(href)
+        const target = parsed.searchParams.get('url')
+        if (target) {
+          setCurrentPageUrl(target)
+          return
+        }
+      }
+      setCurrentPageUrl(href)
+    } catch {
+      // Direct cross-origin frames cannot expose location.
+    }
+  }
+
+  // Preflight detection only runs when in direct mode — auto-flip to proxy on block.
+  useEffect(() => {
+    if (useProxy) return
+    if (!detectionContainerRef.current) return
+    const detectionKey = `${websiteUrl}-${refreshCount}`
+    if (detectionRanRef.current === detectionKey) return
+    detectionRanRef.current = detectionKey
+
+    let cancelled = false
+    iframeDetectionService
+      .detectIframeStatus(websiteUrl, detectionContainerRef.current, {
+        timeout: 7000,
+        enablePreflight: true,
+        checkContentAccess: true
+      })
+      .then(result => {
+        if (cancelled) return
+        if (result.status === 'blocked' && !proxyAutoTriedRef.current) {
+          proxyAutoTriedRef.current = true
+          setUseProxy(true)
+        }
+      })
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
+  }, [websiteUrl, useProxy, refreshCount])
+
+  const refresh = () => {
+    proxyAutoTriedRef.current = false
+    detectionRanRef.current = null
+    setRefreshCount(count => count + 1)
+  }
+
+  const toggleProxy = () => {
+    setUseProxy(value => !value)
+    setRefreshCount(count => count + 1)
+  }
+
+  const setBrowse = () => setFeedbackMode(false)
+  const setComment = () => {
+    setActiveTool('comment')
+    setFeedbackMode(true)
+  }
+
+  const wrapperWidth = isFullscreen ? '100%' : `${preset.width * scale}px`
+  const wrapperHeight = isFullscreen ? '100%' : `${preset.height * scale}px`
+
+  return (
+    <TooltipProvider delayDuration={150}>
+      <div className='flex h-[calc(100vh-3.5rem-57px)] flex-col bg-muted/40'>
+        <div className='flex items-center justify-between gap-2 border-b border-border/60 bg-background px-3 py-2'>
+          <ToggleGroup
+            type='single'
+            value={viewport}
+            onValueChange={value => {
+              if (value) setViewport(value as CanvasViewport)
+            }}
+            size='sm'
+            className='gap-0'
+          >
+            {VIEWPORT_OPTIONS.map(option => {
+              const Icon = option.icon
+              return (
+                <Tooltip key={option.id}>
+                  <TooltipTrigger asChild>
+                    <ToggleGroupItem
+                      value={option.id}
+                      aria-label={option.label}
+                      className='h-8 w-9'
+                    >
+                      <Icon className='h-4 w-4' />
+                    </ToggleGroupItem>
+                  </TooltipTrigger>
+                  <TooltipContent>{option.label}</TooltipContent>
+                </Tooltip>
+              )
+            })}
+          </ToggleGroup>
+
+          <ToggleGroup
+            type='single'
+            value={feedbackMode ? 'comment' : 'browse'}
+            onValueChange={value => {
+              if (value === 'browse') setBrowse()
+              else if (value === 'comment') setComment()
+            }}
+            size='sm'
+            className='gap-0'
+          >
+            <ToggleGroupItem value='browse' aria-label='Browse mode' className='h-8 gap-1.5 px-3 text-xs'>
+              <Cursor className='h-3.5 w-3.5' />
+              Browse
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value='comment'
+              aria-label='Comment mode'
+              disabled={!canEdit}
+              className='h-8 gap-1.5 px-3 text-xs data-[state=on]:bg-blue-600 data-[state=on]:text-white'
+            >
+              <ChatText className='h-3.5 w-3.5' />
+              Comment
+              {pinsOnThisPage.length > 0 && (
+                <span
+                  className={cn(
+                    'ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-sm px-1 text-[10px] font-semibold tabular-nums',
+                    feedbackMode ? 'bg-white/25 text-white' : 'bg-muted text-muted-foreground'
+                  )}
+                >
+                  {pinsOnThisPage.length}
+                </span>
+              )}
+            </ToggleGroupItem>
+          </ToggleGroup>
+
+          <div className='flex items-center gap-1.5'>
+            <span
+              className='hidden max-w-[220px] truncate rounded-md border border-border/60 bg-muted/40 px-2 py-1 font-mono text-[11px] text-muted-foreground md:inline-block'
+              title={currentPageUrl}
+            >
+              {pathHint}
+            </span>
+            <span className='hidden text-[11px] text-muted-foreground lg:block'>
+              {isFullscreen ? 'Fullscreen' : `${preset.width} × ${preset.height}`}
+            </span>
+            <Separator orientation='vertical' className='mx-1 h-5' />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='h-8 w-8'
+                  onClick={toggleProxy}
+                >
+                  {useProxy ? (
+                    <Shield weight='fill' className='h-4 w-4 text-blue-600' />
+                  ) : (
+                    <ShieldSlash className='h-4 w-4 text-muted-foreground' />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {useProxy ? 'Proxy on — navigation works' : 'Direct iframe'}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant='ghost' size='icon' className='h-8 w-8' onClick={refresh}>
+                  <ArrowClockwise className='h-4 w-4' />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Reload preview</TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+
+        <div
+          ref={canvasAreaRef}
+          className='flex flex-1 items-start justify-center overflow-auto p-6'
+        >
+          <div
+            className='relative shrink-0 overflow-hidden rounded-lg border border-border/60 bg-white shadow-sm'
+            style={{
+              width: wrapperWidth,
+              height: wrapperHeight
+            }}
+          >
+            <iframe
+              key={iframeKey}
+              ref={iframeRef}
+              src={iframeSrc}
+              title={`Preview of ${websiteUrl}`}
+              className='border-0'
+              style={
+                isFullscreen
+                  ? { width: '100%', height: '100%' }
+                  : {
+                      width: `${preset.width}px`,
+                      height: `${preset.height}px`,
+                      transform: `scale(${scale})`,
+                      transformOrigin: 'top left'
+                    }
+              }
+              sandbox='allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts'
+              onLoad={() => {
+                setFrameStatus('loaded')
+                readIframeUrl()
+                if (pendingScrollRef.current) {
+                  const pin = pendingScrollRef.current
+                  // small delay to let layout settle
+                  setTimeout(() => scrollToPin(pin), 250)
+                  pendingScrollRef.current = null
+                  onJumpHandled?.()
+                }
+              }}
+              onError={() => setFrameStatus('error')}
+            />
+
+            <FeedbackOverlay
+              view={view}
+              iframeRef={iframeRef}
+              viewportWidth={preset.width}
+              viewportHeight={preset.height}
+            />
+
+            {frameStatus === 'loading' && (
+              <div className='pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm'>
+                <div className='flex flex-col items-center gap-2'>
+                  <div className='h-8 w-8 animate-spin rounded-full border-2 border-foreground/20 border-t-foreground' />
+                  <p className='text-xs text-muted-foreground'>Loading preview…</p>
+                </div>
+              </div>
+            )}
+
+            {frameStatus === 'blocked' && (
+              <div className='absolute inset-0 z-10 flex items-center justify-center bg-white/95 p-6'>
+                <div className='max-w-sm text-center'>
+                  <Shield weight='fill' className='mx-auto h-8 w-8 text-amber-500' />
+                  <h3 className='mt-3 text-sm font-semibold'>This site blocks embedding</h3>
+                  <p className='mt-1 text-xs text-muted-foreground'>
+                    Try the proxy renderer or open the site directly.
+                  </p>
+                  <div className='mt-4 flex flex-wrap justify-center gap-2'>
+                    {!useProxy && (
+                      <Button size='sm' className='h-8 gap-1.5 text-xs' onClick={toggleProxy}>
+                        <Shield className='h-3.5 w-3.5' />
+                        Use proxy
+                      </Button>
+                    )}
+                    <Button asChild size='sm' variant='outline' className='h-8 gap-1.5 text-xs'>
+                      <a href={websiteUrl} target='_blank' rel='noreferrer'>
+                        Open site
+                        <ArrowSquareOut className='h-3.5 w-3.5' />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {frameStatus === 'error' && (
+              <div className='absolute inset-0 z-10 flex items-center justify-center bg-white/95 p-6'>
+                <div className='max-w-sm text-center'>
+                  <Warning weight='fill' className='mx-auto h-8 w-8 text-rose-500' />
+                  <h3 className='mt-3 text-sm font-semibold'>Preview failed to load</h3>
+                  <p className='mt-1 text-xs text-muted-foreground'>
+                    Try refreshing or toggling the proxy.
+                  </p>
+                  <div className='mt-4 flex flex-wrap justify-center gap-2'>
+                    <Button size='sm' className='h-8 gap-1.5 text-xs' onClick={refresh}>
+                      <ArrowClockwise className='h-3.5 w-3.5' />
+                      Reload
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      className='h-8 gap-1.5 text-xs'
+                      onClick={toggleProxy}
+                    >
+                      {useProxy ? (
+                        <ShieldSlash className='h-3.5 w-3.5' />
+                      ) : (
+                        <Shield className='h-3.5 w-3.5' />
+                      )}
+                      {useProxy ? 'Direct' : 'Proxy'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div
+            ref={detectionContainerRef}
+            className='pointer-events-none fixed -left-[9999px] h-1 w-1 opacity-0'
+          />
+        </div>
+      </div>
+    </TooltipProvider>
+  )
+}

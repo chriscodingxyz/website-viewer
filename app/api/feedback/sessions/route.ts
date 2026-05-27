@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
     .values({
       id,
       slug,
+      projectId: data.projectId,
       userId: session.user.id,
       organizationId: projectId,
       url: data.url,

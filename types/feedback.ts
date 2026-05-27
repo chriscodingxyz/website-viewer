@@ -9,6 +9,16 @@ export type FeedbackViewportType = z.infer<typeof ViewportTypeEnum>
 export const FeedbackPinKindEnum = z.enum(['comment', 'inspect'])
 export type FeedbackPinKind = z.infer<typeof FeedbackPinKindEnum>
 
+export const PinReplySchema = z.object({
+  id: z.string(),
+  body: z.string(),
+  authorName: z.string(),
+  authorEmail: z.string().optional(),
+  userId: z.string().optional(),
+  createdAt: z.string()
+})
+export type PinReply = z.infer<typeof PinReplySchema>
+
 export const PinSchema = z.object({
   id: z.string(),
   number: z.number().int().min(1),
@@ -36,7 +46,8 @@ export const PinSchema = z.object({
   severity: SeverityEnum,
   comment: z.string(),
   screenshotDataUrl: z.string().optional(),
-  createdAt: z.string()
+  createdAt: z.string(),
+  replies: z.array(PinReplySchema).optional()
 })
 export type Pin = z.infer<typeof PinSchema>
 

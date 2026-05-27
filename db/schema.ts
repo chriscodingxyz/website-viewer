@@ -137,11 +137,38 @@ export const invitation = pgTable(
  * Feedback domain
  * ------------------------------------------------------------------ */
 
+export const project = pgTable(
+  'project',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    createdByUserId: text('created_by_user_id').references(() => user.id, {
+      onDelete: 'set null'
+    }),
+    websiteUrl: text('website_url').notNull(),
+    name: text('name').notNull(),
+    publicAccess: text('public_access').notNull().default('view'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => ({
+    organizationIdx: uniqueIndex('project_organization_idx').on(
+      table.organizationId
+    ),
+    createdByIdx: index('project_created_by_idx').on(table.createdByUserId)
+  })
+)
+
 export const feedbackSession = pgTable(
   'feedback_session',
   {
     id: text('id').primaryKey(),
     slug: text('slug').notNull().unique(),
+    projectId: text('project_id').references(() => project.id, {
+      onDelete: 'cascade'
+    }),
     userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
     organizationId: text('organization_id').references(() => organization.id, {
       onDelete: 'cascade'
@@ -156,6 +183,7 @@ export const feedbackSession = pgTable(
   },
   table => ({
     slugIdx: uniqueIndex('feedback_session_slug_idx').on(table.slug),
+    projectIdx: uniqueIndex('feedback_session_project_idx').on(table.projectId),
     userIdx: index('feedback_session_user_idx').on(table.userId),
     organizationIdx: index('feedback_session_organization_idx').on(
       table.organizationId
@@ -203,9 +231,29 @@ export const feedbackPin = pgTable(
   })
 )
 
+export const feedbackPinReply = pgTable(
+  'feedback_pin_reply',
+  {
+    id: text('id').primaryKey(),
+    pinId: text('pin_id')
+      .notNull()
+      .references(() => feedbackPin.id, { onDelete: 'cascade' }),
+    userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+    authorName: text('author_name').notNull(),
+    authorEmail: text('author_email'),
+    body: text('body').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow()
+  },
+  table => ({
+    pinIdx: index('feedback_pin_reply_pin_idx').on(table.pinId)
+  })
+)
+
 export type DbUser = typeof user.$inferSelect
 export type DbOrganization = typeof organization.$inferSelect
 export type DbMember = typeof member.$inferSelect
 export type DbInvitation = typeof invitation.$inferSelect
+export type DbProject = typeof project.$inferSelect
 export type DbFeedbackSession = typeof feedbackSession.$inferSelect
 export type DbFeedbackPin = typeof feedbackPin.$inferSelect
+export type DbFeedbackPinReply = typeof feedbackPinReply.$inferSelect

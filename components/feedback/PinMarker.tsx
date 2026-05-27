@@ -28,7 +28,7 @@ const severityLabels: Record<Severity, string> = {
 }
 
 export default function PinMarker({ pin, position, autoOpen = false }: Props) {
-  const { updatePin, removePin, selectedPinId, setSelectedPinId } = useFeedback()
+  const { updatePin, removePin, selectedPinId, setSelectedPinId, canEdit } = useFeedback()
   const [open, setOpen] = useState(autoOpen)
   const [comment, setComment] = useState(pin.comment)
   const [severity, setSeverity] = useState<Severity>(pin.severity)
@@ -38,6 +38,10 @@ export default function PinMarker({ pin, position, autoOpen = false }: Props) {
   const isInspect = pin.kind === 'inspect'
 
   const handleSave = () => {
+    if (!canEdit) {
+      setOpen(false)
+      return
+    }
     updatePin(pin.id, { comment, severity, replacementText, editInstruction })
     setOpen(false)
   }
@@ -48,7 +52,7 @@ export default function PinMarker({ pin, position, autoOpen = false }: Props) {
       onOpenChange={next => {
         setOpen(next)
         if (next) setSelectedPinId(pin.id)
-        else updatePin(pin.id, { comment, severity, replacementText, editInstruction })
+        else if (canEdit) updatePin(pin.id, { comment, severity, replacementText, editInstruction })
       }}
     >
       <PopoverTrigger asChild>
@@ -80,39 +84,47 @@ export default function PinMarker({ pin, position, autoOpen = false }: Props) {
             {isInspect ? <Inspect className='h-3.5 w-3.5' /> : <MessageSquare className='h-3.5 w-3.5' />}
             Pin {pin.number} · {isInspect ? 'Inspect/Edit' : 'Comment'}
           </span>
-          <button
-            type='button'
-            onClick={() => removePin(pin.id)}
-            className='text-muted-foreground hover:text-red-600 transition-colors p-1 rounded'
-            aria-label='Delete pin'
-          >
-            <Trash2 className='h-3.5 w-3.5' />
-          </button>
+          {canEdit && (
+            <button
+              type='button'
+              onClick={() => removePin(pin.id)}
+              className='text-muted-foreground hover:text-red-600 transition-colors p-1 rounded'
+              aria-label='Delete pin'
+            >
+              <Trash2 className='h-3.5 w-3.5' />
+            </button>
+          )}
         </div>
 
-        <div className='flex gap-1 mb-2'>
-          {(['low', 'medium', 'high'] as Severity[]).map(s => (
-            <button
-              key={s}
-              type='button'
-              onClick={() => setSeverity(s)}
-              className={cn(
-                'flex-1 text-xs py-1 px-2 rounded border transition-all',
-                severity === s
-                  ? 'border-foreground/40 bg-foreground/5 font-medium'
-                  : 'border-border/40 text-muted-foreground hover:border-border'
-              )}
-            >
-              <span
+        {canEdit ? (
+          <div className='flex gap-1 mb-2'>
+            {(['low', 'medium', 'high'] as Severity[]).map(s => (
+              <button
+                key={s}
+                type='button'
+                onClick={() => setSeverity(s)}
                 className={cn(
-                  'inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle',
-                  severityStyles[s].split(' ')[0]
+                  'flex-1 text-xs py-1 px-2 rounded border transition-all',
+                  severity === s
+                    ? 'border-foreground/40 bg-foreground/5 font-medium'
+                    : 'border-border/40 text-muted-foreground hover:border-border'
                 )}
-              />
-              {severityLabels[s]}
-            </button>
-          ))}
-        </div>
+              >
+                <span
+                  className={cn(
+                    'inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle',
+                    severityStyles[s].split(' ')[0]
+                  )}
+                />
+                {severityLabels[s]}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className='mb-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground'>
+            {severityLabels[pin.severity]} priority
+          </div>
+        )}
 
         {isInspect && (
           <div className='space-y-2 mb-2'>
@@ -132,12 +144,14 @@ export default function PinMarker({ pin, position, autoOpen = false }: Props) {
               placeholder='Replace selected text with...'
               className='min-h-[70px] text-sm resize-none'
               autoFocus
+              readOnly={!canEdit}
             />
             <Textarea
               value={editInstruction}
               onChange={e => setEditInstruction(e.target.value)}
               placeholder='Optional: style/layout instruction for this element'
               className='min-h-[56px] text-xs resize-none'
+              readOnly={!canEdit}
             />
           </div>
         )}
@@ -148,6 +162,7 @@ export default function PinMarker({ pin, position, autoOpen = false }: Props) {
           placeholder={isInspect ? 'Optional note for this edit' : 'What needs to change?'}
           className='min-h-[72px] text-sm resize-none'
           autoFocus={!isInspect}
+          readOnly={!canEdit}
         />
 
         {pin.cssSelector && (
@@ -164,11 +179,13 @@ export default function PinMarker({ pin, position, autoOpen = false }: Props) {
             className='flex-1'
             onClick={() => setOpen(false)}
           >
-            Cancel
+            {canEdit ? 'Cancel' : 'Close'}
           </Button>
-          <Button size='sm' className='flex-1' onClick={handleSave}>
-            Save
-          </Button>
+          {canEdit && (
+            <Button size='sm' className='flex-1' onClick={handleSave}>
+              Save
+            </Button>
+          )}
         </div>
       </PopoverContent>
     </Popover>

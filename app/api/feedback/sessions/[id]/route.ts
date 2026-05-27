@@ -122,6 +122,7 @@ export async function PUT(
       await tx.insert(schema.feedbackSession).values({
         id: params.id,
         slug: nanoid(10),
+        projectId: data.projectId,
         userId: resolved.session.user.id,
         organizationId: resolved.projectId,
         url: data.url,
@@ -134,6 +135,7 @@ export async function PUT(
         .update(schema.feedbackSession)
         .set({
           userId: existing.userId ?? resolved.session.user.id,
+          projectId: existing.projectId ?? data.projectId,
           organizationId: resolved.projectId,
           url: data.url,
           title: data.meta.title,
