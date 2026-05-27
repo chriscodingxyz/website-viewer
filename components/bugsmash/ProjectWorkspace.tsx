@@ -2,16 +2,24 @@
 
 import { useCallback, useState } from 'react'
 import type { Pin } from '@/types/feedback'
-import { FeedbackProvider } from '@/contexts/FeedbackContext'
+import { FeedbackProvider, useFeedback } from '@/contexts/FeedbackContext'
 import type { FeedbackSession } from '@/types/feedback'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger
+} from '@/components/ui/sheet'
 import { toast } from 'sonner'
 import {
   ArrowSquareOut,
   Eye,
   LinkSimple,
+  ListBullets,
   ShieldCheck,
   Users
 } from '@phosphor-icons/react'
@@ -57,6 +65,8 @@ export default function ProjectWorkspace({
     pin: Pin
     requestId: number
   } | null>(null)
+  const [tasksSheetOpen, setTasksSheetOpen] = useState(false)
+
   const handlePageUrlChange = useCallback((url: string) => {
     setCurrentPageUrl(url)
   }, [])
@@ -65,6 +75,7 @@ export default function ProjectWorkspace({
       pin,
       requestId: (prev?.requestId ?? 0) + 1
     }))
+    setTasksSheetOpen(false)
   }, [])
   const handleJumpHandled = useCallback(() => {
     setPendingJump(null)
@@ -82,7 +93,7 @@ export default function ProjectWorkspace({
   }
 
   return (
-    <div className='flex h-[calc(100vh-3.5rem)] flex-col bg-muted/30'>
+    <div className='flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden bg-background'>
       <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-background px-4 py-3 sm:px-6'>
         <div className='flex min-w-0 items-center gap-3'>
           <div className='min-w-0'>
@@ -113,7 +124,7 @@ export default function ProjectWorkspace({
             </Badge>
           )}
           {publicView && !canEdit && (
-            <Badge className='gap-1 border-amber-200 bg-amber-50 text-[11px] font-medium text-amber-900 hover:bg-amber-50'>
+            <Badge variant='outline' className='gap-1 text-[11px] font-medium'>
               <ShieldCheck className='h-3 w-3' />
               Read-only
             </Badge>
@@ -137,7 +148,8 @@ export default function ProjectWorkspace({
         initialSession={initialSession}
         canEdit={canEdit}
       >
-        <div className='flex flex-1 min-h-0'>
+        {/* Desktop: side-by-side with fixed tasks width */}
+        <div className='hidden min-h-0 flex-1 overflow-hidden xl:flex'>
           <div className='min-w-0 flex-1'>
             <ProjectCanvas
               websiteUrl={project.websiteUrl}
@@ -146,16 +158,86 @@ export default function ProjectWorkspace({
               onJumpHandled={handleJumpHandled}
             />
           </div>
-          <ProjectCommentPanel
+          <aside className='flex h-full w-[340px] shrink-0 flex-col border-l border-border/60 bg-background 2xl:w-[380px]'>
+            <ProjectCommentPanel
+              projectId={project.id}
+              currentPageUrl={currentPageUrl}
+              projectWebsiteUrl={project.websiteUrl}
+              onJumpToPin={handleJumpToPin}
+            />
+          </aside>
+        </div>
+
+        {/* Compact: canvas full width + Tasks Sheet */}
+        <div className='flex min-h-0 flex-1 flex-col overflow-hidden xl:hidden'>
+          <div className='min-h-0 flex-1'>
+            <ProjectCanvas
+              websiteUrl={project.websiteUrl}
+              onPageUrlChange={handlePageUrlChange}
+              jumpToPin={pendingJump}
+              onJumpHandled={handleJumpHandled}
+            />
+          </div>
+          <CompactTasksTrigger
+            open={tasksSheetOpen}
+            onOpenChange={setTasksSheetOpen}
             projectId={project.id}
             currentPageUrl={currentPageUrl}
             projectWebsiteUrl={project.websiteUrl}
             onJumpToPin={handleJumpToPin}
           />
-          <ExportDialog />
-          <FeedbackKeyboard />
         </div>
+
+        <ExportDialog />
+        <FeedbackKeyboard />
       </FeedbackProvider>
     </div>
+  )
+}
+
+function CompactTasksTrigger({
+  open,
+  onOpenChange,
+  projectId,
+  currentPageUrl,
+  projectWebsiteUrl,
+  onJumpToPin
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  projectId: string
+  currentPageUrl: string
+  projectWebsiteUrl: string
+  onJumpToPin: (pin: Pin) => void
+}) {
+  const { pins } = useFeedback()
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <div className='flex items-center justify-between border-t border-border/60 bg-background px-3 py-2'>
+        <span className='text-xs text-muted-foreground'>
+          {pins.length} {pins.length === 1 ? 'task' : 'tasks'}
+        </span>
+        <SheetTrigger asChild>
+          <Button variant='outline' size='sm' className='h-8 gap-1.5 text-xs'>
+            <ListBullets className='h-3.5 w-3.5' />
+            Tasks
+          </Button>
+        </SheetTrigger>
+      </div>
+      <SheetContent side='right' className='w-full max-w-md p-0 sm:max-w-md'>
+        <SheetHeader className='border-b border-border/60 px-4 py-3'>
+          <SheetTitle className='text-sm'>Tasks</SheetTitle>
+        </SheetHeader>
+        <div className='h-[calc(100vh-49px)]'>
+          <ProjectCommentPanel
+            projectId={projectId}
+            currentPageUrl={currentPageUrl}
+            projectWebsiteUrl={projectWebsiteUrl}
+            onJumpToPin={onJumpToPin}
+          />
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }

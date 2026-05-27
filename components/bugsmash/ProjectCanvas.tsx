@@ -366,7 +366,7 @@ export default function ProjectCanvas({
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div className='flex h-[calc(100vh-3.5rem-57px)] flex-col bg-muted/40'>
+      <div className='flex h-full min-h-0 flex-col bg-background'>
         <div className='flex items-center justify-between gap-2 border-b border-border/60 bg-background px-3 py-2'>
           <ToggleGroup
             type='single'
@@ -418,7 +418,7 @@ export default function ProjectCanvas({
               value='comment'
               aria-label='Comment mode'
               disabled={!canEdit}
-              className='h-8 gap-1.5 px-3 text-xs data-[state=on]:bg-blue-600 data-[state=on]:text-white'
+              className='h-8 gap-1.5 px-3 text-xs data-[state=on]:bg-foreground data-[state=on]:text-background'
             >
               <ChatText className='h-3.5 w-3.5' />
               Comment
@@ -462,7 +462,7 @@ export default function ProjectCanvas({
                   size='icon'
                   className={cn(
                     'h-8 w-8',
-                    showAnnotations && 'bg-blue-50 text-blue-700 hover:bg-blue-50 hover:text-blue-700'
+                    showAnnotations && 'bg-muted text-foreground hover:bg-muted hover:text-foreground'
                   )}
                   onClick={() => setShowAnnotations(value => !value)}
                 >
@@ -505,7 +505,7 @@ export default function ProjectCanvas({
                   onClick={toggleProxy}
                 >
                   {useProxy ? (
-                    <Shield weight='fill' className='h-4 w-4 text-blue-600' />
+                    <Shield weight='fill' className='h-4 w-4 text-foreground' />
                   ) : (
                     <ShieldSlash className='h-4 w-4 text-muted-foreground' />
                   )}

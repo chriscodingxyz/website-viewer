@@ -13,7 +13,6 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
@@ -296,7 +295,7 @@ export default function ProjectCommentPanel({
     const placeholderInspectAction = selectedInspectAction ?? inspectActions[0]
 
     return (
-      <aside className='flex w-[340px] shrink-0 flex-col border-l border-border/60 bg-background'>
+      <aside className='flex h-full w-full flex-col border-l border-border/60 bg-background'>
         <header className='flex items-center justify-between border-b border-border/60 px-4 py-3'>
           <Button
             variant='ghost'
@@ -398,8 +397,8 @@ export default function ProjectCommentPanel({
                       className={cn(
                         'inline-flex h-7 items-center gap-1 rounded-md border px-2 text-[11px] font-medium transition-colors',
                         active
-                          ? 'border-zinc-900 bg-zinc-900 text-white'
-                          : 'border-border/70 bg-background text-muted-foreground hover:border-zinc-400 hover:text-foreground'
+                          ? 'border-foreground bg-foreground text-background'
+                          : 'border-border/70 bg-background text-muted-foreground hover:border-foreground/40 hover:text-foreground'
                       )}
                     >
                       <ActionIcon className='h-3.5 w-3.5' />
@@ -539,7 +538,7 @@ export default function ProjectCommentPanel({
           </dl>
         </div>
 
-        <ScrollArea className='flex-1'>
+        <div className='min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden'>
           <div className='space-y-3 px-4 py-3'>
             {replies.length === 0 ? (
               <p className='py-6 text-center text-xs text-muted-foreground'>
@@ -581,7 +580,7 @@ export default function ProjectCommentPanel({
               ))
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         {canEdit ? (
           <form onSubmit={submitReply} className='border-t border-border/60 p-3'>
@@ -620,7 +619,7 @@ export default function ProjectCommentPanel({
   }
 
   return (
-    <aside className='flex w-[340px] shrink-0 flex-col border-l border-border/60 bg-background'>
+    <aside className='flex h-full w-full flex-col border-l border-border/60 bg-background'>
       <header className='flex items-center justify-between border-b border-border/60 px-4 py-3'>
         <div>
           <h2 className='text-sm font-semibold tracking-tight'>Tasks</h2>
@@ -654,7 +653,7 @@ export default function ProjectCommentPanel({
         </div>
       </header>
 
-      <ScrollArea className='flex-1'>
+      <div className='min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden'>
         {pins.length === 0 ? (
           <div className='flex flex-col items-center justify-center px-6 py-16 text-center text-xs text-muted-foreground'>
             <ChatText className='h-6 w-6 text-muted-foreground/60' />
@@ -670,7 +669,7 @@ export default function ProjectCommentPanel({
             type='multiple'
             value={expandedPages}
             onValueChange={setExpandedPages}
-            className='space-y-2 bg-muted/30 p-2'
+            className='space-y-2 p-2'
           >
             {pageGroups.map(group => {
               const isActive = sameFeedbackUrl(group.url, currentPageUrl)
@@ -687,14 +686,14 @@ export default function ProjectCommentPanel({
                   className={cn(
                     'overflow-hidden rounded-lg border bg-background shadow-sm transition-colors',
                     isActive
-                      ? 'border-blue-300 ring-2 ring-blue-200/60'
+                      ? 'border-foreground/20 ring-1 ring-foreground/10'
                       : 'border-border/70'
                   )}
                 >
                   <AccordionTrigger
                     className={cn(
                       'px-3 py-2.5 hover:no-underline',
-                      isActive ? 'bg-blue-50/70' : 'bg-muted/20'
+                      isActive ? 'bg-muted/40' : 'bg-muted/10'
                     )}
                   >
                     <div className='flex min-w-0 flex-1 items-center justify-between gap-2 pr-2'>
@@ -712,25 +711,25 @@ export default function ProjectCommentPanel({
                           {path}
                         </span>
                         {isActive && (
-                          <Badge className='border-blue-200 bg-blue-100 text-[9px] font-semibold uppercase tracking-wide text-blue-900 hover:bg-blue-100'>
+                          <Badge variant='outline' className='text-[9px] font-semibold uppercase tracking-wide'>
                             Active
                           </Badge>
                         )}
                       </div>
                       <div className='flex shrink-0 items-center gap-1'>
-                        <span className='inline-flex h-5 min-w-5 items-center justify-center rounded-md border border-border/70 bg-background px-1.5 text-[10px] font-medium tabular-nums text-muted-foreground'>
+                        <Badge variant='secondary' className='h-5 min-w-5 justify-center px-1.5 text-[10px] tabular-nums'>
                           {group.pins.length}
-                        </span>
+                        </Badge>
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className='px-0 pb-0'>
+                  <AccordionContent className='overflow-hidden px-0 pb-0'>
                     {groupPins.length === 0 ? (
                       <p className='border-t border-border/50 bg-background px-4 py-4 text-center text-[11px] text-muted-foreground'>
                         No comments on this page yet.
                       </p>
                     ) : (
-                      <ul className='divide-y divide-border/50 border-t border-border/50 bg-background'>
+                      <ul className='w-full divide-y divide-border/50 overflow-hidden border-t border-border/50 bg-background'>
                         {groupPins.map(pin => {
                           const replies = allRepliesFor(pin)
                           const pinAction = pin.kind === 'inspect'
@@ -753,8 +752,8 @@ export default function ProjectCommentPanel({
                                   }
                                 }}
                                 className={cn(
-                                  'block w-full cursor-pointer px-4 py-3 text-left transition-colors hover:bg-muted/30',
-                                  selectedPinId === pin.id && 'bg-blue-50/70'
+                                  'block w-full min-w-0 cursor-pointer overflow-hidden px-4 py-3 text-left transition-colors hover:bg-muted/30',
+                                  selectedPinId === pin.id && 'bg-muted/40'
                                 )}
                               >
                                 <div className='flex items-center justify-between gap-2'>
@@ -775,7 +774,7 @@ export default function ProjectCommentPanel({
                                     {timeAgo(pin.createdAt)}
                                   </span>
                                 </div>
-                                <p className='mt-1.5 line-clamp-2 text-sm text-foreground'>
+                                <p className='mt-1.5 line-clamp-2 break-words text-sm text-foreground'>
                                   {pin.comment || (pin.kind === 'inspect' ? (
                                     pinAction?.label || 'Inspect/edit task'
                                   ) : (
@@ -785,16 +784,16 @@ export default function ProjectCommentPanel({
                                   ))}
                                 </p>
                                 {pin.elementTag && (
-                                  <p className='mt-1 flex items-center gap-1.5 truncate text-[11px] text-muted-foreground'>
+                                  <p className='mt-1 flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground'>
                                     <Code className='h-3 w-3 shrink-0' />
-                                    <span className='truncate font-mono'>
+                                    <span className='min-w-0 flex-1 truncate font-mono'>
                                       &lt;{pin.elementTag}&gt;
                                       {pin.elementText ? ` ${pin.elementText}` : ''}
                                     </span>
                                   </p>
                                 )}
                                 {pin.kind === 'inspect' && (
-                                  <p className='mt-1 line-clamp-2 text-[11px] text-muted-foreground'>
+                                  <p className='mt-1 line-clamp-2 break-words text-[11px] text-muted-foreground'>
                                     {pin.replacementText?.trim()
                                       ? `Details: ${pin.replacementText.trim()}`
                                       : pinAction?.label || pin.editInstruction?.trim() || 'Inspect/edit task'}
@@ -845,7 +844,7 @@ export default function ProjectCommentPanel({
             })}
           </Accordion>
         )}
-      </ScrollArea>
+      </div>
     </aside>
   )
 }
