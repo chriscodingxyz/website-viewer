@@ -23,6 +23,7 @@ import {
   Cursor,
   DeviceMobile,
   DeviceTablet,
+  Eye,
   SelectionPlus,
   Monitor,
   Shield,
@@ -32,6 +33,7 @@ import {
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 import { canonicalFeedbackUrl, feedbackPath, sameFeedbackUrl } from '@/lib/feedback/url'
+import { findInspectAction } from '@/lib/feedback/inspectActions'
 
 export type CanvasViewport = 'desktop' | 'tablet' | 'mobile' | 'fullscreen'
 
@@ -73,6 +75,7 @@ export default function ProjectCanvas({
   const [frameStatus, setFrameStatus] = useState<FrameStatus>('loading')
   const [refreshCount, setRefreshCount] = useState(0)
   const [showAnnotations, setShowAnnotations] = useState(true)
+  const [previewMode, setPreviewMode] = useState(false)
   const [targetPageUrl, setTargetPageUrl] = useState<string>(() =>
     canonicalFeedbackUrl(websiteUrl)
   )
@@ -93,6 +96,59 @@ export default function ProjectCanvas({
   const pinsOnThisPage = pins.filter(
     p => sameFeedbackUrl(p.url, currentPageUrl) && p.viewportId === preset.id
   )
+
+  const previewPayload = useMemo(() => {
+    return pins
+      .filter(p => sameFeedbackUrl(p.url, currentPageUrl) && p.kind === 'inspect' && p.cssSelector)
+      .map(p => ({
+        cssSelector: p.cssSelector,
+        action: findInspectAction(p)?.id,
+        replacementText: p.replacementText
+      }))
+      .filter(p => p.action)
+  }, [pins, currentPageUrl])
+
+  const sendPreview = useCallback(() => {
+    const win = iframeRef.current?.contentWindow
+    if (!win) return
+    win.postMessage(
+      { source: 'bugsmash', type: 'apply-preview', pins: previewPayload, showDiff: true },
+      '*'
+    )
+  }, [previewPayload])
+
+  const clearPreview = useCallback(() => {
+    const win = iframeRef.current?.contentWindow
+    if (!win) return
+    win.postMessage({ source: 'bugsmash', type: 'clear-preview' }, '*')
+  }, [])
+
+  useEffect(() => {
+    if (!previewMode) {
+      clearPreview()
+      return
+    }
+    if (frameStatus !== 'loaded') return
+    sendPreview()
+  }, [previewMode, frameStatus, sendPreview, clearPreview])
+
+  const togglePreview = () => {
+    setPreviewMode(value => {
+      const next = !value
+      if (next) {
+        if (!useProxy) {
+          setUseProxy(true)
+          setRefreshCount(count => count + 1)
+        }
+        setFeedbackMode(false)
+      }
+      return next
+    })
+  }
+
+  useEffect(() => {
+    if (feedbackMode && previewMode) setPreviewMode(false)
+  }, [feedbackMode, previewMode])
 
   const pathHint = feedbackPath(currentPageUrl)
 
@@ -415,6 +471,29 @@ export default function ProjectCanvas({
               </TooltipTrigger>
               <TooltipContent>
                 {showAnnotations ? 'Hide marked elements' : 'Show marked elements'}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  disabled={previewPayload.length === 0}
+                  className={cn(
+                    'h-8 w-8',
+                    previewMode && 'bg-emerald-50 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-700'
+                  )}
+                  onClick={togglePreview}
+                >
+                  <Eye weight={previewMode ? 'fill' : 'regular'} className='h-4 w-4' />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {previewPayload.length === 0
+                  ? 'No inspect edits to preview'
+                  : previewMode
+                    ? `Hide preview (${previewPayload.length})`
+                    : `Preview edits (${previewPayload.length})`}
               </TooltipContent>
             </Tooltip>
             <Tooltip>
