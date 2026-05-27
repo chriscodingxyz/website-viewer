@@ -398,7 +398,7 @@ export default function ProjectCommentPanel({
                         'inline-flex h-7 items-center gap-1 rounded-md border px-2 text-[11px] font-medium transition-colors',
                         active
                           ? 'border-foreground bg-foreground text-background'
-                          : 'border-border/70 bg-background text-muted-foreground hover:border-foreground/40 hover:text-foreground'
+                          : 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                       )}
                     >
                       <ActionIcon className='h-3.5 w-3.5' />

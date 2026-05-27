@@ -9,6 +9,7 @@ import { iframeDetectionService } from '@/services/IframeDetectionService'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Toggle } from '@/components/ui/toggle'
 import {
   Tooltip,
   TooltipContent,
@@ -418,17 +419,12 @@ export default function ProjectCanvas({
               value='comment'
               aria-label='Comment mode'
               disabled={!canEdit}
-              className='h-8 gap-1.5 px-3 text-xs data-[state=on]:bg-foreground data-[state=on]:text-background'
+              className='h-8 gap-1.5 px-3 text-xs'
             >
               <ChatText className='h-3.5 w-3.5' />
               Comment
               {pinsOnThisPage.length > 0 && (
-                <span
-                  className={cn(
-                    'ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-sm px-1 text-[10px] font-semibold tabular-nums',
-                    feedbackMode ? 'bg-white/25 text-white' : 'bg-muted text-muted-foreground'
-                  )}
-                >
+                <span className='ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-sm bg-muted-foreground/20 px-1 text-[10px] font-semibold tabular-nums text-muted-foreground'>
                   {pinsOnThisPage.length}
                 </span>
               )}
@@ -437,7 +433,7 @@ export default function ProjectCanvas({
               value='inspect'
               aria-label='Inspect/edit mode'
               disabled={!canEdit}
-              className='h-8 gap-1.5 px-3 text-xs data-[state=on]:bg-zinc-900 data-[state=on]:text-white'
+              className='h-8 gap-1.5 px-3 text-xs'
             >
               <SelectionPlus className='h-3.5 w-3.5' />
               Inspect
@@ -446,7 +442,7 @@ export default function ProjectCanvas({
 
           <div className='flex items-center gap-1.5'>
             <span
-              className='hidden max-w-[220px] truncate rounded-md border border-border/60 bg-muted/40 px-2 py-1 font-mono text-[11px] text-muted-foreground md:inline-block'
+              className='max-w-[180px] truncate rounded-md border border-border bg-muted px-2 py-1 font-mono text-[11px] text-foreground md:max-w-[260px]'
               title={currentPageUrl}
             >
               {pathHint}
@@ -457,17 +453,15 @@ export default function ProjectCanvas({
             <Separator orientation='vertical' className='mx-1 h-5' />
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  className={cn(
-                    'h-8 w-8',
-                    showAnnotations && 'bg-muted text-foreground hover:bg-muted hover:text-foreground'
-                  )}
-                  onClick={() => setShowAnnotations(value => !value)}
+                <Toggle
+                  size='sm'
+                  pressed={showAnnotations}
+                  onPressedChange={setShowAnnotations}
+                  aria-label='Toggle marked elements'
+                  className='h-8 w-8 p-0'
                 >
                   <Target weight={showAnnotations ? 'fill' : 'regular'} className='h-4 w-4' />
-                </Button>
+                </Toggle>
               </TooltipTrigger>
               <TooltipContent>
                 {showAnnotations ? 'Hide marked elements' : 'Show marked elements'}
@@ -475,18 +469,16 @@ export default function ProjectCanvas({
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant='ghost'
-                  size='icon'
+                <Toggle
+                  size='sm'
+                  pressed={previewMode}
+                  onPressedChange={togglePreview}
                   disabled={previewPayload.length === 0}
-                  className={cn(
-                    'h-8 w-8',
-                    previewMode && 'bg-emerald-50 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-700'
-                  )}
-                  onClick={togglePreview}
+                  aria-label='Toggle preview of edits'
+                  className='h-8 w-8 p-0'
                 >
                   <Eye weight={previewMode ? 'fill' : 'regular'} className='h-4 w-4' />
-                </Button>
+                </Toggle>
               </TooltipTrigger>
               <TooltipContent>
                 {previewPayload.length === 0
@@ -498,18 +490,19 @@ export default function ProjectCanvas({
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  className='h-8 w-8'
-                  onClick={toggleProxy}
+                <Toggle
+                  size='sm'
+                  pressed={useProxy}
+                  onPressedChange={toggleProxy}
+                  aria-label='Toggle proxy mode'
+                  className='h-8 w-8 p-0'
                 >
                   {useProxy ? (
-                    <Shield weight='fill' className='h-4 w-4 text-foreground' />
+                    <Shield weight='fill' className='h-4 w-4' />
                   ) : (
-                    <ShieldSlash className='h-4 w-4 text-muted-foreground' />
+                    <ShieldSlash className='h-4 w-4' />
                   )}
-                </Button>
+                </Toggle>
               </TooltipTrigger>
               <TooltipContent>
                 {useProxy ? 'Proxy on — navigation works' : 'Direct iframe'}

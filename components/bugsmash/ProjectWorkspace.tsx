@@ -61,6 +61,16 @@ export default function ProjectWorkspace({
   const host = hostFor(project.websiteUrl)
   const [copied, setCopied] = useState(false)
   const [currentPageUrl, setCurrentPageUrl] = useState<string>(project.websiteUrl)
+  const currentPath = (() => {
+    try {
+      const u = new URL(currentPageUrl)
+      const path = u.pathname + u.search
+      return path === '/' ? '/' : path
+    } catch {
+      return '/'
+    }
+  })()
+  const isHome = currentPath === '/'
   const [pendingJump, setPendingJump] = useState<{
     pin: Pin
     requestId: number
@@ -99,13 +109,17 @@ export default function ProjectWorkspace({
           <div className='min-w-0'>
             <h1 className='truncate text-sm font-semibold tracking-tight'>{project.name}</h1>
             <a
-              href={project.websiteUrl}
+              href={currentPageUrl}
               target='_blank'
               rel='noreferrer'
-              className='mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground'
+              className='mt-0.5 inline-flex max-w-full items-center gap-1 text-xs text-muted-foreground hover:text-foreground'
+              title={currentPageUrl}
             >
-              {host}
-              <ArrowSquareOut className='h-3 w-3' />
+              <span className='shrink-0'>{host}</span>
+              {!isHome && (
+                <span className='truncate font-mono text-foreground'>{currentPath}</span>
+              )}
+              <ArrowSquareOut className='h-3 w-3 shrink-0' />
             </a>
           </div>
         </div>
