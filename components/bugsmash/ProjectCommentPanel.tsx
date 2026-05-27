@@ -240,7 +240,7 @@ export default function ProjectCommentPanel({
   useEffect(() => {
     if (!currentPageUrl) return
     const url = canonicalFeedbackUrl(currentPageUrl, projectWebsiteUrl)
-    setExpandedPages(prev => (prev.includes(url) ? prev : [...prev, url]))
+    setExpandedPages([url])
   }, [currentPageUrl, projectWebsiteUrl])
 
   useEffect(() => {
