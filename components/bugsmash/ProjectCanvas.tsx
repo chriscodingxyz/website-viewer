@@ -27,6 +27,7 @@ import {
   Monitor,
   Shield,
   ShieldSlash,
+  Target,
   Warning
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
@@ -71,6 +72,7 @@ export default function ProjectCanvas({
   const [useProxy, setUseProxy] = useState<boolean>(true)
   const [frameStatus, setFrameStatus] = useState<FrameStatus>('loading')
   const [refreshCount, setRefreshCount] = useState(0)
+  const [showAnnotations, setShowAnnotations] = useState(true)
   const [targetPageUrl, setTargetPageUrl] = useState<string>(() =>
     canonicalFeedbackUrl(websiteUrl)
   )
@@ -108,7 +110,7 @@ export default function ProjectCanvas({
     return () => observer.disconnect()
   }, [])
 
-  const horizontalPadding = 48
+  const horizontalPadding = 16
   const scale = isFullscreen
     ? 1
     : Math.min(1, Math.max(0.3, (canvasWidth - horizontalPadding) / preset.width || 1))
@@ -402,6 +404,24 @@ export default function ProjectCanvas({
                 <Button
                   variant='ghost'
                   size='icon'
+                  className={cn(
+                    'h-8 w-8',
+                    showAnnotations && 'bg-blue-50 text-blue-700 hover:bg-blue-50 hover:text-blue-700'
+                  )}
+                  onClick={() => setShowAnnotations(value => !value)}
+                >
+                  <Target weight={showAnnotations ? 'fill' : 'regular'} className='h-4 w-4' />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {showAnnotations ? 'Hide marked elements' : 'Show marked elements'}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant='ghost'
+                  size='icon'
                   className='h-8 w-8'
                   onClick={toggleProxy}
                 >
@@ -429,7 +449,7 @@ export default function ProjectCanvas({
 
         <div
           ref={canvasAreaRef}
-          className='flex flex-1 items-start justify-center overflow-auto p-6'
+          className='flex flex-1 items-start justify-center overflow-auto p-2'
         >
           <div
             className='relative shrink-0 overflow-hidden rounded-lg border border-border/60 bg-white shadow-sm'
@@ -474,6 +494,7 @@ export default function ProjectCanvas({
               iframeRef={iframeRef}
               viewportWidth={preset.width}
               viewportHeight={preset.height}
+              showAnnotations={showAnnotations}
             />
 
             {frameStatus === 'loading' && (

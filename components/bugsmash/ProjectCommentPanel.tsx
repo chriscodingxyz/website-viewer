@@ -17,6 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
+  ArrowsOutCardinal,
   CaretLeft,
   ChatText,
   CircleNotch,
@@ -25,27 +26,30 @@ import {
   DownloadSimple,
   FileText,
   House,
+  Image,
+  Link,
+  PaintBrush,
   PaperPlaneTilt,
   SelectionPlus,
   Target,
+  TextT,
   Trash,
   X
 } from '@phosphor-icons/react'
 import type { Pin, PinReply } from '@/types/feedback'
 import { toMarkdown } from '@/lib/feedback/export'
 import { canonicalFeedbackUrl, feedbackPath, sameFeedbackUrl } from '@/lib/feedback/url'
+import {
+  getInspectActions,
+  type InspectAction,
+  type InspectActionId
+} from '@/lib/feedback/inspectActions'
 
 interface Props {
   projectId: string
   currentPageUrl?: string
   projectWebsiteUrl?: string
   onJumpToPin?: (pin: Pin) => void
-}
-
-const SEVERITY_STYLES: Record<Pin['severity'], string> = {
-  low: 'border-emerald-200 bg-emerald-50 text-emerald-900',
-  medium: 'border-amber-200 bg-amber-50 text-amber-900',
-  high: 'border-rose-200 bg-rose-50 text-rose-900'
 }
 
 function timeAgo(iso: string) {
@@ -57,6 +61,26 @@ function timeAgo(iso: string) {
   if (hours < 24) return `${hours}h ago`
   const days = Math.floor(hours / 24)
   return `${days}d ago`
+}
+
+const actionIcon = (id: InspectActionId) => {
+  switch (id) {
+    case 'replace-image':
+    case 'remove-image':
+    case 'update-alt':
+      return Image
+    case 'replace-text':
+    case 'rewrite-copy':
+      return TextT
+    case 'update-link':
+      return Link
+    case 'remove-element':
+      return Trash
+    case 'style-layout':
+      return PaintBrush
+    default:
+      return ArrowsOutCardinal
+  }
 }
 
 function pathOf(url: string) {
@@ -134,10 +158,19 @@ export default function ProjectCommentPanel({
     toast.success(`Pin ${pin.number} moved to ${feedbackPath(url)}`)
   }
 
+  const applyInspectAction = (pin: Pin, action: InspectAction) => {
+    updatePin(pin.id, {
+      editInstruction: action.instruction,
+      replacementText:
+        action.id === 'remove-image' || action.id === 'remove-element'
+          ? ''
+          : pin.replacementText
+    })
+  }
+
   type PageGroup = {
     url: string
     pins: Pin[]
-    counts: Record<Pin['severity'], number>
     lastUpdated: string
   }
 
@@ -149,7 +182,6 @@ export default function ProjectCommentPanel({
       groups.set(url, {
         url,
         pins: [],
-        counts: { low: 0, medium: 0, high: 0 },
         lastUpdated: ''
       })
     }
@@ -158,7 +190,6 @@ export default function ProjectCommentPanel({
       groups.set(url, groups.get(url) ?? {
         url,
         pins: [],
-        counts: { low: 0, medium: 0, high: 0 },
         lastUpdated: ''
       })
     }
@@ -168,11 +199,9 @@ export default function ProjectCommentPanel({
       const existing = groups.get(url) ?? {
         url,
         pins: [],
-        counts: { low: 0, medium: 0, high: 0 },
         lastUpdated: ''
       }
       existing.pins.push(pin)
-      existing.counts[pin.severity]++
       if (pin.createdAt > existing.lastUpdated) {
         existing.lastUpdated = pin.createdAt
       }
@@ -260,6 +289,12 @@ export default function ProjectCommentPanel({
 
   if (selectedPin) {
     const replies = allRepliesFor(selectedPin)
+    const inspectActions =
+      selectedPin.kind === 'inspect' ? getInspectActions(selectedPin) : []
+    const selectedInspectAction =
+      inspectActions.find(action => action.instruction === selectedPin.editInstruction)
+    const placeholderInspectAction = selectedInspectAction ?? inspectActions[0]
+
     return (
       <aside className='flex w-[340px] shrink-0 flex-col border-l border-border/60 bg-background'>
         <header className='flex items-center justify-between border-b border-border/60 px-4 py-3'>
@@ -311,46 +346,67 @@ export default function ProjectCommentPanel({
         <div className='border-b border-border/60 px-4 py-3'>
           <div className='flex items-center justify-between gap-2'>
             <div className='flex items-center gap-2'>
-              <span className='inline-flex h-6 w-6 items-center justify-center rounded-md bg-amber-400 text-[11px] font-semibold text-amber-950'>
+              <span className='inline-flex h-6 w-6 items-center justify-center rounded-md bg-zinc-950 text-[11px] font-semibold text-white'>
                 {selectedPin.number}
               </span>
-              <Badge
-                variant='outline'
-                className={cn('text-[10px] font-semibold uppercase tracking-wide', SEVERITY_STYLES[selectedPin.severity])}
-              >
-                {selectedPin.severity}
-              </Badge>
+              <span className='inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
+                {selectedPin.kind === 'inspect' ? (
+                  <SelectionPlus className='h-3 w-3' />
+                ) : (
+                  <FileText className='h-3 w-3' />
+                )}
+                {selectedPin.kind === 'inspect' ? 'Inspect' : 'Comment'}
+              </span>
             </div>
             <span className='text-[11px] text-muted-foreground'>
               {timeAgo(selectedPin.createdAt)}
             </span>
           </div>
-          {canEdit ? (
+          {canEdit && selectedPin.kind !== 'inspect' ? (
             <Textarea
               value={selectedPin.comment}
               onChange={event =>
                 updatePin(selectedPin.id, { comment: event.target.value })
               }
-              placeholder={
-                selectedPin.kind === 'inspect'
-                  ? 'Optional context for this edit'
-                  : 'Describe what should change here'
-              }
+              placeholder='Describe what should change here'
               rows={3}
               className='mt-3 resize-y'
             />
-          ) : (
+          ) : selectedPin.kind !== 'inspect' ? (
             <p className='mt-3 whitespace-pre-wrap text-sm text-foreground'>
               {selectedPin.comment || (
                 <span className='text-muted-foreground'>No description.</span>
               )}
             </p>
-          )}
+          ) : null}
           {selectedPin.kind === 'inspect' && (
             <div className='mt-3 space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3'>
               <div className='flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground'>
                 <SelectionPlus className='h-3.5 w-3.5' />
-                Implementation edit
+                Intent
+              </div>
+              <div className='flex flex-wrap gap-1'>
+                {inspectActions.map(action => {
+                  const ActionIcon = actionIcon(action.id)
+                  const active = selectedPin.editInstruction === action.instruction
+                  return (
+                    <button
+                      key={action.id}
+                      type='button'
+                      disabled={!canEdit}
+                      onClick={() => applyInspectAction(selectedPin, action)}
+                      className={cn(
+                        'inline-flex h-7 items-center gap-1 rounded-md border px-2 text-[11px] font-medium transition-colors',
+                        active
+                          ? 'border-zinc-900 bg-zinc-900 text-white'
+                          : 'border-border/70 bg-background text-muted-foreground hover:border-zinc-400 hover:text-foreground'
+                      )}
+                    >
+                      <ActionIcon className='h-3.5 w-3.5' />
+                      {action.label}
+                    </button>
+                  )
+                })}
               </div>
               {selectedPin.elementText && (
                 <div className='rounded-md border border-border/50 bg-background p-2'>
@@ -371,18 +427,24 @@ export default function ProjectCommentPanel({
                         replacementText: event.target.value
                       })
                     }
-                    placeholder='Replacement text, or leave blank if this is a remove/style task'
+                    placeholder={
+                      placeholderInspectAction?.detailPlaceholder ??
+                      'Describe the requested change or desired result'
+                    }
                     rows={3}
                     className='resize-y text-sm'
                   />
                   <Textarea
-                    value={selectedPin.editInstruction || ''}
+                    value={selectedPin.comment}
                     onChange={event =>
                       updatePin(selectedPin.id, {
-                        editInstruction: event.target.value
+                        comment: event.target.value
                       })
                     }
-                    placeholder='Exact developer instruction, e.g. remove this image, change spacing, update CTA'
+                    placeholder={
+                      placeholderInspectAction?.notePlaceholder ??
+                      'Add any context, asset reference, or acceptance detail'
+                    }
                     rows={2}
                     className='resize-y text-xs'
                   />
@@ -392,20 +454,30 @@ export default function ProjectCommentPanel({
                   {selectedPin.replacementText && (
                     <div className='rounded-md border border-border/50 bg-background p-2'>
                       <p className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
-                        Replacement
+                        Details
                       </p>
                       <p className='mt-1 whitespace-pre-wrap text-xs text-foreground'>
                         {selectedPin.replacementText}
                       </p>
                     </div>
                   )}
-                  {selectedPin.editInstruction && (
+                  {selectedPin.editInstruction && !selectedInspectAction && (
                     <div className='rounded-md border border-border/50 bg-background p-2'>
                       <p className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
                         Instruction
                       </p>
                       <p className='mt-1 whitespace-pre-wrap text-xs text-foreground'>
                         {selectedPin.editInstruction}
+                      </p>
+                    </div>
+                  )}
+                  {selectedPin.comment && (
+                    <div className='rounded-md border border-border/50 bg-background p-2'>
+                      <p className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
+                        Context
+                      </p>
+                      <p className='mt-1 whitespace-pre-wrap text-xs text-foreground'>
+                        {selectedPin.comment}
                       </p>
                     </div>
                   )}
@@ -646,22 +718,7 @@ export default function ProjectCommentPanel({
                         )}
                       </div>
                       <div className='flex shrink-0 items-center gap-1'>
-                        {group.counts.high > 0 && (
-                          <span className='inline-flex h-4 min-w-4 items-center justify-center rounded-sm bg-rose-100 px-1 text-[9px] font-semibold text-rose-900'>
-                            {group.counts.high}
-                          </span>
-                        )}
-                        {group.counts.medium > 0 && (
-                          <span className='inline-flex h-4 min-w-4 items-center justify-center rounded-sm bg-amber-100 px-1 text-[9px] font-semibold text-amber-900'>
-                            {group.counts.medium}
-                          </span>
-                        )}
-                        {group.counts.low > 0 && (
-                          <span className='inline-flex h-4 min-w-4 items-center justify-center rounded-sm bg-emerald-100 px-1 text-[9px] font-semibold text-emerald-900'>
-                            {group.counts.low}
-                          </span>
-                        )}
-                        <span className='ml-1 text-[10px] tabular-nums text-muted-foreground'>
+                        <span className='inline-flex h-5 min-w-5 items-center justify-center rounded-md border border-border/70 bg-background px-1.5 text-[10px] font-medium tabular-nums text-muted-foreground'>
                           {group.pins.length}
                         </span>
                       </div>
@@ -676,6 +733,9 @@ export default function ProjectCommentPanel({
                       <ul className='divide-y divide-border/50 border-t border-border/50 bg-background'>
                         {groupPins.map(pin => {
                           const replies = allRepliesFor(pin)
+                          const pinAction = pin.kind === 'inspect'
+                            ? getInspectActions(pin).find(action => action.instruction === pin.editInstruction)
+                            : undefined
                           const canMoveToActivePage =
                             canEdit &&
                             Boolean(currentPageUrl) &&
@@ -699,7 +759,7 @@ export default function ProjectCommentPanel({
                               >
                                 <div className='flex items-center justify-between gap-2'>
                                   <span className='inline-flex items-center gap-2'>
-                                    <span className='inline-flex h-5 w-5 items-center justify-center rounded-md bg-amber-400 text-[10px] font-semibold text-amber-950'>
+                                    <span className='inline-flex h-5 w-5 items-center justify-center rounded-md bg-zinc-950 text-[10px] font-semibold text-white'>
                                       {pin.number}
                                     </span>
                                     {pin.kind === 'inspect' ? (
@@ -707,15 +767,6 @@ export default function ProjectCommentPanel({
                                     ) : (
                                       <FileText className='h-3.5 w-3.5 text-muted-foreground' />
                                     )}
-                                    <Badge
-                                      variant='outline'
-                                      className={cn(
-                                        'text-[9px] font-semibold uppercase tracking-wide',
-                                        SEVERITY_STYLES[pin.severity]
-                                      )}
-                                    >
-                                      {pin.severity}
-                                    </Badge>
                                     <span className='text-[10px] capitalize text-muted-foreground'>
                                       {pin.viewportType}
                                     </span>
@@ -725,11 +776,13 @@ export default function ProjectCommentPanel({
                                   </span>
                                 </div>
                                 <p className='mt-1.5 line-clamp-2 text-sm text-foreground'>
-                                  {pin.comment || (
+                                  {pin.comment || (pin.kind === 'inspect' ? (
+                                    pinAction?.label || 'Inspect/edit task'
+                                  ) : (
                                     <span className='text-muted-foreground'>
                                       No description.
                                     </span>
-                                  )}
+                                  ))}
                                 </p>
                                 {pin.elementTag && (
                                   <p className='mt-1 flex items-center gap-1.5 truncate text-[11px] text-muted-foreground'>
@@ -743,8 +796,8 @@ export default function ProjectCommentPanel({
                                 {pin.kind === 'inspect' && (
                                   <p className='mt-1 line-clamp-2 text-[11px] text-muted-foreground'>
                                     {pin.replacementText?.trim()
-                                      ? `Replace with: ${pin.replacementText.trim()}`
-                                      : pin.editInstruction?.trim() || 'Inspect/edit task'}
+                                      ? `Details: ${pin.replacementText.trim()}`
+                                      : pinAction?.label || pin.editInstruction?.trim() || 'Inspect/edit task'}
                                   </p>
                                 )}
                                 {(replies.length > 0 || pin.cssSelector || canMoveToActivePage) && (

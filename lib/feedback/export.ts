@@ -1,11 +1,5 @@
-import { FeedbackSession, Pin, Severity } from '@/types/feedback'
+import { FeedbackSession, Pin } from '@/types/feedback'
 import { feedbackPath } from '@/lib/feedback/url'
-
-const severityLabel: Record<Severity, string> = {
-  low: 'low',
-  medium: 'medium',
-  high: 'high'
-}
 
 const safeHost = (url: string): string => {
   try {
@@ -30,7 +24,7 @@ export const pinBlock = (pin: Pin): string => {
   const lines: string[] = []
   const kind = pin.kind === 'inspect' ? 'inspect/edit' : 'comment'
 
-  lines.push(`### Pin ${pin.number} - ${kind} - ${severityLabel[pin.severity]} severity`)
+  lines.push(`### Pin ${pin.number} - ${kind}`)
   lines.push(`- **Page:** ${pin.url}`)
   lines.push(`- **Path:** ${feedbackPath(pin.url)}`)
 
@@ -43,7 +37,7 @@ export const pinBlock = (pin: Pin): string => {
     lines.push('- **Requested action:** Inspect this element and apply the requested edit.')
     if (pin.elementText) lines.push(`- **Current text:** ${pin.elementText}`)
     if (pin.replacementText?.trim()) {
-      lines.push(`- **Replace text with:** ${pin.replacementText.trim()}`)
+      lines.push(`- **Details / desired result:** ${pin.replacementText.trim()}`)
     }
     if (pin.editInstruction?.trim()) {
       lines.push(`- **Edit instruction:** ${pin.editInstruction.trim()}`)
@@ -130,7 +124,7 @@ export function toMarkdown(session: FeedbackSession, pageTitle?: string): string
   lines.push('## Implementation Rules')
   lines.push('')
   lines.push('- Use the page URL/path first, then the selector/locator/context to find the intended element.')
-  lines.push('- Treat inspect/edit pins as concrete change requests. Use replacement text when supplied.')
+  lines.push('- Treat inspect/edit pins as concrete change requests. Use the details and instruction fields as the client intent.')
   lines.push('- Treat comment pins as review notes anchored to the captured element or coordinates.')
   lines.push('- Preserve the existing design system and nearby copy style unless a pin explicitly asks otherwise.')
   lines.push('')
@@ -155,7 +149,7 @@ export function toMarkdown(session: FeedbackSession, pageTitle?: string): string
   for (const pin of session.pins.slice().sort((a, b) => a.number - b.number)) {
     const action = pin.kind === 'inspect'
       ? pin.replacementText?.trim()
-        ? 'replace text'
+        ? 'apply details'
         : pin.editInstruction?.trim()
           ? 'apply instruction'
           : 'inspect/edit'
@@ -189,7 +183,6 @@ export function toJson(session: FeedbackSession): string {
         pin: pin.number,
         id: pin.id,
         kind: pin.kind ?? 'comment',
-        severity: pin.severity,
         viewport: {
           type: pin.viewportType,
           width: pin.viewportWidth,

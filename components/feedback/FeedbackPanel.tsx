@@ -5,14 +5,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Trash2, Monitor, Tablet, Smartphone, Download, Inspect, MessageSquare } from 'lucide-react'
-import { Severity, FeedbackViewportType } from '@/types/feedback'
+import { FeedbackViewportType } from '@/types/feedback'
 import { cn } from '@/lib/utils'
-
-const severityDot: Record<Severity, string> = {
-  low: 'bg-emerald-500',
-  medium: 'bg-amber-500',
-  high: 'bg-red-500'
-}
 
 const viewportIcon: Record<FeedbackViewportType, typeof Monitor> = {
   desktop: Monitor,
@@ -81,10 +75,7 @@ export default function FeedbackPanel() {
                 <div className='flex items-start justify-between gap-2 mb-2'>
                   <div className='flex items-center gap-2 min-w-0'>
                     <span
-                      className={cn(
-                        'w-6 h-6 rounded-full text-white text-xs font-semibold flex items-center justify-center flex-shrink-0',
-                        severityDot[pin.severity]
-                      )}
+                      className='flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-zinc-950 text-xs font-semibold text-white'
                     >
                       {pin.number}
                     </span>
@@ -114,33 +105,6 @@ export default function FeedbackPanel() {
                   )}
                 </div>
 
-                {canEdit ? (
-                  <div className='flex gap-1 mb-2'>
-                    {(['low', 'medium', 'high'] as Severity[]).map(s => (
-                      <button
-                        key={s}
-                        onClick={e => {
-                          e.stopPropagation()
-                          updatePin(pin.id, { severity: s })
-                        }}
-                        className={cn(
-                          'text-[10px] px-2 py-0.5 rounded border transition-all capitalize',
-                          pin.severity === s
-                            ? 'border-foreground/40 bg-foreground/5 font-medium'
-                            : 'border-border/40 text-muted-foreground hover:border-border'
-                        )}
-                      >
-                        <span className={cn('inline-block w-1 h-1 rounded-full mr-1 align-middle', severityDot[s])} />
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className='mb-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground'>
-                    {pin.severity} priority
-                  </div>
-                )}
-
                 <Textarea
                   value={pin.comment}
                   onChange={e => updatePin(pin.id, { comment: e.target.value })}
@@ -166,7 +130,7 @@ export default function FeedbackPanel() {
                       value={pin.replacementText || ''}
                       onChange={e => updatePin(pin.id, { replacementText: e.target.value })}
                       onClick={e => e.stopPropagation()}
-                      placeholder='Replace selected text with...'
+                      placeholder='Details, desired result, or replacement content'
                       className='min-h-[64px] text-sm resize-none'
                       readOnly={!canEdit}
                     />
@@ -174,7 +138,7 @@ export default function FeedbackPanel() {
                       value={pin.editInstruction || ''}
                       onChange={e => updatePin(pin.id, { editInstruction: e.target.value })}
                       onClick={e => e.stopPropagation()}
-                      placeholder='Optional: style/layout instruction for this element'
+                      placeholder='Developer instruction, e.g. remove element, replace image, update CTA'
                       className='min-h-[52px] text-xs resize-none'
                       readOnly={!canEdit}
                     />
