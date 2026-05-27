@@ -11,7 +11,12 @@ import {
 import { Spinner } from '@/components/ui/spinner'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
+import { useFeedback } from '@/contexts/FeedbackContext'
 import WebsiteView from '../WebsiteView'
+import FeedbackToolbar from '../feedback/FeedbackToolbar'
+import FeedbackPanel from '../feedback/FeedbackPanel'
+import ExportDialog from '../feedback/ExportDialog'
+import FeedbackKeyboard from '../feedback/FeedbackKeyboard'
 import { toast } from 'sonner'
 import {
   Select,
@@ -50,6 +55,7 @@ export default function ViewportsSection ({
     metadataLoading,
     metadata
   } = useWebsiteViewer()
+  const { feedbackMode } = useFeedback()
 
   // Reset favicon state when site changes
   useEffect(() => {
@@ -149,7 +155,10 @@ export default function ViewportsSection ({
   }
 
   return (
-    <div className='max-w-[1600px] mx-auto px-6 lg:px-8 py-6'>
+    <div
+      data-feedback-mode={feedbackMode ? 'on' : 'off'}
+      className='max-w-[1600px] mx-auto px-6 lg:px-8 py-6'
+    >
       <div className='flex gap-8 lg:gap-16'>
         {/* Sticky Logo - Hidden on mobile */}
         <div className='hidden lg:block flex-shrink-0'>
@@ -344,6 +353,11 @@ export default function ViewportsSection ({
           )}
         </div>
       </div>
+
+      <FeedbackToolbar />
+      <FeedbackPanel />
+      <ExportDialog />
+      <FeedbackKeyboard />
     </div>
   )
 }

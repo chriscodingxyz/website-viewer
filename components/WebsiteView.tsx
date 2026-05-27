@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button'
 import { View, ViewType, useWebsiteViewer } from '@/contexts/WebsiteViewerContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { toast } from 'sonner'
+import FeedbackOverlay from '@/components/feedback/FeedbackOverlay'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -145,14 +146,8 @@ export default function WebsiteView ({
     }
 
     const timeoutId = window.setTimeout(() => {
-      setRealIframeStatus(currentStatus => {
-        if (currentStatus !== 'loading') {
-          return currentStatus
-        }
-
-        updateViewIframeStatus(view.id, 'loaded')
-        return 'loaded'
-      })
+      setRealIframeStatus('loaded')
+      updateViewIframeStatus(view.id, 'loaded')
     }, 3500)
 
     return () => window.clearTimeout(timeoutId)
@@ -496,6 +491,13 @@ export default function WebsiteView ({
           sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
         />
         
+        <FeedbackOverlay
+          view={view}
+          iframeRef={iframeRef}
+          viewportWidth={actualDimensions[view.type].width}
+          viewportHeight={actualDimensions[view.type].height}
+        />
+
         {/* Loading/Error Overlay */}
         {realIframeStatus === 'loading' && (
           <div className="absolute inset-0 bg-card flex items-center justify-center">

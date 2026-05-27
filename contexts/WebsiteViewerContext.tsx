@@ -95,22 +95,6 @@ const commonDevPorts = [
   '127.0.0.1:5173'
 ]
 
-const isLocalOrStagingUrl = (url: string): boolean => {
-  try {
-    const { hostname } = new URL(url)
-    return (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname.includes('staging') ||
-      hostname.includes('dev') ||
-      hostname.includes('test') ||
-      hostname.endsWith('.local')
-    )
-  } catch {
-    return false
-  }
-}
-
 const blocksCurrentOrigin = (sourceList: string, targetUrl: string): boolean => {
   const sources = sourceList
     .trim()
@@ -364,7 +348,7 @@ export function WebsiteViewerProvider ({ children }: { children: ReactNode }) {
   // Use metadata API to choose the best viewport loading mode.
   useEffect(() => {
     if (metadata && views.length > 0) {
-      const shouldProxy = hasIframeBlockingHeaders(metadata) && !isLocalOrStagingUrl(metadata.url)
+      const shouldProxy = hasIframeBlockingHeaders(metadata)
 
       if (shouldProxy) {
         setViews(prevViews =>

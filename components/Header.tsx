@@ -52,6 +52,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import ExportReportButton from './ExportReportButton'
 import ShareableLink from './ShareableLink'
+import ProjectAuthMenu from '@/components/auth/ProjectAuthMenu'
 
 function Header () {
   const {
@@ -169,7 +170,7 @@ function Header () {
   return (
     <header className='fixed top-0 left-0 right-0 z-50 bg-background border-b'>
       <div className='px-2 sm:px-4 py-2.5'>
-        <div className='max-w-[1600px] flex items-center justify-start gap-1.5 sm:gap-2.5'>
+        <div className='max-w-[1600px] mx-auto w-full flex items-center justify-start gap-1.5 sm:gap-2.5'>
           {/* Globe Icon and WebViewer Text - Home Link */}
           <button
             onClick={() => {
@@ -375,6 +376,10 @@ function Header () {
               </div>
             </>
           )}
+
+          <div className='ml-auto flex items-center gap-2'>
+            <ProjectAuthMenu />
+          </div>
         </div>
       </div>
 
