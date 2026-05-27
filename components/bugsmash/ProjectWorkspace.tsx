@@ -25,6 +25,7 @@ import {
 } from '@phosphor-icons/react'
 import ProjectCanvas from './ProjectCanvas'
 import ProjectCommentPanel from './ProjectCommentPanel'
+import ProjectSeoPreview from './ProjectSeoPreview'
 import ExportDialog from '@/components/feedback/ExportDialog'
 import FeedbackKeyboard from '@/components/feedback/FeedbackKeyboard'
 
@@ -144,6 +145,7 @@ export default function ProjectWorkspace({
             </Badge>
           )}
           <Separator orientation='vertical' className='h-5' />
+          <ProjectSeoPreview pageUrl={currentPageUrl} />
           <Button
             variant='outline'
             size='sm'
