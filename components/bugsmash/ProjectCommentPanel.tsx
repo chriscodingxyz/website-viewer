@@ -86,6 +86,28 @@ function pathOf(url: string) {
   return feedbackPath(url)
 }
 
+function detailLabelFor(id: InspectActionId | undefined) {
+  switch (id) {
+    case 'replace-text':
+      return 'Replacement text'
+    case 'rewrite-copy':
+      return 'New copy'
+    case 'replace-image':
+      return 'Replacement image'
+    case 'update-alt':
+      return 'New alt text'
+    case 'update-link':
+      return 'New URL'
+    case 'style-layout':
+      return 'Desired change'
+    case 'remove-image':
+    case 'remove-element':
+      return 'Removal notes'
+    default:
+      return 'Details'
+  }
+}
+
 function initialsFor(name: string | null | undefined) {
   if (!name) return '·'
   const parts = name.split(/\s+/).filter(Boolean)
@@ -419,41 +441,51 @@ export default function ProjectCommentPanel({
               )}
               {canEdit ? (
                 <>
-                  <Textarea
-                    value={selectedPin.replacementText || ''}
-                    onChange={event =>
-                      updatePin(selectedPin.id, {
-                        replacementText: event.target.value
-                      })
-                    }
-                    placeholder={
-                      placeholderInspectAction?.detailPlaceholder ??
-                      'Describe the requested change or desired result'
-                    }
-                    rows={3}
-                    className='resize-y text-sm'
-                  />
-                  <Textarea
-                    value={selectedPin.comment}
-                    onChange={event =>
-                      updatePin(selectedPin.id, {
-                        comment: event.target.value
-                      })
-                    }
-                    placeholder={
-                      placeholderInspectAction?.notePlaceholder ??
-                      'Add any context, asset reference, or acceptance detail'
-                    }
-                    rows={2}
-                    className='resize-y text-xs'
-                  />
+                  <div className='space-y-1'>
+                    <p className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
+                      {detailLabelFor(placeholderInspectAction?.id)}
+                    </p>
+                    <Textarea
+                      value={selectedPin.replacementText || ''}
+                      onChange={event =>
+                        updatePin(selectedPin.id, {
+                          replacementText: event.target.value
+                        })
+                      }
+                      placeholder={
+                        placeholderInspectAction?.detailPlaceholder ??
+                        'Describe the requested change or desired result'
+                      }
+                      rows={3}
+                      className='resize-y text-sm'
+                    />
+                  </div>
+                  <div className='space-y-1'>
+                    <p className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
+                      Notes
+                    </p>
+                    <Textarea
+                      value={selectedPin.comment}
+                      onChange={event =>
+                        updatePin(selectedPin.id, {
+                          comment: event.target.value
+                        })
+                      }
+                      placeholder={
+                        placeholderInspectAction?.notePlaceholder ??
+                        'Add any context, asset reference, or acceptance detail'
+                      }
+                      rows={2}
+                      className='resize-y text-xs'
+                    />
+                  </div>
                 </>
               ) : (
                 <>
                   {selectedPin.replacementText && (
                     <div className='rounded-md border border-border/50 bg-background p-2'>
                       <p className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
-                        Details
+                        {detailLabelFor(selectedInspectAction?.id)}
                       </p>
                       <p className='mt-1 whitespace-pre-wrap text-xs text-foreground'>
                         {selectedPin.replacementText}
