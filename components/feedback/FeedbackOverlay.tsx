@@ -6,6 +6,7 @@ import { useWebsiteViewer, View } from '@/contexts/WebsiteViewerContext'
 import { inspectElementAtPoint } from '@/lib/feedback/selector'
 import type { SelectorResult } from '@/lib/feedback/selector'
 import { canonicalFeedbackUrl, sameFeedbackUrl } from '@/lib/feedback/url'
+import { findInspectAction } from '@/lib/feedback/inspectActions'
 import { cn } from '@/lib/utils'
 import PinMarker from './PinMarker'
 
@@ -295,13 +296,38 @@ export default function FeedbackOverlay({
   }
 
   const isRemovalPin = (pin: typeof pinsForView[number]) => {
+    const action = findInspectAction(pin)
     const instruction = pin.editInstruction?.toLowerCase() ?? ''
     return (
+      action?.id === 'remove-image' ||
+      action?.id === 'remove-element' ||
       instruction.includes('remove this') ||
       instruction.includes('remove the') ||
       instruction.includes('delete this') ||
       instruction.includes('hide this')
     )
+  }
+
+  const annotationMetaFor = (pin: typeof pinsForView[number]) => {
+    const action = pin.kind === 'inspect' ? findInspectAction(pin) : undefined
+    const label = action?.label ?? (pin.kind === 'inspect' ? 'Inspect' : 'Comment')
+    const removal = isRemovalPin(pin)
+    const mediaAction = action?.id === 'replace-image' || action?.id === 'update-alt'
+
+    return {
+      label,
+      removal,
+      outlineClass: removal
+        ? 'border-red-500 bg-red-500/5 shadow-[0_0_0_1px_rgba(239,68,68,0.22)]'
+        : mediaAction
+          ? 'border-cyan-500 bg-cyan-500/5 shadow-[0_0_0_1px_rgba(6,182,212,0.18)]'
+          : 'border-blue-500 bg-blue-500/5 shadow-[0_0_0_1px_rgba(59,130,246,0.18)]',
+      badgeClass: removal
+        ? 'border-red-600 bg-red-600 text-white'
+        : mediaAction
+          ? 'border-cyan-600 bg-cyan-600 text-white'
+          : 'border-blue-600 bg-blue-600 text-white'
+    }
   }
 
   return (
@@ -336,16 +362,14 @@ export default function FeedbackOverlay({
       {pinsForView.map(pin => {
         const anchor = pinAnchors[pin.id]
         if (!anchor || (!showAnnotations && selectedPinId !== pin.id)) return null
-        const removal = isRemovalPin(pin)
+        const meta = annotationMetaFor(pin)
         const selected = selectedPinId === pin.id
         return (
           <div
             key={`anchor-${pin.id}`}
             className={cn(
-              'pointer-events-none absolute z-20 overflow-hidden rounded-sm border bg-background/0',
-              removal
-                ? 'border-red-500 bg-red-500/5 shadow-[0_0_0_1px_rgba(239,68,68,0.22)]'
-                : 'border-blue-500 bg-blue-500/5 shadow-[0_0_0_1px_rgba(59,130,246,0.18)]',
+              'pointer-events-none absolute z-20 overflow-visible rounded-sm border bg-background/0',
+              meta.outlineClass,
               selected && 'border-2'
             )}
             style={{
@@ -355,16 +379,28 @@ export default function FeedbackOverlay({
               height: `${Math.max(anchor.height, 0.4)}%`
             }}
           >
-            {removal && (
-              <svg
-                className='absolute inset-0 h-full w-full'
-                viewBox='0 0 100 100'
-                preserveAspectRatio='none'
-                aria-hidden='true'
+            <div className='absolute inset-0 overflow-hidden rounded-[inherit]'>
+              {meta.removal && (
+                <svg
+                  className='absolute inset-0 h-full w-full'
+                  viewBox='0 0 100 100'
+                  preserveAspectRatio='none'
+                  aria-hidden='true'
+                >
+                  <line x1='0' y1='0' x2='100' y2='100' stroke='rgb(239 68 68)' strokeWidth='1.5' vectorEffect='non-scaling-stroke' />
+                  <line x1='100' y1='0' x2='0' y2='100' stroke='rgb(239 68 68)' strokeWidth='1.5' vectorEffect='non-scaling-stroke' />
+                </svg>
+              )}
+            </div>
+            {pin.kind === 'inspect' && (
+              <div
+                className={cn(
+                  'absolute left-0 top-0 z-10 max-w-[180px] -translate-y-[calc(100%+4px)] truncate rounded-md border px-2 py-1 text-[10px] font-semibold leading-none shadow-sm',
+                  meta.badgeClass
+                )}
               >
-                <line x1='0' y1='0' x2='100' y2='100' stroke='rgb(239 68 68)' strokeWidth='1.5' vectorEffect='non-scaling-stroke' />
-                <line x1='100' y1='0' x2='0' y2='100' stroke='rgb(239 68 68)' strokeWidth='1.5' vectorEffect='non-scaling-stroke' />
-              </svg>
+                {meta.label}
+              </div>
             )}
           </div>
         )
