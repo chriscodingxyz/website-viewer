@@ -20,7 +20,6 @@ import {
   ArrowClockwise,
   ArrowsOut,
   ArrowSquareOut,
-  ChatText,
   Cursor,
   DeviceMobile,
   DeviceTablet,
@@ -357,10 +356,6 @@ export default function ProjectCanvas({
   }
 
   const setBrowse = () => setFeedbackMode(false)
-  const setComment = () => {
-    setActiveTool('comment')
-    setFeedbackMode(true)
-  }
 
   const wrapperWidth = isFullscreen ? '100%' : `${preset.width * scale}px`
   const wrapperHeight = isFullscreen ? '100%' : `${preset.height * scale}px`
@@ -399,11 +394,10 @@ export default function ProjectCanvas({
 
           <ToggleGroup
             type='single'
-            value={feedbackMode ? activeTool : 'browse'}
+            value={feedbackMode ? 'annotate' : 'browse'}
             onValueChange={value => {
               if (value === 'browse') setBrowse()
-              else if (value === 'comment') setComment()
-              else if (value === 'inspect') {
+              else if (value === 'annotate') {
                 setActiveTool('inspect')
                 setFeedbackMode(true)
               }
@@ -416,27 +410,18 @@ export default function ProjectCanvas({
               Browse
             </ToggleGroupItem>
             <ToggleGroupItem
-              value='comment'
-              aria-label='Comment mode'
+              value='annotate'
+              aria-label='Annotate mode'
               disabled={!canEdit}
               className='h-8 gap-1.5 px-3 text-xs'
             >
-              <ChatText className='h-3.5 w-3.5' />
-              Comment
+              <SelectionPlus className='h-3.5 w-3.5' />
+              Annotate
               {pinsOnThisPage.length > 0 && (
                 <span className='ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-sm bg-muted-foreground/20 px-1 text-[10px] font-semibold tabular-nums text-muted-foreground'>
                   {pinsOnThisPage.length}
                 </span>
               )}
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value='inspect'
-              aria-label='Inspect/edit mode'
-              disabled={!canEdit}
-              className='h-8 gap-1.5 px-3 text-xs'
-            >
-              <SelectionPlus className='h-3.5 w-3.5' />
-              Inspect
             </ToggleGroupItem>
           </ToggleGroup>
 

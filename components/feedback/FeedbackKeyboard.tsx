@@ -38,10 +38,7 @@ export default function FeedbackKeyboard() {
       } else if (canEdit && e.key === 'Escape' && feedbackMode) {
         e.preventDefault()
         setFeedbackMode(false)
-      } else if (canEdit && (e.key === 'c' || e.key === 'C') && feedbackMode) {
-        e.preventDefault()
-        setActiveTool('comment')
-      } else if (canEdit && (e.key === 'i' || e.key === 'I') && feedbackMode) {
+      } else if (canEdit && (e.key === 'a' || e.key === 'A') && feedbackMode) {
         e.preventDefault()
         setActiveTool('inspect')
       } else if ((e.key === 'e' || e.key === 'E') && pins.length > 0) {
