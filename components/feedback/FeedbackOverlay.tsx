@@ -25,7 +25,7 @@ export default function FeedbackOverlay({
   viewportHeight,
   showAnnotations = true
 }: Props) {
-  const { feedbackMode, pins, addPin, activeTool, canEdit, selectedPinId } = useFeedback()
+  const { feedbackMode, pins, addPin, activeTool, canEdit, selectedPinId, setSelectedPinId } = useFeedback()
   const { currentSite } = useWebsiteViewer()
   const [autoOpenPinId, setAutoOpenPinId] = useState<string | null>(null)
   const [iframeScroll, setIframeScroll] = useState({ x: 0, y: 0 })
@@ -393,19 +393,28 @@ export default function FeedbackOverlay({
               )}
             </div>
             {pin.kind === 'inspect' && (
-              <div
+              <button
+                type='button'
+                onClick={event => {
+                  event.stopPropagation()
+                  setSelectedPinId(pin.id)
+                }}
                 className={cn(
-                  'absolute left-0 top-0 z-10 max-w-[180px] -translate-y-[calc(100%+4px)] truncate rounded-md border px-2 py-1 text-[10px] font-semibold leading-none shadow-sm',
+                  'pointer-events-auto absolute left-0 top-0 z-10 inline-flex max-w-[200px] -translate-y-[calc(100%+4px)] items-center gap-1 truncate rounded-md border pl-1 pr-2 py-0.5 text-[10px] font-semibold leading-none shadow-sm transition-transform hover:scale-[1.02]',
                   meta.badgeClass
                 )}
+                title={`Pin ${pin.number}: ${meta.label}`}
               >
-                {meta.label}
-              </div>
+                <span className='inline-flex h-4 min-w-4 items-center justify-center rounded-sm bg-black/25 px-1 text-[9px] font-bold tabular-nums'>
+                  {pin.number}
+                </span>
+                <span className='truncate'>{meta.label}</span>
+              </button>
             )}
           </div>
         )
       })}
-      {pinsForView.map(pin => (
+      {pinsForView.filter(p => p.kind !== 'inspect').map(pin => (
         <PinMarker
           key={pin.id}
           pin={pin}
