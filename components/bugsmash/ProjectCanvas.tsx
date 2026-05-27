@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFeedback } from '@/contexts/FeedbackContext'
 import type { View, ViewType } from '@/contexts/WebsiteViewerContext'
+import type { Pin } from '@/types/feedback'
 import FeedbackOverlay from '@/components/feedback/FeedbackOverlay'
 import { iframeDetectionService } from '@/services/IframeDetectionService'
 import { Button } from '@/components/ui/button'
@@ -22,12 +23,14 @@ import {
   Cursor,
   DeviceMobile,
   DeviceTablet,
+  SelectionPlus,
   Monitor,
   Shield,
   ShieldSlash,
   Warning
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
+import { canonicalFeedbackUrl, feedbackPath, sameFeedbackUrl } from '@/lib/feedback/url'
 
 export type CanvasViewport = 'desktop' | 'tablet' | 'mobile' | 'fullscreen'
 
@@ -52,7 +55,7 @@ type FrameStatus = 'loading' | 'loaded' | 'blocked' | 'error'
 interface Props {
   websiteUrl: string
   onPageUrlChange?: (url: string) => void
-  jumpToPin?: import('@/types/feedback').Pin | null
+  jumpToPin?: { pin: Pin; requestId: number } | null
   onJumpHandled?: () => void
 }
 
@@ -68,13 +71,17 @@ export default function ProjectCanvas({
   const [useProxy, setUseProxy] = useState<boolean>(true)
   const [frameStatus, setFrameStatus] = useState<FrameStatus>('loading')
   const [refreshCount, setRefreshCount] = useState(0)
-  const [targetPageUrl, setTargetPageUrl] = useState<string>(websiteUrl)
-  const [currentPageUrl, setCurrentPageUrl] = useState<string>(websiteUrl)
-  const pendingScrollRef = useRef<import('@/types/feedback').Pin | null>(null)
+  const [targetPageUrl, setTargetPageUrl] = useState<string>(() =>
+    canonicalFeedbackUrl(websiteUrl)
+  )
+  const [currentPageUrl, setCurrentPageUrl] = useState<string>(() =>
+    canonicalFeedbackUrl(websiteUrl)
+  )
+  const pendingScrollRef = useRef<Pin | null>(null)
   const proxyAutoTriedRef = useRef(false)
   const detectionRanRef = useRef<string | null>(null)
 
-  const { feedbackMode, setFeedbackMode, setActiveTool, canEdit, pins } = useFeedback()
+  const { feedbackMode, setFeedbackMode, activeTool, setActiveTool, canEdit, pins } = useFeedback()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const detectionContainerRef = useRef<HTMLDivElement>(null)
 
@@ -82,17 +89,10 @@ export default function ProjectCanvas({
   const isFullscreen = viewport === 'fullscreen'
 
   const pinsOnThisPage = pins.filter(
-    p => p.url === currentPageUrl && p.viewportId === preset.id
+    p => sameFeedbackUrl(p.url, currentPageUrl) && p.viewportId === preset.id
   )
 
-  const pathHint = (() => {
-    try {
-      const u = new URL(currentPageUrl)
-      return (u.pathname + (u.search ?? '')) || '/'
-    } catch {
-      return currentPageUrl
-    }
-  })()
+  const pathHint = feedbackPath(currentPageUrl)
 
   const canvasAreaRef = useRef<HTMLDivElement>(null)
   const [canvasWidth, setCanvasWidth] = useState(0)
@@ -131,37 +131,48 @@ export default function ProjectCanvas({
   const iframeKey = `${targetPageUrl}-${useProxy ? 'proxy' : 'direct'}-${refreshCount}`
 
   useEffect(() => {
+    const handleProxyMessage = (event: MessageEvent) => {
+      const data = event.data
+      if (
+        !data ||
+        typeof data !== 'object' ||
+        data.source !== 'bugsmash-proxy' ||
+        data.type !== 'url-change' ||
+        typeof data.url !== 'string'
+      ) {
+        return
+      }
+
+      const nextUrl = canonicalFeedbackUrl(data.url, websiteUrl)
+      setCurrentPageUrl(nextUrl)
+      setTargetPageUrl(prev =>
+        sameFeedbackUrl(prev, nextUrl) ? prev : nextUrl
+      )
+    }
+
+    window.addEventListener('message', handleProxyMessage)
+    return () => window.removeEventListener('message', handleProxyMessage)
+  }, [websiteUrl])
+
+  useEffect(() => {
     setFrameStatus('loading')
-    setCurrentPageUrl(targetPageUrl)
-  }, [iframeKey, targetPageUrl])
+    setCurrentPageUrl(canonicalFeedbackUrl(targetPageUrl, websiteUrl))
+  }, [iframeKey, targetPageUrl, websiteUrl])
 
   // Reset target URL if project changes.
   useEffect(() => {
-    setTargetPageUrl(websiteUrl)
+    const canonicalProjectUrl = canonicalFeedbackUrl(websiteUrl)
+    setTargetPageUrl(canonicalProjectUrl)
+    setCurrentPageUrl(canonicalProjectUrl)
   }, [websiteUrl])
 
-  // Handle jump-to-pin requests from the comment panel.
-  useEffect(() => {
-    if (!jumpToPin) return
-    pendingScrollRef.current = jumpToPin
-    if (jumpToPin.url !== currentPageUrl) {
-      setTargetPageUrl(jumpToPin.url)
-    } else {
-      // Already on the right page — scroll immediately.
-      scrollToPin(jumpToPin)
-      pendingScrollRef.current = null
-      onJumpHandled?.()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jumpToPin])
-
-  const scrollToPin = (pin: import('@/types/feedback').Pin) => {
+  const scrollToPin = useCallback((pin: Pin) => {
     const iframe = iframeRef.current
-    if (!iframe) return
+    if (!iframe) return false
     try {
       const doc = iframe.contentDocument
       const win = iframe.contentWindow
-      if (!doc || !win) return
+      if (!doc || !win) return false
 
       let target: Element | null = null
       if (pin.cssSelector) {
@@ -173,7 +184,7 @@ export default function ProjectCanvas({
       }
       if (target) {
         target.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        return
+        return true
       }
       if (typeof pin.documentY === 'number') {
         win.scrollTo({
@@ -181,11 +192,43 @@ export default function ProjectCanvas({
           top: Math.max(0, pin.documentY - 200),
           behavior: 'smooth'
         })
+        return true
       }
     } catch {
       // cross-origin
     }
-  }
+    return false
+  }, [])
+
+  const scrollToPinWithRetry = useCallback((pin: Pin, attempt = 0) => {
+    const didScroll = scrollToPin(pin)
+    if (didScroll || attempt >= 6) return
+
+    window.setTimeout(() => {
+      scrollToPinWithRetry(pin, attempt + 1)
+    }, attempt === 0 ? 120 : 250)
+  }, [scrollToPin])
+
+  // Handle jump-to-pin requests from the comment panel.
+  useEffect(() => {
+    if (!jumpToPin) return
+
+    const pin = jumpToPin.pin
+    const targetUrl = canonicalFeedbackUrl(pin.url, websiteUrl)
+    pendingScrollRef.current = { ...pin, url: targetUrl }
+    setUseProxy(true)
+
+    if (!sameFeedbackUrl(targetUrl, currentPageUrl)) {
+      setTargetPageUrl(targetUrl)
+      return
+    }
+
+    window.setTimeout(() => {
+      scrollToPinWithRetry({ ...pin, url: targetUrl })
+      pendingScrollRef.current = null
+      onJumpHandled?.()
+    }, 50)
+  }, [jumpToPin, currentPageUrl, onJumpHandled, scrollToPinWithRetry, websiteUrl])
 
   useEffect(() => {
     onPageUrlChange?.(currentPageUrl)
@@ -204,11 +247,11 @@ export default function ProjectCanvas({
         const parsed = new URL(href)
         const target = parsed.searchParams.get('url')
         if (target) {
-          setCurrentPageUrl(target)
+          setCurrentPageUrl(canonicalFeedbackUrl(target, websiteUrl))
           return
         }
       }
-      setCurrentPageUrl(href)
+      setCurrentPageUrl(canonicalFeedbackUrl(href, websiteUrl))
     } catch {
       // Direct cross-origin frames cannot expose location.
     }
@@ -297,10 +340,14 @@ export default function ProjectCanvas({
 
           <ToggleGroup
             type='single'
-            value={feedbackMode ? 'comment' : 'browse'}
+            value={feedbackMode ? activeTool : 'browse'}
             onValueChange={value => {
               if (value === 'browse') setBrowse()
               else if (value === 'comment') setComment()
+              else if (value === 'inspect') {
+                setActiveTool('inspect')
+                setFeedbackMode(true)
+              }
             }}
             size='sm'
             className='gap-0'
@@ -327,6 +374,15 @@ export default function ProjectCanvas({
                   {pinsOnThisPage.length}
                 </span>
               )}
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value='inspect'
+              aria-label='Inspect/edit mode'
+              disabled={!canEdit}
+              className='h-8 gap-1.5 px-3 text-xs data-[state=on]:bg-zinc-900 data-[state=on]:text-white'
+            >
+              <SelectionPlus className='h-3.5 w-3.5' />
+              Inspect
             </ToggleGroupItem>
           </ToggleGroup>
 
@@ -405,7 +461,7 @@ export default function ProjectCanvas({
                 if (pendingScrollRef.current) {
                   const pin = pendingScrollRef.current
                   // small delay to let layout settle
-                  setTimeout(() => scrollToPin(pin), 250)
+                  setTimeout(() => scrollToPinWithRetry(pin), 250)
                   pendingScrollRef.current = null
                   onJumpHandled?.()
                 }

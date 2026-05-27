@@ -218,6 +218,44 @@ export async function GET (request: NextRequest) {
           (function() {
             var PROXY_PREFIX = '/api/proxy?url=';
             var TARGET_ORIGIN = ${JSON.stringify(targetOrigin)};
+            var TARGET_URL = ${JSON.stringify(targetUrl)};
+            var REAL_PARENT = window.parent;
+
+            function toTargetUrl(url) {
+              if (url == null) return TARGET_URL;
+              try { url = String(url); } catch (e) { return TARGET_URL; }
+              if (!url || url.charAt(0) === '#') return TARGET_URL;
+              try {
+                var proxied = new URL(url, window.location.href);
+                if (proxied.pathname === '/api/proxy' && proxied.searchParams.get('url')) {
+                  return proxied.searchParams.get('url') || TARGET_URL;
+                }
+              } catch (e) {}
+              if (url.indexOf(PROXY_PREFIX) === 0) {
+                try {
+                  var relativeProxied = new URL(url, window.location.href);
+                  return relativeProxied.searchParams.get('url') || TARGET_URL;
+                } catch (e) { return TARGET_URL; }
+              }
+              try {
+                var abs = new URL(url, TARGET_URL).toString();
+                return abs;
+              } catch (e) { return TARGET_URL; }
+            }
+
+            function notifyPage(url) {
+              try {
+                var target = toTargetUrl(url);
+                window.__BUGSMASH_TARGET_URL__ = target;
+                if (REAL_PARENT && REAL_PARENT !== window) {
+                  REAL_PARENT.postMessage({
+                    source: 'bugsmash-proxy',
+                    type: 'url-change',
+                    url: target
+                  }, '*');
+                }
+              } catch (e) {}
+            }
 
             function toProxy(url) {
               if (url == null) return url;
@@ -225,7 +263,7 @@ export async function GET (request: NextRequest) {
               if (!url || url.indexOf(PROXY_PREFIX) === 0) return url;
               if (url.indexOf('data:') === 0 || url.indexOf('blob:') === 0 || url.indexOf('javascript:') === 0 || url.indexOf('mailto:') === 0 || url.indexOf('tel:') === 0 || url.charAt(0) === '#') return url;
               try {
-                var abs = new URL(url, TARGET_ORIGIN).toString();
+                var abs = new URL(url, TARGET_URL).toString();
                 return PROXY_PREFIX + encodeURIComponent(abs);
               } catch (e) { return url; }
             }
@@ -250,6 +288,7 @@ export async function GET (request: NextRequest) {
                   if (node.target && node.target !== '_self') return;
                   e.preventDefault();
                   e.stopPropagation();
+                  notifyPage(href);
                   window.location.href = toProxy(href);
                   return;
                 }
@@ -261,12 +300,18 @@ export async function GET (request: NextRequest) {
             try {
               var _push = history.pushState;
               history.pushState = function(state, title, url) {
-                if (url != null) url = toProxy(url);
+                if (url != null) {
+                  notifyPage(url);
+                  url = toProxy(url);
+                }
                 return _push.call(this, state, title, url);
               };
               var _replace = history.replaceState;
               history.replaceState = function(state, title, url) {
-                if (url != null) url = toProxy(url);
+                if (url != null) {
+                  notifyPage(url);
+                  url = toProxy(url);
+                }
                 return _replace.call(this, state, title, url);
               };
             } catch (e) {}
@@ -275,11 +320,17 @@ export async function GET (request: NextRequest) {
             try {
               var _assign = window.location.assign && window.location.assign.bind(window.location);
               if (_assign) {
-                window.location.assign = function(url) { return _assign(toProxy(url)); };
+                window.location.assign = function(url) {
+                  notifyPage(url);
+                  return _assign(toProxy(url));
+                };
               }
               var _locReplace = window.location.replace && window.location.replace.bind(window.location);
               if (_locReplace) {
-                window.location.replace = function(url) { return _locReplace(toProxy(url)); };
+                window.location.replace = function(url) {
+                  notifyPage(url);
+                  return _locReplace(toProxy(url));
+                };
               }
             } catch (e) {}
 
@@ -290,8 +341,15 @@ export async function GET (request: NextRequest) {
               var action = form.getAttribute('action');
               if (action && action.indexOf(PROXY_PREFIX) !== 0) {
                 form.setAttribute('action', toProxy(action));
+                notifyPage(action);
               }
             }, true);
+
+            window.addEventListener('popstate', function() {
+              notifyPage(window.location.href);
+            });
+
+            notifyPage(TARGET_URL);
           })();
         </script>
       `

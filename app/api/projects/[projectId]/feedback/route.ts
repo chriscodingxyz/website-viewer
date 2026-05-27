@@ -60,12 +60,22 @@ export async function PUT(
     }
 
     for (const pin of data.pins) {
+      const pinUrl = (() => {
+        try {
+          const url = new URL(pin.url, bundle.project.websiteUrl)
+          url.hash = ''
+          return url.toString()
+        } catch {
+          return bundle.project.websiteUrl
+        }
+      })()
+
       const values = {
         id: pin.id,
         sessionId,
         number: pin.number,
         kind: pin.kind ?? 'comment',
-        url: bundle.project.websiteUrl,
+        url: pinUrl,
         viewportId: pin.viewportId,
         viewportType: pin.viewportType,
         viewportWidth: pin.viewportWidth,
@@ -99,6 +109,7 @@ export async function PUT(
           set: {
             number: values.number,
             kind: values.kind,
+            url: values.url,
             viewportId: values.viewportId,
             viewportType: values.viewportType,
             viewportWidth: values.viewportWidth,

@@ -20,12 +20,20 @@ import {
   CaretLeft,
   ChatText,
   CircleNotch,
+  Code,
+  CopySimple,
+  DownloadSimple,
+  FileText,
   House,
   PaperPlaneTilt,
+  SelectionPlus,
+  Target,
   Trash,
   X
 } from '@phosphor-icons/react'
 import type { Pin, PinReply } from '@/types/feedback'
+import { toMarkdown } from '@/lib/feedback/export'
+import { canonicalFeedbackUrl, feedbackPath, sameFeedbackUrl } from '@/lib/feedback/url'
 
 interface Props {
   projectId: string
@@ -52,12 +60,7 @@ function timeAgo(iso: string) {
 }
 
 function pathOf(url: string) {
-  try {
-    const u = new URL(url)
-    return (u.pathname + (u.search ?? '')) || '/'
-  } catch {
-    return url
-  }
+  return feedbackPath(url)
 }
 
 function initialsFor(name: string | null | undefined) {
@@ -82,7 +85,9 @@ export default function ProjectCommentPanel({
     setSelectedPinId,
     canEdit,
     removePin,
-    updatePin
+    updatePin,
+    setExportOpen,
+    session
   } = useFeedback()
 
   const handlePinClick = (pin: Pin) => {
@@ -96,6 +101,39 @@ export default function ProjectCommentPanel({
 
   const selectedPin = pins.find(p => p.id === selectedPinId) ?? null
 
+  const copyText = async (text: string, success: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      toast.success(success)
+    } catch {
+      toast.error('Copy failed')
+    }
+  }
+
+  const copySessionBrief = () => {
+    if (!session || session.pins.length === 0) return
+    void copyText(toMarkdown(session), 'LLM brief copied')
+  }
+
+  const copyPinBrief = (pin: Pin) => {
+    if (!session) return
+    void copyText(
+      toMarkdown({
+        ...session,
+        pins: [pin],
+        updatedAt: pin.createdAt
+      }),
+      `Pin ${pin.number} brief copied`
+    )
+  }
+
+  const movePinToCurrentPage = (pin: Pin) => {
+    if (!currentPageUrl || !canEdit) return
+    const url = canonicalFeedbackUrl(currentPageUrl, projectWebsiteUrl)
+    updatePin(pin.id, { url })
+    toast.success(`Pin ${pin.number} moved to ${feedbackPath(url)}`)
+  }
+
   type PageGroup = {
     url: string
     pins: Pin[]
@@ -107,16 +145,18 @@ export default function ProjectCommentPanel({
     const groups = new Map<string, PageGroup>()
 
     if (projectWebsiteUrl) {
-      groups.set(projectWebsiteUrl, {
-        url: projectWebsiteUrl,
+      const url = canonicalFeedbackUrl(projectWebsiteUrl)
+      groups.set(url, {
+        url,
         pins: [],
         counts: { low: 0, medium: 0, high: 0 },
         lastUpdated: ''
       })
     }
     if (currentPageUrl) {
-      groups.set(currentPageUrl, groups.get(currentPageUrl) ?? {
-        url: currentPageUrl,
+      const url = canonicalFeedbackUrl(currentPageUrl, projectWebsiteUrl)
+      groups.set(url, groups.get(url) ?? {
+        url,
         pins: [],
         counts: { low: 0, medium: 0, high: 0 },
         lastUpdated: ''
@@ -124,8 +164,9 @@ export default function ProjectCommentPanel({
     }
 
     for (const pin of pins) {
-      const existing = groups.get(pin.url) ?? {
-        url: pin.url,
+      const url = canonicalFeedbackUrl(pin.url, projectWebsiteUrl)
+      const existing = groups.get(url) ?? {
+        url,
         pins: [],
         counts: { low: 0, medium: 0, high: 0 },
         lastUpdated: ''
@@ -135,12 +176,12 @@ export default function ProjectCommentPanel({
       if (pin.createdAt > existing.lastUpdated) {
         existing.lastUpdated = pin.createdAt
       }
-      groups.set(pin.url, existing)
+      groups.set(url, existing)
     }
 
     return Array.from(groups.values()).sort((a, b) => {
-      if (a.url === currentPageUrl) return -1
-      if (b.url === currentPageUrl) return 1
+      if (sameFeedbackUrl(a.url, currentPageUrl)) return -1
+      if (sameFeedbackUrl(b.url, currentPageUrl)) return 1
       if (a.pins.length !== b.pins.length) return b.pins.length - a.pins.length
       return b.lastUpdated.localeCompare(a.lastUpdated)
     })
@@ -148,8 +189,15 @@ export default function ProjectCommentPanel({
 
   useEffect(() => {
     if (!currentPageUrl) return
-    setExpandedPages(prev => (prev.includes(currentPageUrl) ? prev : [...prev, currentPageUrl]))
-  }, [currentPageUrl])
+    const url = canonicalFeedbackUrl(currentPageUrl, projectWebsiteUrl)
+    setExpandedPages(prev => (prev.includes(url) ? prev : [...prev, url]))
+  }, [currentPageUrl, projectWebsiteUrl])
+
+  useEffect(() => {
+    if (!selectedPin) return
+    const url = canonicalFeedbackUrl(selectedPin.url, projectWebsiteUrl)
+    setExpandedPages(prev => (prev.includes(url) ? prev : [...prev, url]))
+  }, [selectedPin, projectWebsiteUrl])
 
   const allRepliesFor = (pin: Pin) => {
     const fromServer = pin.replies ?? []
@@ -224,20 +272,40 @@ export default function ProjectCommentPanel({
             <CaretLeft className='h-3.5 w-3.5' />
             All comments
           </Button>
-          {canEdit && (
+          <div className='flex items-center gap-1'>
             <Button
               variant='ghost'
               size='sm'
-              className='h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-rose-600'
-              onClick={() => {
-                removePin(selectedPin.id)
-                setSelectedPinId(null)
-              }}
+              className='h-7 gap-1.5 px-2 text-xs'
+              onClick={() => onJumpToPin?.(selectedPin)}
             >
-              <Trash className='h-3.5 w-3.5' />
-              Delete
+              <Target className='h-3.5 w-3.5' />
+              Focus
             </Button>
-          )}
+            <Button
+              variant='ghost'
+              size='icon'
+              className='size-7 text-muted-foreground'
+              onClick={() => copyPinBrief(selectedPin)}
+              title='Copy pin brief'
+            >
+              <CopySimple className='h-3.5 w-3.5' />
+            </Button>
+            {canEdit && (
+              <Button
+                variant='ghost'
+                size='icon'
+                className='size-7 text-muted-foreground hover:text-rose-600'
+                onClick={() => {
+                  removePin(selectedPin.id)
+                  setSelectedPinId(null)
+                }}
+                title='Delete pin'
+              >
+                <Trash className='h-3.5 w-3.5' />
+              </Button>
+            )}
+          </div>
         </header>
 
         <div className='border-b border-border/60 px-4 py-3'>
@@ -263,7 +331,11 @@ export default function ProjectCommentPanel({
               onChange={event =>
                 updatePin(selectedPin.id, { comment: event.target.value })
               }
-              placeholder='Describe the issue…'
+              placeholder={
+                selectedPin.kind === 'inspect'
+                  ? 'Optional context for this edit'
+                  : 'Describe what should change here'
+              }
               rows={3}
               className='mt-3 resize-y'
             />
@@ -274,6 +346,86 @@ export default function ProjectCommentPanel({
               )}
             </p>
           )}
+          {selectedPin.kind === 'inspect' && (
+            <div className='mt-3 space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3'>
+              <div className='flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground'>
+                <SelectionPlus className='h-3.5 w-3.5' />
+                Implementation edit
+              </div>
+              {selectedPin.elementText && (
+                <div className='rounded-md border border-border/50 bg-background p-2'>
+                  <p className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
+                    Current text
+                  </p>
+                  <p className='mt-1 line-clamp-4 text-xs leading-relaxed text-foreground'>
+                    {selectedPin.elementText}
+                  </p>
+                </div>
+              )}
+              {canEdit ? (
+                <>
+                  <Textarea
+                    value={selectedPin.replacementText || ''}
+                    onChange={event =>
+                      updatePin(selectedPin.id, {
+                        replacementText: event.target.value
+                      })
+                    }
+                    placeholder='Replacement text, or leave blank if this is a remove/style task'
+                    rows={3}
+                    className='resize-y text-sm'
+                  />
+                  <Textarea
+                    value={selectedPin.editInstruction || ''}
+                    onChange={event =>
+                      updatePin(selectedPin.id, {
+                        editInstruction: event.target.value
+                      })
+                    }
+                    placeholder='Exact developer instruction, e.g. remove this image, change spacing, update CTA'
+                    rows={2}
+                    className='resize-y text-xs'
+                  />
+                </>
+              ) : (
+                <>
+                  {selectedPin.replacementText && (
+                    <div className='rounded-md border border-border/50 bg-background p-2'>
+                      <p className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
+                        Replacement
+                      </p>
+                      <p className='mt-1 whitespace-pre-wrap text-xs text-foreground'>
+                        {selectedPin.replacementText}
+                      </p>
+                    </div>
+                  )}
+                  {selectedPin.editInstruction && (
+                    <div className='rounded-md border border-border/50 bg-background p-2'>
+                      <p className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
+                        Instruction
+                      </p>
+                      <p className='mt-1 whitespace-pre-wrap text-xs text-foreground'>
+                        {selectedPin.editInstruction}
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+          {canEdit &&
+            currentPageUrl &&
+            !sameFeedbackUrl(selectedPin.url, currentPageUrl) && (
+              <Button
+                variant='outline'
+                size='sm'
+                className='mt-3 h-8 w-full gap-1.5 rounded-md text-xs'
+                onClick={() => movePinToCurrentPage(selectedPin)}
+              >
+                <Target className='h-3.5 w-3.5' />
+                Move pin to active page ({pathOf(currentPageUrl)})
+              </Button>
+            )}
           <Separator className='my-3' />
           <dl className='space-y-1 text-[11px] text-muted-foreground'>
             <div className='flex gap-2'>
@@ -296,6 +448,20 @@ export default function ProjectCommentPanel({
               <div className='flex gap-2'>
                 <dt className='shrink-0 font-medium uppercase tracking-wide'>Sel</dt>
                 <dd className='truncate font-mono'>{selectedPin.cssSelector}</dd>
+              </div>
+            )}
+            {selectedPin.playwrightLocator && (
+              <div className='flex gap-2'>
+                <dt className='shrink-0 font-medium uppercase tracking-wide'>Test</dt>
+                <dd className='truncate font-mono'>{selectedPin.playwrightLocator}</dd>
+              </div>
+            )}
+            {typeof selectedPin.documentY === 'number' && (
+              <div className='flex gap-2'>
+                <dt className='shrink-0 font-medium uppercase tracking-wide'>Doc</dt>
+                <dd className='font-mono'>
+                  {Math.round(selectedPin.documentX ?? 0)}×{Math.round(selectedPin.documentY)}
+                </dd>
               </div>
             )}
           </dl>
@@ -392,6 +558,28 @@ export default function ProjectCommentPanel({
             {pageGroups.filter(g => g.pins.length > 0).length === 1 ? 'page' : 'pages'}
           </p>
         </div>
+        <div className='flex items-center gap-1'>
+          <Button
+            variant='ghost'
+            size='icon'
+            className='size-8 text-muted-foreground'
+            onClick={copySessionBrief}
+            disabled={pins.length === 0}
+            title='Copy LLM brief'
+          >
+            <CopySimple className='h-4 w-4' />
+          </Button>
+          <Button
+            variant='ghost'
+            size='icon'
+            className='size-8 text-muted-foreground'
+            onClick={() => setExportOpen(true)}
+            disabled={pins.length === 0}
+            title='Export feedback'
+          >
+            <DownloadSimple className='h-4 w-4' />
+          </Button>
+        </div>
       </header>
 
       <ScrollArea className='flex-1'>
@@ -413,8 +601,8 @@ export default function ProjectCommentPanel({
             className='space-y-2 bg-muted/30 p-2'
           >
             {pageGroups.map(group => {
-              const isActive = group.url === currentPageUrl
-              const isHome = group.url === projectWebsiteUrl
+              const isActive = sameFeedbackUrl(group.url, currentPageUrl)
+              const isHome = sameFeedbackUrl(group.url, projectWebsiteUrl)
               const path = pathOf(group.url)
               const groupPins = [...group.pins].sort((a, b) =>
                 b.createdAt.localeCompare(a.createdAt)
@@ -488,18 +676,37 @@ export default function ProjectCommentPanel({
                       <ul className='divide-y divide-border/50 border-t border-border/50 bg-background'>
                         {groupPins.map(pin => {
                           const replies = allRepliesFor(pin)
+                          const canMoveToActivePage =
+                            canEdit &&
+                            Boolean(currentPageUrl) &&
+                            !sameFeedbackUrl(pin.url, currentPageUrl)
                           return (
                             <li key={pin.id}>
-                              <button
-                                type='button'
+                              <div
+                                role='button'
+                                tabIndex={0}
                                 onClick={() => handlePinClick(pin)}
-                                className='block w-full px-4 py-3 text-left hover:bg-muted/30'
+                                onKeyDown={event => {
+                                  if (event.key === 'Enter' || event.key === ' ') {
+                                    event.preventDefault()
+                                    handlePinClick(pin)
+                                  }
+                                }}
+                                className={cn(
+                                  'block w-full cursor-pointer px-4 py-3 text-left transition-colors hover:bg-muted/30',
+                                  selectedPinId === pin.id && 'bg-blue-50/70'
+                                )}
                               >
                                 <div className='flex items-center justify-between gap-2'>
                                   <span className='inline-flex items-center gap-2'>
                                     <span className='inline-flex h-5 w-5 items-center justify-center rounded-md bg-amber-400 text-[10px] font-semibold text-amber-950'>
                                       {pin.number}
                                     </span>
+                                    {pin.kind === 'inspect' ? (
+                                      <SelectionPlus className='h-3.5 w-3.5 text-muted-foreground' />
+                                    ) : (
+                                      <FileText className='h-3.5 w-3.5 text-muted-foreground' />
+                                    )}
                                     <Badge
                                       variant='outline'
                                       className={cn(
@@ -524,13 +731,56 @@ export default function ProjectCommentPanel({
                                     </span>
                                   )}
                                 </p>
-                                {replies.length > 0 && (
-                                  <p className='mt-1 text-[11px] text-muted-foreground'>
-                                    {replies.length}{' '}
-                                    {replies.length === 1 ? 'reply' : 'replies'}
+                                {pin.elementTag && (
+                                  <p className='mt-1 flex items-center gap-1.5 truncate text-[11px] text-muted-foreground'>
+                                    <Code className='h-3 w-3 shrink-0' />
+                                    <span className='truncate font-mono'>
+                                      &lt;{pin.elementTag}&gt;
+                                      {pin.elementText ? ` ${pin.elementText}` : ''}
+                                    </span>
                                   </p>
                                 )}
-                              </button>
+                                {pin.kind === 'inspect' && (
+                                  <p className='mt-1 line-clamp-2 text-[11px] text-muted-foreground'>
+                                    {pin.replacementText?.trim()
+                                      ? `Replace with: ${pin.replacementText.trim()}`
+                                      : pin.editInstruction?.trim() || 'Inspect/edit task'}
+                                  </p>
+                                )}
+                                {(replies.length > 0 || pin.cssSelector || canMoveToActivePage) && (
+                                  <div className='mt-1 flex items-center justify-between gap-2 text-[11px] text-muted-foreground'>
+                                    <span className='flex min-w-0 items-center gap-2'>
+                                      {replies.length > 0 && (
+                                        <span>
+                                          {replies.length}{' '}
+                                          {replies.length === 1 ? 'reply' : 'replies'}
+                                        </span>
+                                      )}
+                                      {pin.cssSelector && <span>selector captured</span>}
+                                    </span>
+                                    {canMoveToActivePage && (
+                                      <span
+                                        role='button'
+                                        tabIndex={0}
+                                        className='shrink-0 rounded border border-border/70 px-1.5 py-0.5 text-[10px] font-medium text-foreground hover:bg-muted'
+                                        onClick={event => {
+                                          event.stopPropagation()
+                                          movePinToCurrentPage(pin)
+                                        }}
+                                        onKeyDown={event => {
+                                          if (event.key === 'Enter' || event.key === ' ') {
+                                            event.preventDefault()
+                                            event.stopPropagation()
+                                            movePinToCurrentPage(pin)
+                                          }
+                                        }}
+                                      >
+                                        Move here
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </li>
                           )
                         })}

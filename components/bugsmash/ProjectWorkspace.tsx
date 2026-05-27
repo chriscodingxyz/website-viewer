@@ -17,6 +17,8 @@ import {
 } from '@phosphor-icons/react'
 import ProjectCanvas from './ProjectCanvas'
 import ProjectCommentPanel from './ProjectCommentPanel'
+import ExportDialog from '@/components/feedback/ExportDialog'
+import FeedbackKeyboard from '@/components/feedback/FeedbackKeyboard'
 
 type ProjectSummary = {
   id: string
@@ -51,15 +53,21 @@ export default function ProjectWorkspace({
   const host = hostFor(project.websiteUrl)
   const [copied, setCopied] = useState(false)
   const [currentPageUrl, setCurrentPageUrl] = useState<string>(project.websiteUrl)
-  const [pendingJumpPin, setPendingJumpPin] = useState<Pin | null>(null)
+  const [pendingJump, setPendingJump] = useState<{
+    pin: Pin
+    requestId: number
+  } | null>(null)
   const handlePageUrlChange = useCallback((url: string) => {
     setCurrentPageUrl(url)
   }, [])
   const handleJumpToPin = useCallback((pin: Pin) => {
-    setPendingJumpPin(pin)
+    setPendingJump(prev => ({
+      pin,
+      requestId: (prev?.requestId ?? 0) + 1
+    }))
   }, [])
   const handleJumpHandled = useCallback(() => {
-    setPendingJumpPin(null)
+    setPendingJump(null)
   }, [])
 
   const copyShareLink = async () => {
@@ -134,7 +142,7 @@ export default function ProjectWorkspace({
             <ProjectCanvas
               websiteUrl={project.websiteUrl}
               onPageUrlChange={handlePageUrlChange}
-              jumpToPin={pendingJumpPin}
+              jumpToPin={pendingJump}
               onJumpHandled={handleJumpHandled}
             />
           </div>
@@ -144,6 +152,8 @@ export default function ProjectWorkspace({
             projectWebsiteUrl={project.websiteUrl}
             onJumpToPin={handleJumpToPin}
           />
+          <ExportDialog />
+          <FeedbackKeyboard />
         </div>
       </FeedbackProvider>
     </div>

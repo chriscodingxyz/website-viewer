@@ -5,6 +5,7 @@ import { useFeedback } from '@/contexts/FeedbackContext'
 import { useWebsiteViewer, View } from '@/contexts/WebsiteViewerContext'
 import { inspectElementAtPoint } from '@/lib/feedback/selector'
 import type { SelectorResult } from '@/lib/feedback/selector'
+import { canonicalFeedbackUrl, sameFeedbackUrl } from '@/lib/feedback/url'
 import PinMarker from './PinMarker'
 
 interface Props {
@@ -33,7 +34,7 @@ export default function FeedbackOverlay({
   } | null>(null)
   const lastHoverReadRef = useRef(0)
   const pinsForView = pins.filter(
-    p => p.viewportId === view.id && p.url === view.url
+    p => p.viewportId === view.id && sameFeedbackUrl(p.url, view.url)
   )
   const hasDocumentPins = pinsForView.some(
     p => typeof p.documentX === 'number' && typeof p.documentY === 'number'
@@ -91,10 +92,29 @@ export default function FeedbackOverlay({
     const yPct = ((e.clientY - rect.top) / rect.height) * 100
 
     const inspection = inspectElementAtPoint(iframeRef.current, xPct, yPct)
+    const actualPageUrl = (() => {
+      try {
+        const win = iframeRef.current?.contentWindow
+        const proxyWindow = win as (Window & { __BUGSMASH_TARGET_URL__?: string }) | null
+        const targetUrl = proxyWindow?.__BUGSMASH_TARGET_URL__
+        if (targetUrl) return canonicalFeedbackUrl(targetUrl, view.url || currentSite || '')
+
+        const href = win?.location.href
+        if (href?.includes('/api/proxy')) {
+          const parsed = new URL(href)
+          const target = parsed.searchParams.get('url')
+          if (target) return canonicalFeedbackUrl(target, view.url || currentSite || '')
+        }
+        if (href) return canonicalFeedbackUrl(href, view.url || currentSite || '')
+      } catch {
+        // Direct cross-origin frames fall back to the canvas URL.
+      }
+      return canonicalFeedbackUrl(view.url || currentSite || '')
+    })()
 
     const created = addPin({
       kind: activeTool,
-      url: view.url || currentSite || '',
+      url: actualPageUrl,
       viewportId: view.id,
       viewportType: view.type,
       viewportWidth,

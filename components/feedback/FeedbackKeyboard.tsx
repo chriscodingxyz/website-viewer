@@ -20,6 +20,8 @@ export default function FeedbackKeyboard() {
     setFeedbackMode,
     setExportOpen,
     setActiveTool,
+    session,
+    projectMode,
     pins,
     canEdit
   } = useFeedback()
@@ -28,7 +30,7 @@ export default function FeedbackKeyboard() {
     const handler = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return
       if (isTypingTarget(e.target)) return
-      if (!currentSite) return
+      if (!currentSite && !session?.url && !projectMode) return
 
       if (canEdit && (e.key === 'f' || e.key === 'F')) {
         e.preventDefault()
@@ -56,6 +58,8 @@ export default function FeedbackKeyboard() {
     setFeedbackMode,
     setExportOpen,
     setActiveTool,
+    session?.url,
+    projectMode,
     pins.length,
     canEdit
   ])
