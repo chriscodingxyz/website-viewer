@@ -76,6 +76,10 @@ export default function ProjectWorkspace({
     pin: Pin
     requestId: number
   } | null>(null)
+  const [pendingNavigation, setPendingNavigation] = useState<{
+    url: string
+    requestId: number
+  } | null>(null)
   const [tasksSheetOpen, setTasksSheetOpen] = useState(false)
 
   const handlePageUrlChange = useCallback((url: string) => {
@@ -90,6 +94,16 @@ export default function ProjectWorkspace({
   }, [])
   const handleJumpHandled = useCallback(() => {
     setPendingJump(null)
+  }, [])
+  const handleNavigateToPage = useCallback((url: string) => {
+    setPendingNavigation(prev => ({
+      url,
+      requestId: (prev?.requestId ?? 0) + 1
+    }))
+    setTasksSheetOpen(false)
+  }, [])
+  const handleNavigationHandled = useCallback(() => {
+    setPendingNavigation(null)
   }, [])
 
   const copyShareLink = async () => {
@@ -172,6 +186,8 @@ export default function ProjectWorkspace({
               onPageUrlChange={handlePageUrlChange}
               jumpToPin={pendingJump}
               onJumpHandled={handleJumpHandled}
+              pendingNavigation={pendingNavigation}
+              onNavigationHandled={handleNavigationHandled}
             />
           </div>
           <aside className='flex h-full w-[340px] shrink-0 flex-col border-l border-border/60 bg-background 2xl:w-[380px]'>
@@ -180,6 +196,7 @@ export default function ProjectWorkspace({
               currentPageUrl={currentPageUrl}
               projectWebsiteUrl={project.websiteUrl}
               onJumpToPin={handleJumpToPin}
+              onNavigateToPage={handleNavigateToPage}
             />
           </aside>
         </div>
@@ -192,6 +209,8 @@ export default function ProjectWorkspace({
               onPageUrlChange={handlePageUrlChange}
               jumpToPin={pendingJump}
               onJumpHandled={handleJumpHandled}
+              pendingNavigation={pendingNavigation}
+              onNavigationHandled={handleNavigationHandled}
             />
           </div>
           <CompactTasksTrigger
@@ -201,6 +220,7 @@ export default function ProjectWorkspace({
             currentPageUrl={currentPageUrl}
             projectWebsiteUrl={project.websiteUrl}
             onJumpToPin={handleJumpToPin}
+            onNavigateToPage={handleNavigateToPage}
           />
         </div>
 
@@ -217,7 +237,8 @@ function CompactTasksTrigger({
   projectId,
   currentPageUrl,
   projectWebsiteUrl,
-  onJumpToPin
+  onJumpToPin,
+  onNavigateToPage
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -225,6 +246,7 @@ function CompactTasksTrigger({
   currentPageUrl: string
   projectWebsiteUrl: string
   onJumpToPin: (pin: Pin) => void
+  onNavigateToPage: (url: string) => void
 }) {
   const { pins } = useFeedback()
 
@@ -251,6 +273,7 @@ function CompactTasksTrigger({
             currentPageUrl={currentPageUrl}
             projectWebsiteUrl={projectWebsiteUrl}
             onJumpToPin={onJumpToPin}
+            onNavigateToPage={onNavigateToPage}
           />
         </div>
       </SheetContent>

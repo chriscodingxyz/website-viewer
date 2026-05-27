@@ -1,6 +1,7 @@
 import type { Pin } from '@/types/feedback'
 
 export type InspectActionId =
+  | 'comment'
   | 'replace-text'
   | 'rewrite-copy'
   | 'replace-image'
@@ -120,6 +121,16 @@ export function getInspectActions(pin: Pick<Pin, 'elementTag' | 'elementText'>):
       'Style/layout',
       `Adjust the styling or layout of this ${elementName(pin)}.`,
       'Describe the visual/layout change'
+    )
+  )
+
+  actions.unshift(
+    action(
+      'comment',
+      'Comment',
+      'Leave a comment or open a discussion on this element.',
+      '',
+      'Write your comment or question'
     )
   )
 

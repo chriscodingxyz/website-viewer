@@ -60,13 +60,17 @@ interface Props {
   onPageUrlChange?: (url: string) => void
   jumpToPin?: { pin: Pin; requestId: number } | null
   onJumpHandled?: () => void
+  pendingNavigation?: { url: string; requestId: number } | null
+  onNavigationHandled?: () => void
 }
 
 export default function ProjectCanvas({
   websiteUrl,
   onPageUrlChange,
   jumpToPin,
-  onJumpHandled
+  onJumpHandled,
+  pendingNavigation,
+  onNavigationHandled
 }: Props) {
   const [viewport, setViewport] = useState<CanvasViewport>('desktop')
   // Default to proxy so links inside the iframe stay rewritten and navigation works
@@ -291,6 +295,16 @@ export default function ProjectCanvas({
   useEffect(() => {
     onPageUrlChange?.(currentPageUrl)
   }, [currentPageUrl, onPageUrlChange])
+
+  useEffect(() => {
+    if (!pendingNavigation) return
+    const next = canonicalFeedbackUrl(pendingNavigation.url, websiteUrl)
+    setUseProxy(true)
+    if (!sameFeedbackUrl(next, currentPageUrl)) {
+      setTargetPageUrl(next)
+    }
+    onNavigationHandled?.()
+  }, [pendingNavigation, currentPageUrl, onNavigationHandled, websiteUrl])
 
   // Read the iframe's actual page URL on load. With proxy mode the iframe URL is
   // /api/proxy?url=<target>, so we extract the target. With direct mode we can't

@@ -163,7 +163,8 @@ export function inspectElementAtPoint(
   }
   if (!el) return { sameOrigin: true }
 
-  const text = truncText(el.textContent || '')
+  const rawText = (el as HTMLElement).innerText ?? el.textContent ?? ''
+  const text = truncText(rawText)
   const rect = el.getBoundingClientRect()
   return {
     sameOrigin: true,

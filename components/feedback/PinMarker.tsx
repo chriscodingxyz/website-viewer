@@ -31,6 +31,8 @@ interface Props {
 
 const actionIcon = (id: InspectActionId) => {
   switch (id) {
+    case 'comment':
+      return ChatText
     case 'replace-image':
     case 'remove-image':
     case 'update-alt':
