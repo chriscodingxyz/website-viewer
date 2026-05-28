@@ -200,6 +200,7 @@ export const feedbackPin = pgTable(
       .references(() => feedbackSession.id, { onDelete: 'cascade' }),
     number: integer('number').notNull(),
     kind: text('kind').notNull().default('comment'),
+    status: text('status').notNull().default('open'),
     url: text('url').notNull(),
     viewportId: integer('viewport_id').notNull(),
     viewportType: text('viewport_type').notNull(),

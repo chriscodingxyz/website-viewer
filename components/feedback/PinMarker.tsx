@@ -51,6 +51,25 @@ const actionIcon = (id: InspectActionId) => {
   }
 }
 
+const actionTone = (id: InspectActionId) => {
+  switch (id) {
+    case 'remove-image':
+    case 'remove-element':
+      return 'border-red-200 bg-red-50 text-red-700 hover:border-red-400 dark:border-red-950 dark:bg-red-950/30 dark:text-red-300'
+    case 'replace-image':
+    case 'replace-text':
+    case 'rewrite-copy':
+    case 'update-alt':
+      return 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400 dark:border-emerald-950 dark:bg-emerald-950/30 dark:text-emerald-300'
+    case 'update-link':
+      return 'border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-400 dark:border-blue-950 dark:bg-blue-950/30 dark:text-blue-300'
+    case 'style-layout':
+      return 'border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-400 dark:border-amber-950 dark:bg-amber-950/30 dark:text-amber-300'
+    default:
+      return 'border-border/70 bg-background text-muted-foreground hover:border-zinc-400 hover:text-foreground'
+  }
+}
+
 export default function PinMarker({ pin, position, autoOpen = false }: Props) {
   const { updatePin, removePin, selectedPinId, setSelectedPinId, canEdit } = useFeedback()
   const [open, setOpen] = useState(autoOpen)
@@ -65,6 +84,8 @@ export default function PinMarker({ pin, position, autoOpen = false }: Props) {
   const selectedAction =
     inspectActions.find(action => action.id === selectedActionId) ?? savedAction
   const placeholderAction = selectedAction ?? inspectActions[0]
+  const showCurrentText =
+    selectedAction?.id === 'replace-text' || selectedAction?.id === 'rewrite-copy'
 
   const applyAction = (action: InspectAction) => {
     setSelectedActionId(action.id)
@@ -148,7 +169,7 @@ export default function PinMarker({ pin, position, autoOpen = false }: Props) {
                       'inline-flex h-7 items-center gap-1 rounded-md border px-2 text-[11px] font-medium transition-colors',
                       active
                         ? 'border-zinc-900 bg-zinc-900 text-white'
-                        : 'border-border/70 bg-background text-muted-foreground hover:border-zinc-400 hover:text-foreground'
+                        : actionTone(action.id)
                     )}
                   >
                     <ActionIcon className='h-3.5 w-3.5' />
@@ -157,7 +178,7 @@ export default function PinMarker({ pin, position, autoOpen = false }: Props) {
                 )
               })}
             </div>
-            {pin.elementText && (
+            {showCurrentText && pin.elementText && (
               <div className='rounded-md border border-border/50 bg-muted/30 p-2'>
                 <p className='text-[10px] uppercase tracking-[0.14em] text-muted-foreground mb-1'>
                   Current text

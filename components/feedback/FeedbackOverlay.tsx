@@ -43,9 +43,12 @@ export default function FeedbackOverlay({
   const anchorsKeyRef = useRef('')
   const pinsForView = useMemo(
     () => pins.filter(
-      p => p.viewportId === view.id && sameFeedbackUrl(p.url, view.url)
+      p =>
+        p.viewportId === view.id &&
+        sameFeedbackUrl(p.url, view.url) &&
+        ((p.status ?? 'open') !== 'closed' || p.id === selectedPinId)
     ),
-    [pins, view.id, view.url]
+    [pins, selectedPinId, view.id, view.url]
   )
   const hasDocumentPins = pinsForView.some(
     p => typeof p.documentX === 'number' && typeof p.documentY === 'number'
@@ -312,21 +315,35 @@ export default function FeedbackOverlay({
     const action = pin.kind === 'inspect' ? findInspectAction(pin) : undefined
     const label = action?.label ?? (pin.kind === 'inspect' ? 'Inspect' : 'Comment')
     const removal = isRemovalPin(pin)
-    const mediaAction = action?.id === 'replace-image' || action?.id === 'update-alt'
+    const greenAction =
+      action?.id === 'replace-image' ||
+      action?.id === 'replace-text' ||
+      action?.id === 'rewrite-copy' ||
+      action?.id === 'update-alt'
+    const linkAction = action?.id === 'update-link'
+    const amberAction = action?.id === 'style-layout'
 
     return {
       label,
       removal,
       outlineClass: removal
         ? 'border-red-500 bg-red-500/5 shadow-[0_0_0_1px_rgba(239,68,68,0.22)]'
-        : mediaAction
-          ? 'border-cyan-500 bg-cyan-500/5 shadow-[0_0_0_1px_rgba(6,182,212,0.18)]'
-          : 'border-blue-500 bg-blue-500/5 shadow-[0_0_0_1px_rgba(59,130,246,0.18)]',
+        : greenAction
+          ? 'border-emerald-500 bg-emerald-500/5 shadow-[0_0_0_1px_rgba(16,185,129,0.18)]'
+          : linkAction
+            ? 'border-blue-500 bg-blue-500/5 shadow-[0_0_0_1px_rgba(59,130,246,0.18)]'
+            : amberAction
+              ? 'border-amber-500 bg-amber-500/5 shadow-[0_0_0_1px_rgba(245,158,11,0.18)]'
+              : 'border-zinc-500 bg-zinc-500/5 shadow-[0_0_0_1px_rgba(113,113,122,0.18)]',
       badgeClass: removal
         ? 'border-red-600 bg-red-600 text-white'
-        : mediaAction
-          ? 'border-cyan-600 bg-cyan-600 text-white'
-          : 'border-blue-600 bg-blue-600 text-white'
+        : greenAction
+          ? 'border-emerald-600 bg-emerald-600 text-white'
+          : linkAction
+            ? 'border-blue-600 bg-blue-600 text-white'
+            : amberAction
+              ? 'border-amber-600 bg-amber-600 text-white'
+              : 'border-zinc-700 bg-zinc-700 text-white'
     }
   }
 

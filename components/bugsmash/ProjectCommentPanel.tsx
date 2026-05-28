@@ -17,7 +17,9 @@ import {
   ArrowsOutCardinal,
   CaretDown,
   CaretLeft,
+  ArrowCounterClockwise,
   ChatText,
+  CheckCircle,
   CircleNotch,
   Code,
   CopySimple,
@@ -81,6 +83,40 @@ const actionIcon = (id: InspectActionId) => {
       return PaintBrush
     default:
       return ArrowsOutCardinal
+  }
+}
+
+const actionTone = (id: InspectActionId | undefined) => {
+  switch (id) {
+    case 'remove-image':
+    case 'remove-element':
+      return {
+        chip: 'border-red-200 bg-red-50 text-red-700 dark:border-red-950 dark:bg-red-950/30 dark:text-red-300',
+        active: 'border-red-600 bg-red-600 text-white'
+      }
+    case 'replace-image':
+    case 'replace-text':
+    case 'rewrite-copy':
+    case 'update-alt':
+      return {
+        chip: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-950 dark:bg-emerald-950/30 dark:text-emerald-300',
+        active: 'border-emerald-600 bg-emerald-600 text-white'
+      }
+    case 'update-link':
+      return {
+        chip: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-950 dark:bg-blue-950/30 dark:text-blue-300',
+        active: 'border-blue-600 bg-blue-600 text-white'
+      }
+    case 'style-layout':
+      return {
+        chip: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-950 dark:bg-amber-950/30 dark:text-amber-300',
+        active: 'border-amber-600 bg-amber-600 text-white'
+      }
+    default:
+      return {
+        chip: 'border-border bg-background text-muted-foreground',
+        active: 'border-foreground bg-foreground text-background'
+      }
   }
 }
 
@@ -149,6 +185,8 @@ export default function ProjectCommentPanel({
   const [localReplies, setLocalReplies] = useState<Record<string, PinReply[]>>({})
 
   const selectedPin = pins.find(p => p.id === selectedPinId) ?? null
+  const openPins = pins.filter(pin => (pin.status ?? 'open') !== 'closed')
+  const closedPins = pins.filter(pin => pin.status === 'closed')
 
   const copyText = async (text: string, success: string) => {
     try {
@@ -191,6 +229,11 @@ export default function ProjectCommentPanel({
           ? ''
           : pin.replacementText
     })
+  }
+
+  const setPinStatus = (pin: Pin, status: 'open' | 'closed') => {
+    updatePin(pin.id, { status })
+    toast.success(`Pin ${pin.number} ${status === 'closed' ? 'closed' : 'reopened'}`)
   }
 
   type PageGroup = {
@@ -306,6 +349,9 @@ export default function ProjectCommentPanel({
       selectedPin.kind === 'inspect' ? getInspectActions(selectedPin) : []
     const selectedInspectAction =
       inspectActions.find(action => action.instruction === selectedPin.editInstruction)
+    const showCurrentText =
+      selectedInspectAction?.id === 'replace-text' ||
+      selectedInspectAction?.id === 'rewrite-copy'
 
     return (
       <aside className='flex h-full w-full flex-col border-l border-border/60 bg-background'>
@@ -320,6 +366,26 @@ export default function ProjectCommentPanel({
             All comments
           </Button>
           <div className='flex items-center gap-1'>
+            {canEdit && (
+              <Button
+                variant='ghost'
+                size='sm'
+                className='h-7 gap-1.5 px-2 text-xs'
+                onClick={() =>
+                  setPinStatus(
+                    selectedPin,
+                    selectedPin.status === 'closed' ? 'open' : 'closed'
+                  )
+                }
+              >
+                {selectedPin.status === 'closed' ? (
+                  <ArrowCounterClockwise className='h-3.5 w-3.5' />
+                ) : (
+                  <CheckCircle className='h-3.5 w-3.5' />
+                )}
+                {selectedPin.status === 'closed' ? 'Reopen' : 'Close'}
+              </Button>
+            )}
             <Button
               variant='ghost'
               size='sm'
@@ -421,6 +487,7 @@ export default function ProjectCommentPanel({
                 {inspectActions.map(action => {
                   const ActionIcon = actionIcon(action.id)
                   const active = selectedPin.editInstruction === action.instruction
+                  const tone = actionTone(action.id)
                   return (
                     <button
                       key={action.id}
@@ -430,8 +497,8 @@ export default function ProjectCommentPanel({
                       className={cn(
                         'inline-flex h-7 items-center gap-1 rounded-md border px-2 text-[11px] font-medium transition-colors',
                         active
-                          ? 'border-foreground bg-foreground text-background'
-                          : 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                          ? tone.active
+                          : `${tone.chip} hover:bg-accent hover:text-accent-foreground`
                       )}
                     >
                       <ActionIcon className='h-3.5 w-3.5' />
@@ -440,7 +507,7 @@ export default function ProjectCommentPanel({
                   )
                 })}
               </div>
-              {selectedPin.elementText && (
+              {showCurrentText && selectedPin.elementText && (
                 <div className='rounded-md border border-border/50 bg-background p-2'>
                   <p className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
                     Current text
@@ -449,6 +516,11 @@ export default function ProjectCommentPanel({
                     {selectedPin.elementText}
                   </p>
                 </div>
+              )}
+              {!showCurrentText && selectedPin.elementText && (
+                <p className='rounded-md border border-border/50 bg-background px-2 py-1.5 text-[11px] text-muted-foreground'>
+                  Captured text saved for context.
+                </p>
               )}
               {canEdit ? (
                 <>
@@ -678,7 +750,7 @@ export default function ProjectCommentPanel({
         <div>
           <h2 className='text-sm font-semibold tracking-tight'>Tasks</h2>
           <p className='text-[11px] text-muted-foreground'>
-            {pins.length} {pins.length === 1 ? 'pin' : 'pins'} ·{' '}
+            {openPins.length} open · {closedPins.length} closed ·{' '}
             {pageGroups.filter(g => g.pins.length > 0).length}{' '}
             {pageGroups.filter(g => g.pins.length > 0).length === 1 ? 'page' : 'pages'}
           </p>
@@ -776,19 +848,22 @@ export default function ProjectCommentPanel({
               )
             }
 
-            return (
+            const activeOpenPins = activePins.filter(pin => (pin.status ?? 'open') !== 'closed')
+            const activeClosedPins = activePins.filter(pin => pin.status === 'closed')
+            const renderPins = (items: Pin[], closed = false) => (
               <ul className='w-full divide-y divide-border/50 overflow-hidden bg-background'>
-                {activePins.map(pin => {
+                {items.map(pin => {
                   const replies = allRepliesFor(pin)
                   const pinAction = pin.kind === 'inspect'
                     ? getInspectActions(pin).find(action => action.instruction === pin.editInstruction)
                     : undefined
+                  const tone = actionTone(pinAction?.id)
                   const canMoveToActivePage =
                     canEdit &&
                     Boolean(currentPageUrl) &&
                     !sameFeedbackUrl(pin.url, currentPageUrl)
                   return (
-                    <li key={pin.id}>
+                    <li key={pin.id} className={closed ? 'opacity-70' : undefined}>
                       <div
                         role='button'
                         tabIndex={0}
@@ -817,12 +892,18 @@ export default function ProjectCommentPanel({
                             <span className='text-[10px] capitalize text-muted-foreground'>
                               {pin.viewportType}
                             </span>
+                            {pinAction && (
+                              <span className={cn('rounded-sm border px-1.5 py-0.5 text-[10px] font-medium', tone.chip)}>
+                                {pinAction.label}
+                              </span>
+                            )}
                           </span>
-                          <span className='text-[10px] text-muted-foreground'>
+                          <span className='inline-flex items-center gap-1.5 text-[10px] text-muted-foreground'>
+                            {closed && <CheckCircle className='h-3 w-3 text-emerald-600' />}
                             {timeAgo(pin.createdAt)}
                           </span>
                         </div>
-                        <p className='mt-1.5 line-clamp-2 break-words text-sm text-foreground'>
+                        <p className={cn('mt-1.5 line-clamp-2 break-words text-sm text-foreground', closed && 'line-through decoration-muted-foreground/50')}>
                           {pin.comment || (pin.kind === 'inspect' ? (
                             pinAction?.label || 'Inspect/edit task'
                           ) : (
@@ -847,44 +928,70 @@ export default function ProjectCommentPanel({
                               : pinAction?.label || pin.editInstruction?.trim() || 'Inspect/edit task'}
                           </p>
                         )}
-                        {(replies.length > 0 || pin.cssSelector || canMoveToActivePage) && (
-                          <div className='mt-1 flex items-center justify-between gap-2 text-[11px] text-muted-foreground'>
-                            <span className='flex min-w-0 items-center gap-2'>
-                              {replies.length > 0 && (
-                                <span>
-                                  {replies.length}{' '}
-                                  {replies.length === 1 ? 'reply' : 'replies'}
-                                </span>
-                              )}
-                              {pin.cssSelector && <span>selector captured</span>}
-                            </span>
+                        <div className='mt-2 flex items-center justify-between gap-2 text-[11px] text-muted-foreground'>
+                          <span className='flex min-w-0 items-center gap-2'>
+                            {replies.length > 0 && (
+                              <span>
+                                {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
+                              </span>
+                            )}
+                            {pin.cssSelector && <span>selector captured</span>}
+                          </span>
+                          <span className='flex shrink-0 items-center gap-1'>
+                            {canEdit && (
+                              <button
+                                type='button'
+                                className='rounded border border-border/70 px-1.5 py-0.5 text-[10px] font-medium text-foreground hover:bg-muted'
+                                onClick={event => {
+                                  event.stopPropagation()
+                                  setPinStatus(pin, closed ? 'open' : 'closed')
+                                }}
+                              >
+                                {closed ? 'Reopen' : 'Close'}
+                              </button>
+                            )}
                             {canMoveToActivePage && (
-                              <span
-                                role='button'
-                                tabIndex={0}
-                                className='shrink-0 rounded border border-border/70 px-1.5 py-0.5 text-[10px] font-medium text-foreground hover:bg-muted'
+                              <button
+                                type='button'
+                                className='rounded border border-border/70 px-1.5 py-0.5 text-[10px] font-medium text-foreground hover:bg-muted'
                                 onClick={event => {
                                   event.stopPropagation()
                                   movePinToCurrentPage(pin)
                                 }}
-                                onKeyDown={event => {
-                                  if (event.key === 'Enter' || event.key === ' ') {
-                                    event.preventDefault()
-                                    event.stopPropagation()
-                                    movePinToCurrentPage(pin)
-                                  }
-                                }}
                               >
                                 Move here
-                              </span>
+                              </button>
                             )}
-                          </div>
-                        )}
+                          </span>
+                        </div>
                       </div>
                     </li>
                   )
                 })}
               </ul>
+            )
+
+            return (
+              <div>
+                <div className='border-b border-border/60 bg-muted/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground'>
+                  Open ({activeOpenPins.length})
+                </div>
+                {activeOpenPins.length > 0 ? (
+                  renderPins(activeOpenPins)
+                ) : (
+                  <p className='px-4 py-6 text-center text-xs text-muted-foreground'>
+                    No open tasks on this page.
+                  </p>
+                )}
+                {activeClosedPins.length > 0 && (
+                  <>
+                    <div className='border-y border-border/60 bg-muted/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground'>
+                      Closed ({activeClosedPins.length})
+                    </div>
+                    {renderPins(activeClosedPins, true)}
+                  </>
+                )}
+              </div>
             )
           })()
         )}

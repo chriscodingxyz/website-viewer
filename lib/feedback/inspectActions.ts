@@ -33,7 +33,9 @@ const TEXT_TAGS = new Set([
   'li',
   'p',
   'span',
-  'strong'
+  'strong',
+  'td',
+  'th'
 ])
 
 const IMAGE_TAGS = new Set(['img', 'picture', 'source'])
@@ -55,7 +57,7 @@ function action(
 
 export function getInspectActions(pin: Pick<Pin, 'elementTag' | 'elementText'>): InspectAction[] {
   const tag = pin.elementTag?.toLowerCase()
-  const hasText = Boolean(pin.elementText?.trim())
+  const isTextElement = Boolean(tag && TEXT_TAGS.has(tag))
   const actions: InspectAction[] = []
 
   if (tag && IMAGE_TAGS.has(tag)) {
@@ -81,7 +83,7 @@ export function getInspectActions(pin: Pick<Pin, 'elementTag' | 'elementText'>):
     )
   }
 
-  if (hasText || (tag && TEXT_TAGS.has(tag))) {
+  if (isTextElement) {
     actions.push(
       action(
         'replace-text',

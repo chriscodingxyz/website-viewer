@@ -51,7 +51,12 @@ const renumber = (pins: Pin[]): Pin[] =>
   pins
     .slice()
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-    .map((p, i) => ({ ...p, number: i + 1 }))
+    .map((p, i) => ({ ...p, status: p.status ?? 'open', number: i + 1 }))
+
+const normalizeSession = (session: FeedbackSession): FeedbackSession => ({
+  ...session,
+  pins: renumber(session.pins)
+})
 
 interface FeedbackContextValue {
   feedbackMode: boolean
@@ -63,7 +68,7 @@ interface FeedbackContextValue {
   pins: Pin[]
   selectedPinId: string | null
   setSelectedPinId: (id: string | null) => void
-  addPin: (pin: Omit<Pin, 'id' | 'number' | 'createdAt'>) => Pin
+  addPin: (pin: Omit<Pin, 'id' | 'number' | 'status' | 'createdAt'>) => Pin
   updatePin: (id: string, patch: Partial<Pin>) => void
   removePin: (id: string) => void
   clearPins: () => void
@@ -119,7 +124,7 @@ export function FeedbackProvider({
         ...emptySession(currentUrl),
         projectId
       }
-      setSession(seededSession)
+      setSession(normalizeSession(seededSession))
       lastUrlRef.current = currentUrl
       skipNextProjectSyncRef.current = true
       return
@@ -137,7 +142,7 @@ export function FeedbackProvider({
       const raw = window.localStorage.getItem(sessionKey(currentUrl))
       if (raw) {
         const parsed = JSON.parse(raw) as FeedbackSession
-        setSession(parsed)
+        setSession(normalizeSession(parsed))
       } else {
         setSession(emptySession(currentUrl))
       }
@@ -171,6 +176,7 @@ export function FeedbackProvider({
         ...input,
         id: '',
         number: 0,
+        status: 'open',
         createdAt: new Date().toISOString()
       }
     }
@@ -179,6 +185,7 @@ export function FeedbackProvider({
       ...input,
       id: newId(),
       number: 0,
+      status: 'open',
       createdAt: new Date().toISOString()
     }
     setSession(prev => {

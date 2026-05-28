@@ -16,11 +16,12 @@ import {
 import {
   ArrowSquareOut,
   Folder,
-  Globe,
   PlusCircle,
   Users
 } from '@phosphor-icons/react/ssr'
 import DashboardSignInPrompt from '@/components/bugsmash/DashboardSignInPrompt'
+import SiteFavicon from '@/components/SiteFavicon'
+import ProjectOwnerActions from '@/components/bugsmash/ProjectOwnerActions'
 
 export const dynamic = 'force-dynamic'
 
@@ -89,21 +90,59 @@ export default async function DashboardPage() {
           )}
         </Card>
       ) : (
-        <Card className='overflow-hidden'>
+        <>
+          <div className='mb-4 grid gap-3 sm:grid-cols-3'>
+            <Card className='border-border/70 p-4 shadow-sm'>
+              <p className='text-xs text-muted-foreground'>Open tasks</p>
+              <p className='mt-1 text-2xl font-semibold tabular-nums'>
+                {projects.reduce((sum, item) => sum + item.openPinCount, 0)}
+              </p>
+            </Card>
+            <Card className='border-border/70 p-4 shadow-sm'>
+              <p className='text-xs text-muted-foreground'>Closed tasks</p>
+              <p className='mt-1 text-2xl font-semibold tabular-nums'>
+                {projects.reduce((sum, item) => sum + item.closedPinCount, 0)}
+              </p>
+            </Card>
+            <Card className='border-border/70 p-4 shadow-sm'>
+              <p className='text-xs text-muted-foreground'>Team members</p>
+              <p className='mt-1 text-2xl font-semibold tabular-nums'>
+                {projects.reduce((sum, item) => sum + item.memberCount, 0)}
+              </p>
+            </Card>
+          </div>
+
+          <Card className='overflow-hidden'>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Project</TableHead>
                 <TableHead>Website</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead className='text-right'>Pins</TableHead>
+                <TableHead className='text-right'>Open</TableHead>
+                <TableHead className='text-right'>Closed</TableHead>
+                <TableHead className='text-right'>Team</TableHead>
                 <TableHead className='text-right'>Updated</TableHead>
-                <TableHead className='w-[80px]' />
+                <TableHead className='w-[140px]' />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {projects.map(({ project, role, pinCount, feedbackUpdatedAt }) => {
+              {projects.map(({
+                project,
+                role,
+                openPinCount,
+                closedPinCount,
+                memberCount,
+                members,
+                invitations,
+                feedbackUpdatedAt
+              }) => {
                 const host = hostFor(project.websiteUrl)
+                const canManage =
+                  role
+                    ?.split(',')
+                    .map(part => part.trim())
+                    .includes('owner') ?? false
                 return (
                   <TableRow key={project.id}>
                     <TableCell>
@@ -111,7 +150,7 @@ export default async function DashboardPage() {
                         href={`/p/${project.id}`}
                         className='inline-flex items-center gap-2 font-medium hover:underline'
                       >
-                        <Globe className='h-3.5 w-3.5 text-muted-foreground' />
+                        <SiteFavicon siteUrl={project.websiteUrl} className='size-6' />
                         {project.name}
                       </Link>
                     </TableCell>
@@ -133,22 +172,40 @@ export default async function DashboardPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className='text-right tabular-nums text-muted-foreground'>
-                      {pinCount}
+                      {openPinCount}
+                    </TableCell>
+                    <TableCell className='text-right tabular-nums text-muted-foreground'>
+                      {closedPinCount}
+                    </TableCell>
+                    <TableCell className='text-right tabular-nums text-muted-foreground'>
+                      {memberCount}
                     </TableCell>
                     <TableCell className='text-right text-muted-foreground'>
                       {formatDate(feedbackUpdatedAt ?? project.updatedAt)}
                     </TableCell>
                     <TableCell className='text-right'>
-                      <Button asChild variant='ghost' size='sm' className='h-7 rounded-md text-xs'>
-                        <Link href={`/p/${project.id}`}>Open</Link>
-                      </Button>
+                      <div className='flex justify-end gap-1.5'>
+                        <ProjectOwnerActions
+                          projectId={project.id}
+                          organizationId={project.organizationId}
+                          projectName={project.name}
+                          publicAccess={project.publicAccess}
+                          members={members}
+                          invitations={invitations}
+                          canManage={canManage}
+                        />
+                        <Button asChild variant='ghost' size='sm' className='h-8 rounded-md text-xs'>
+                          <Link href={`/p/${project.id}`}>Open</Link>
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )
               })}
             </TableBody>
           </Table>
-        </Card>
+          </Card>
+        </>
       )}
     </div>
   )

@@ -54,6 +54,7 @@ const VIEWPORT_OPTIONS: { id: CanvasViewport; label: string; icon: typeof Monito
 ]
 
 type FrameStatus = 'loading' | 'loaded' | 'blocked' | 'error'
+type PreloadStatus = 'idle' | 'loading' | 'loaded' | 'error'
 
 interface Props {
   websiteUrl: string
@@ -86,6 +87,7 @@ export default function ProjectCanvas({
   const [currentPageUrl, setCurrentPageUrl] = useState<string>(() =>
     canonicalFeedbackUrl(websiteUrl)
   )
+  const [preloadStatusByUrl, setPreloadStatusByUrl] = useState<Record<string, PreloadStatus>>({})
   const pendingScrollRef = useRef<Pin | null>(null)
   const proxyAutoTriedRef = useRef(false)
   const detectionRanRef = useRef<string | null>(null)
@@ -111,6 +113,50 @@ export default function ProjectCanvas({
       }))
       .filter(p => p.action)
   }, [pins, currentPageUrl])
+
+  const preloadUrls = useMemo(() => {
+    const urls = new Set<string>([canonicalFeedbackUrl(currentPageUrl, websiteUrl)])
+    for (const pin of pins) {
+      urls.add(canonicalFeedbackUrl(pin.url, websiteUrl))
+    }
+    return Array.from(urls)
+  }, [currentPageUrl, pins, websiteUrl])
+
+  useEffect(() => {
+    let cancelled = false
+    const controller = new AbortController()
+
+    preloadUrls.forEach(url => {
+      setPreloadStatusByUrl(prev => {
+        const current = prev[url]
+        if (current === 'loading' || current === 'loaded') return prev
+        return { ...prev, [url]: 'loading' }
+      })
+
+      fetch(`/api/proxy?url=${encodeURIComponent(url)}`, {
+        cache: 'force-cache',
+        signal: controller.signal
+      })
+        .then(res => {
+          if (cancelled) return
+          setPreloadStatusByUrl(prev => ({
+            ...prev,
+            [url]: res.ok ? 'loaded' : 'error'
+          }))
+        })
+        .catch(() => {
+          if (cancelled) return
+          setPreloadStatusByUrl(prev => ({ ...prev, [url]: 'error' }))
+        })
+    })
+
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [preloadUrls])
+
+  const preloadedCount = preloadUrls.filter(url => preloadStatusByUrl[url] === 'loaded').length
 
   const sendPreview = useCallback(() => {
     const win = iframeRef.current?.contentWindow
@@ -449,6 +495,11 @@ export default function ProjectCanvas({
             <span className='hidden text-[11px] text-muted-foreground lg:block'>
               {isFullscreen ? 'Fullscreen' : `${preset.width} × ${preset.height}`}
             </span>
+            {preloadUrls.length > 1 && (
+              <span className='hidden rounded-md border border-border bg-muted px-2 py-1 text-[11px] text-muted-foreground lg:block'>
+                {preloadedCount}/{preloadUrls.length} cached
+              </span>
+            )}
             <Separator orientation='vertical' className='mx-1 h-5' />
             <Tooltip>
               <TooltipTrigger asChild>

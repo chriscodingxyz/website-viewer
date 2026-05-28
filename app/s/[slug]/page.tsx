@@ -57,6 +57,7 @@ export default async function SharePage({ params }: { params: { slug: string } }
       id: p.id,
       number: p.number,
       kind: (p.kind as Pin['kind']) ?? 'comment',
+      status: (p.status as Pin['status']) ?? 'open',
       url: p.url,
       viewportId: p.viewportId,
       viewportType: p.viewportType as Pin['viewportType'],

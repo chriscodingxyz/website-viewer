@@ -12,6 +12,7 @@ export default async function BugsmashLayout({ children }: { children: ReactNode
   const navProjects = projects.map(item => ({
     id: item.project.id,
     name: item.project.name,
+    websiteUrl: item.project.websiteUrl,
     pinCount: item.pinCount
   }))
 

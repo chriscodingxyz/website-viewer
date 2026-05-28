@@ -18,7 +18,8 @@ export const dynamic = 'force-dynamic'
 
 const CreateProjectSchema = z.object({
   websiteUrl: z.string().min(1),
-  name: z.string().trim().min(1).max(80).optional()
+  name: z.string().trim().min(1).max(80).optional(),
+  publicAccess: z.enum(['view', 'private']).optional()
 })
 
 export async function GET() {
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
       createdByUserId: session.user.id,
       websiteUrl,
       name,
-      publicAccess: PROJECT_PUBLIC_ACCESS_VIEW,
+      publicAccess: parsed.data.publicAccess ?? PROJECT_PUBLIC_ACCESS_VIEW,
       createdAt: now,
       updatedAt: now
     })

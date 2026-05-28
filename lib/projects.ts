@@ -20,7 +20,26 @@ export type ProjectWithRole = {
   role: string | null
   canEdit: boolean
   pinCount: number
+  openPinCount: number
+  closedPinCount: number
   feedbackUpdatedAt: Date | null
+  memberCount: number
+  members: Array<{
+    id: string
+    userId: string
+    role: string
+    name: string | null
+    email: string | null
+    image: string | null
+  }>
+  invitations: Array<{
+    id: string
+    email: string
+    role: string
+    status: string
+    expiresAt: Date
+    createdAt: Date
+  }>
 }
 
 export function normalizeWebsiteUrl(value: string) {
@@ -97,6 +116,7 @@ export function toFeedbackSession(
       id: pin.id,
       number: pin.number,
       kind: (pin.kind as Pin['kind']) ?? 'comment',
+      status: (pin.status as Pin['status']) ?? 'open',
       url: pin.url,
       viewportId: pin.viewportId,
       viewportType: pin.viewportType as Pin['viewportType'],
@@ -245,18 +265,61 @@ export async function listProjectsForUser(userId: string): Promise<ProjectWithRo
         .where(inArray(schema.feedbackPin.sessionId, sessionIds))
     : []
 
+  const organizationIds = rows.map(row => row.project.organizationId)
+  const memberRows = organizationIds.length
+    ? await db
+        .select({
+          member: schema.member,
+          user: schema.user
+        })
+        .from(schema.member)
+        .innerJoin(schema.user, eq(schema.member.userId, schema.user.id))
+        .where(inArray(schema.member.organizationId, organizationIds))
+    : []
+  const invitations = organizationIds.length
+    ? await db
+        .select()
+        .from(schema.invitation)
+        .where(inArray(schema.invitation.organizationId, organizationIds))
+    : []
+
   return rows.map(row => {
     const feedbackSession = sessions.find(item => item.projectId === row.project.id)
-    const pinCount = feedbackSession
-      ? pins.filter(pin => pin.sessionId === feedbackSession.id).length
-      : 0
+    const projectPins = feedbackSession
+      ? pins.filter(pin => pin.sessionId === feedbackSession.id)
+      : []
+    const projectMembers = memberRows
+      .filter(item => item.member.organizationId === row.project.organizationId)
+      .map(item => ({
+        id: item.member.id,
+        userId: item.member.userId,
+        role: item.member.role,
+        name: item.user.name,
+        email: item.user.email,
+        image: item.user.image
+      }))
+    const projectInvitations = invitations
+      .filter(invitation => invitation.organizationId === row.project.organizationId)
+      .map(invitation => ({
+        id: invitation.id,
+        email: invitation.email,
+        role: invitation.role,
+        status: invitation.status,
+        expiresAt: invitation.expiresAt,
+        createdAt: invitation.createdAt
+      }))
 
     return {
       project: row.project,
       role: row.member.role,
       canEdit: canEditProjectFeedback(row.member),
-      pinCount,
-      feedbackUpdatedAt: feedbackSession?.updatedAt ?? null
+      pinCount: projectPins.length,
+      openPinCount: projectPins.filter(pin => (pin.status ?? 'open') !== 'closed').length,
+      closedPinCount: projectPins.filter(pin => pin.status === 'closed').length,
+      feedbackUpdatedAt: feedbackSession?.updatedAt ?? null,
+      memberCount: projectMembers.length,
+      members: projectMembers,
+      invitations: projectInvitations
     }
   })
 }

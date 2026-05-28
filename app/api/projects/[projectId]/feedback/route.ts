@@ -75,6 +75,7 @@ export async function PUT(
         sessionId,
         number: pin.number,
         kind: pin.kind ?? 'comment',
+        status: pin.status ?? 'open',
         url: pinUrl,
         viewportId: pin.viewportId,
         viewportType: pin.viewportType,
@@ -109,6 +110,7 @@ export async function PUT(
           set: {
             number: values.number,
             kind: values.kind,
+            status: values.status,
             url: values.url,
             viewportId: values.viewportId,
             viewportType: values.viewportType,

@@ -28,6 +28,7 @@ import ProjectCommentPanel from './ProjectCommentPanel'
 import ProjectSeoPreview from './ProjectSeoPreview'
 import ExportDialog from '@/components/feedback/ExportDialog'
 import FeedbackKeyboard from '@/components/feedback/FeedbackKeyboard'
+import SiteFavicon from '@/components/SiteFavicon'
 
 type ProjectSummary = {
   id: string
@@ -121,6 +122,7 @@ export default function ProjectWorkspace({
     <div className='flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden bg-background'>
       <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-background px-4 py-3 sm:px-6'>
         <div className='flex min-w-0 items-center gap-3'>
+          <SiteFavicon siteUrl={project.websiteUrl} className='size-8 rounded-lg' />
           <div className='min-w-0'>
             <h1 className='truncate text-sm font-semibold tracking-tight'>{project.name}</h1>
             <a

@@ -25,6 +25,7 @@ export const pinBlock = (pin: Pin): string => {
   const kind = pin.kind === 'inspect' ? 'inspect/edit' : 'comment'
 
   lines.push(`### Pin ${pin.number} - ${kind}`)
+  lines.push(`- **Status:** ${pin.status ?? 'open'}`)
   lines.push(`- **Page:** ${pin.url}`)
   lines.push(`- **Path:** ${feedbackPath(pin.url)}`)
 
@@ -183,6 +184,7 @@ export function toJson(session: FeedbackSession): string {
         pin: pin.number,
         id: pin.id,
         kind: pin.kind ?? 'comment',
+        status: pin.status ?? 'open',
         viewport: {
           type: pin.viewportType,
           width: pin.viewportWidth,
@@ -220,6 +222,8 @@ export function toJson(session: FeedbackSession): string {
       capturedAt: session.updatedAt,
       summary: {
         pinCount: pins.length,
+        openCount: pins.filter(pin => (pin.status ?? 'open') !== 'closed').length,
+        closedCount: pins.filter(pin => pin.status === 'closed').length,
         pageCount: pages.length,
         inspectEditCount: pins.filter(pin => pin.kind === 'inspect').length,
         commentCount: pins.filter(pin => pin.kind !== 'inspect').length

@@ -44,10 +44,12 @@ import {
 } from '@phosphor-icons/react'
 import { signInWithGoogle, signOut } from '@/lib/auth-client'
 import { toast } from 'sonner'
+import SiteFavicon from '@/components/SiteFavicon'
 
 type NavProject = {
   id: string
   name: string
+  websiteUrl: string
   pinCount: number
 }
 
@@ -156,7 +158,7 @@ export default function BugsmashShell({ children, user, canCreate, projects }: P
                         tooltip={project.name}
                       >
                         <Link href={`/p/${project.id}`}>
-                          <Folder />
+                          <SiteFavicon siteUrl={project.websiteUrl} className='size-4 rounded-sm border-0' />
                           <span>{project.name}</span>
                         </Link>
                       </SidebarMenuButton>
