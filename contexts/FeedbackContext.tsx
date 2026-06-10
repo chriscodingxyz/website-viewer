@@ -81,6 +81,7 @@ interface FeedbackContextValue {
   canEdit: boolean
   projectMode: boolean
   createShareLink: () => Promise<string | null>
+  triggerSnapshots: () => Promise<void>
 }
 
 const FeedbackContext = createContext<FeedbackContextValue | undefined>(
@@ -170,6 +171,10 @@ export function FeedbackProvider({
     setFeedbackModeState(on)
   }, [canEdit])
 
+  const authSession = useSession()
+  const activeProject = useActiveOrganization()
+  const signedInUser = authSession.data?.user ?? null
+
   const addPin: FeedbackContextValue['addPin'] = useCallback(input => {
     if (!canEdit) {
       return {
@@ -186,6 +191,9 @@ export function FeedbackProvider({
       id: newId(),
       number: 0,
       status: 'open',
+      authorUserId: signedInUser?.id,
+      authorName: signedInUser?.name ?? signedInUser?.email ?? undefined,
+      authorEmail: signedInUser?.email ?? undefined,
       createdAt: new Date().toISOString()
     }
     setSession(prev => {
@@ -195,7 +203,7 @@ export function FeedbackProvider({
     })
     setSelectedPinId(created.id)
     return created
-  }, [canEdit])
+  }, [canEdit, signedInUser])
 
   const updatePin = useCallback((id: string, patch: Partial<Pin>) => {
     if (!canEdit) return
@@ -227,9 +235,6 @@ export function FeedbackProvider({
 
   const pins = useMemo(() => session?.pins ?? [], [session])
 
-  const authSession = useSession()
-  const activeProject = useActiveOrganization()
-  const signedInUser = authSession.data?.user ?? null
   const activeProjectId =
     activeProject.data?.id ??
     authSession.data?.session.activeOrganizationId ??
@@ -239,6 +244,48 @@ export function FeedbackProvider({
     : SYNC_ENABLED && !!signedInUser && !!activeProjectId
   const [isSyncing, setIsSyncing] = useState(false)
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const snapshotRunRef = useRef(false)
+
+  // Server-side Playwright capture: fire-and-forget after a successful sync,
+  // then merge any new snapshots into local pins (only when they changed, so
+  // the merge cannot retrigger the sync loop forever).
+  const triggerSnapshots = useCallback(async () => {
+    if (!projectMode || !projectId || snapshotRunRef.current) return
+    snapshotRunRef.current = true
+    try {
+      const res = await fetch(`/api/projects/${projectId}/snapshots`, {
+        method: 'POST'
+      })
+      if (!res.ok) return
+      const data = (await res.json()) as {
+        snapshots?: Array<{ pinId: string; snapshot: Pin['snapshot'] }>
+      }
+      const byPin = new Map(
+        (data.snapshots ?? []).map(item => [item.pinId, item.snapshot])
+      )
+      if (!byPin.size) return
+      setSession(prev => {
+        if (!prev) return prev
+        let changed = false
+        const pins = prev.pins.map(pin => {
+          const next = byPin.get(pin.id)
+          if (!next) return pin
+          if (JSON.stringify(pin.snapshot ?? null) === JSON.stringify(next ?? null)) {
+            return pin
+          }
+          changed = true
+          return { ...pin, snapshot: next }
+        })
+        if (!changed) return prev
+        skipNextProjectSyncRef.current = true
+        return { ...prev, pins }
+      })
+    } catch {
+      // capture is best-effort; pins remain fully usable without snapshots
+    } finally {
+      snapshotRunRef.current = false
+    }
+  }, [projectId, projectMode])
 
   useEffect(() => {
     if (!canSync || !session) return
@@ -256,7 +303,7 @@ export function FeedbackProvider({
           ? `/api/projects/${projectId}/feedback`
           : `/api/feedback/sessions/${session.id}`
 
-        await fetch(syncUrl, {
+        const res = await fetch(syncUrl, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -264,6 +311,7 @@ export function FeedbackProvider({
             projectId: projectMode ? projectId : activeProjectId
           })
         })
+        // snapshots triggered explicitly on save, not every sync
       } catch {
         // silent — localStorage still holds truth
       } finally {
@@ -273,7 +321,7 @@ export function FeedbackProvider({
     return () => {
       if (syncTimerRef.current) clearTimeout(syncTimerRef.current)
     }
-  }, [session, canSync, activeProjectId, projectId, projectMode])
+  }, [session, canSync, activeProjectId, projectId, projectMode, triggerSnapshots])
 
   const createShareLink = useCallback(async (): Promise<string | null> => {
     if (projectMode && projectId) {
@@ -332,7 +380,8 @@ export function FeedbackProvider({
     isSyncing,
     canEdit,
     projectMode,
-    createShareLink
+    createShareLink,
+    triggerSnapshots
   }
 
   return (
@@ -381,7 +430,8 @@ export function useFeedback(): FeedbackContextValue {
       isSyncing: false,
       canEdit: false,
       projectMode: false,
-      createShareLink: async () => null
+      createShareLink: async () => null,
+      triggerSnapshots: async () => {}
     }
   }
   return ctx

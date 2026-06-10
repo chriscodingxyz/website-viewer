@@ -188,7 +188,9 @@ export default function ProjectCommentPanel({
     updatePin,
     setExportOpen,
     session,
-    setFeedbackMode
+    setFeedbackMode,
+    triggerSnapshots,
+    projectMode
   } = useFeedback()
 
   const handlePinClick = (pin: Pin) => {
@@ -197,9 +199,15 @@ export default function ProjectCommentPanel({
   }
   const [replyDraft, setReplyDraft] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [replyOpen, setReplyOpen] = useState(false)
   const [verifyingPinId, setVerifyingPinId] = useState<string | null>(null)
   const [localReplies, setLocalReplies] = useState<Record<string, PinReply[]>>({})
   const [taskFilter, setTaskFilter] = useState<'open' | 'done' | 'all'>('open')
+
+  useEffect(() => {
+    setReplyOpen(false)
+    setReplyDraft('')
+  }, [selectedPinId])
 
   const selectedPin = pins.find(p => p.id === selectedPinId) ?? null
   const openPins = pins.filter(pin => (pin.status ?? 'open') === 'open')
@@ -898,13 +906,9 @@ export default function ProjectCommentPanel({
           </Collapsible>
         </div>
 
+          {replies.length > 0 && (
           <div className='space-y-3 px-4 py-3'>
-            {replies.length === 0 ? (
-              <p className='py-6 text-center text-xs text-muted-foreground'>
-                No replies yet.
-              </p>
-            ) : (
-              replies.map(reply => (
+            {replies.map(reply => (
                 <div key={reply.id} className='group flex items-start gap-2'>
                   <Avatar className='size-7'>
                     <AvatarFallback className='bg-foreground/10 text-[10px] font-semibold'>
@@ -936,9 +940,9 @@ export default function ProjectCommentPanel({
                     </Button>
                   )}
                 </div>
-              ))
-            )}
+              ))}
           </div>
+          )}
         </div>
 
         <div className='border-t border-border/60 p-3'>
@@ -949,6 +953,7 @@ export default function ProjectCommentPanel({
               setFeedbackMode(false)
               setSelectedPinId(null)
               toast.success(`Pin ${selectedPin.number} saved`)
+              if (projectMode) void triggerSnapshots()
             }}
           >
             <CheckCircle className='h-3.5 w-3.5' />
@@ -957,36 +962,60 @@ export default function ProjectCommentPanel({
         </div>
 
         {canEdit ? (
-          <form onSubmit={submitReply} className='border-t border-border/60 p-3'>
-            <Textarea
-              value={replyDraft}
-              onChange={event => setReplyDraft(event.target.value)}
-              placeholder='Reply…'
-              rows={2}
-              className='resize-none'
-            />
-            <div className='mt-2 flex items-center justify-end'>
-              <Button
-                type='submit'
-                size='sm'
-                className='h-8 gap-1.5 rounded-md text-xs'
-                disabled={submitting || !replyDraft.trim()}
-              >
-                {submitting ? (
-                  <CircleNotch className='h-3.5 w-3.5 animate-spin' />
-                ) : (
-                  <>
-                    <PaperPlaneTilt weight='fill' className='h-3.5 w-3.5' />
-                    Reply
-                  </>
+          replies.length > 0 || replyOpen ? (
+            <form onSubmit={submitReply} className='border-t border-border/60 p-3'>
+              <Textarea
+                value={replyDraft}
+                onChange={event => setReplyDraft(event.target.value)}
+                placeholder='Reply…'
+                rows={2}
+                className='resize-none'
+                autoFocus={replyOpen}
+              />
+              <div className='mt-2 flex items-center justify-between'>
+                {replyOpen && replies.length === 0 && (
+                  <button
+                    type='button'
+                    className='text-[11px] text-muted-foreground hover:text-foreground'
+                    onClick={() => { setReplyOpen(false); setReplyDraft('') }}
+                  >
+                    Cancel
+                  </button>
                 )}
-              </Button>
+                <Button
+                  type='submit'
+                  size='sm'
+                  className='ml-auto h-8 gap-1.5 rounded-md text-xs'
+                  disabled={submitting || !replyDraft.trim()}
+                >
+                  {submitting ? (
+                    <CircleNotch className='h-3.5 w-3.5 animate-spin' />
+                  ) : (
+                    <>
+                      <PaperPlaneTilt weight='fill' className='h-3.5 w-3.5' />
+                      Reply
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className='border-t border-border/60 px-4 py-2'>
+              <button
+                type='button'
+                className='text-[11px] text-muted-foreground hover:text-foreground'
+                onClick={() => setReplyOpen(true)}
+              >
+                + Add reply
+              </button>
             </div>
-          </form>
+          )
         ) : (
-          <div className='border-t border-border/60 px-4 py-3 text-center text-xs text-muted-foreground'>
-            Sign in as a project member to reply.
-          </div>
+          replies.length > 0 ? (
+            <div className='border-t border-border/60 px-4 py-3 text-center text-xs text-muted-foreground'>
+              Sign in as a project member to reply.
+            </div>
+          ) : null
         )}
       </aside>
     )

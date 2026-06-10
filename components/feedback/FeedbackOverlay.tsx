@@ -7,6 +7,7 @@ import { inspectElementAtPoint } from '@/lib/feedback/selector'
 import type { SelectorResult } from '@/lib/feedback/selector'
 import { canonicalFeedbackUrl, sameFeedbackUrl } from '@/lib/feedback/url'
 import { findInspectAction } from '@/lib/feedback/inspectActions'
+import { classifyPinAnchor } from '@/lib/feedback/verification'
 import { cn } from '@/lib/utils'
 import PinMarker from './PinMarker'
 
@@ -25,7 +26,7 @@ export default function FeedbackOverlay({
   viewportHeight,
   showAnnotations = true
 }: Props) {
-  const { feedbackMode, pins, addPin, activeTool, canEdit, selectedPinId, setSelectedPinId } = useFeedback()
+  const { feedbackMode, pins, addPin, updatePin, activeTool, canEdit, selectedPinId, setSelectedPinId } = useFeedback()
   const { currentSite } = useWebsiteViewer()
   const [autoOpenPinId, setAutoOpenPinId] = useState<string | null>(null)
   const [iframeScroll, setIframeScroll] = useState({ x: 0, y: 0 })
@@ -41,6 +42,7 @@ export default function FeedbackOverlay({
   >({})
   const lastHoverReadRef = useRef(0)
   const anchorsKeyRef = useRef('')
+  const anchorWritesRef = useRef<Record<string, string>>({})
   const pinsForView = useMemo(
     () => pins.filter(
       p =>
@@ -110,6 +112,25 @@ export default function FeedbackOverlay({
           anchorsKeyRef.current = nextKey
           setPinAnchors(nextAnchors)
         }
+
+        // Staleness heuristic: only on a fully loaded page so a half-rendered
+        // DOM can't flag pins as missing. Skip when preview is active — the DOM
+        // has been modified by our own injection and would produce false positives.
+        const previewActive = !!doc.querySelector('[data-bugsmash-preview]')
+        if (canEdit && doc.readyState === 'complete' && !previewActive) {
+          for (const pin of pinsForView) {
+            if ((pin.status ?? 'open') !== 'open') continue
+            const status = classifyPinAnchor(pin, doc)
+            if (!status) continue
+            if (status === pin.anchorStatus) continue
+            if (anchorWritesRef.current[pin.id] === status) continue
+            anchorWritesRef.current[pin.id] = status
+            updatePin(pin.id, {
+              anchorStatus: status,
+              anchorCheckedAt: new Date().toISOString()
+            })
+          }
+        }
       } catch {
         // Cross-origin frames cannot expose scroll state; pins fall back to viewport coords.
       }
@@ -147,11 +168,13 @@ export default function FeedbackOverlay({
       cleanupScrollListener?.()
     }
   }, [
+    canEdit,
     feedbackMode,
     hasDocumentPins,
     hasSelectorPins,
     iframeRef,
     pinsForView,
+    updatePin,
     viewportHeight,
     viewportWidth
   ])
@@ -321,7 +344,7 @@ export default function FeedbackOverlay({
       action?.id === 'rewrite-copy' ||
       action?.id === 'update-alt'
     const linkAction = action?.id === 'update-link'
-    const amberAction = action?.id === 'style-layout'
+    const amberAction = action?.id === 'style-layout' || action?.id === 'layout-issue'
 
     return {
       label,
