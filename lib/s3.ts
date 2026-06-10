@@ -9,6 +9,8 @@ const forcePathStyle = process.env.S3_FORCE_PATH_STYLE !== 'false'
 export const s3Bucket = process.env.S3_BUCKET || 'feedback-uploads'
 export const s3PublicUrl = process.env.S3_PUBLIC_URL || ''
 
+export const storageMode: 's3' | 'local' = accessKey && secretKey ? 's3' : 'local'
+
 export const s3 = accessKey && secretKey
   ? new S3Client({
       endpoint,
@@ -18,7 +20,8 @@ export const s3 = accessKey && secretKey
     })
   : null
 
-export function publicUrlFor(key: string) {
+export function publicUrlFor(key: string): string | null {
+  if (storageMode === 'local') return `/snapshots/${key}`
   if (!s3PublicUrl) return null
   return `${s3PublicUrl.replace(/\/$/, '')}/${key}`
 }

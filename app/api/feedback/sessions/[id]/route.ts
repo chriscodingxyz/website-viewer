@@ -179,7 +179,7 @@ export async function PUT(
           editInstruction: p.editInstruction,
           severity: p.severity,
           comment: p.comment,
-          screenshotKey: p.screenshotDataUrl
+          assetUrl: p.assetUrl ?? null
         }))
       )
     }

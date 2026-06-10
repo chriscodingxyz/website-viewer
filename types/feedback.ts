@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const SeverityEnum = z.enum(['low', 'medium', 'high'])
+export const SeverityEnum = z.enum(['low', 'medium', 'high', 'blocking'])
 export type Severity = z.infer<typeof SeverityEnum>
 
 export const ViewportTypeEnum = z.enum(['desktop', 'tablet', 'mobile'])
@@ -9,8 +9,22 @@ export type FeedbackViewportType = z.infer<typeof ViewportTypeEnum>
 export const FeedbackPinKindEnum = z.enum(['comment', 'inspect'])
 export type FeedbackPinKind = z.infer<typeof FeedbackPinKindEnum>
 
-export const FeedbackPinStatusEnum = z.enum(['open', 'closed'])
+export const FeedbackPinStatusEnum = z.enum(['open', 'implemented', 'closed'])
 export type FeedbackPinStatus = z.infer<typeof FeedbackPinStatusEnum>
+
+export const AnchorStatusEnum = z.enum(['found', 'missing', 'matches-target'])
+export type AnchorStatus = z.infer<typeof AnchorStatusEnum>
+
+export const VerificationStateEnum = z.enum([
+  'unverified',
+  'possibly-done',
+  'confirmed-done',
+  'still-open'
+])
+export type VerificationState = z.infer<typeof VerificationStateEnum>
+
+export const VerifiedByEnum = z.enum(['heuristic', 'ai', 'human'])
+export type VerifiedBy = z.infer<typeof VerifiedByEnum>
 
 export const PinReplySchema = z.object({
   id: z.string(),
@@ -21,6 +35,16 @@ export const PinReplySchema = z.object({
   createdAt: z.string()
 })
 export type PinReply = z.infer<typeof PinReplySchema>
+
+export const PinSnapshotSchema = z.object({
+  status: z.enum(['pending', 'captured', 'element-missing', 'failed']),
+  pageScreenshotUrl: z.string().optional(),
+  elementScreenshotUrl: z.string().optional(),
+  elementHtml: z.string().optional(),
+  capturedUrl: z.string().optional(),
+  capturedAt: z.string().optional()
+})
+export type PinSnapshot = z.infer<typeof PinSnapshotSchema>
 
 export const PinSchema = z.object({
   id: z.string(),
@@ -52,7 +76,16 @@ export const PinSchema = z.object({
   editInstruction: z.string().optional(),
   severity: SeverityEnum,
   comment: z.string(),
-  screenshotDataUrl: z.string().optional(),
+  assetUrl: z.string().optional(),
+  anchorStatus: AnchorStatusEnum.optional(),
+  anchorCheckedAt: z.string().optional(),
+  // server/human-owned; round-tripped for display but ignored by the bulk sync
+  verificationState: VerificationStateEnum.optional(),
+  verifiedBy: VerifiedByEnum.optional(),
+  verifiedAt: z.string().optional(),
+  verificationReason: z.string().optional(),
+  // server-populated historical capture; never written by the bulk sync
+  snapshot: PinSnapshotSchema.optional(),
   createdAt: z.string(),
   replies: z.array(PinReplySchema).optional()
 })

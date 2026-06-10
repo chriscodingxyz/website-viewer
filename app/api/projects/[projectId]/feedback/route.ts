@@ -76,6 +76,9 @@ export async function PUT(
         number: pin.number,
         kind: pin.kind ?? 'comment',
         status: pin.status ?? 'open',
+        authorUserId: pin.authorUserId,
+        authorName: pin.authorName,
+        authorEmail: pin.authorEmail,
         url: pinUrl,
         viewportId: pin.viewportId,
         viewportType: pin.viewportType,
@@ -98,7 +101,10 @@ export async function PUT(
         editInstruction: pin.editInstruction,
         severity: pin.severity,
         comment: pin.comment,
-        screenshotKey: pin.screenshotDataUrl,
+        // null (not undefined) so the upsert clears a removed asset
+        assetUrl: pin.assetUrl ?? null,
+        anchorStatus: pin.anchorStatus ?? null,
+        anchorCheckedAt: pin.anchorCheckedAt ? new Date(pin.anchorCheckedAt) : null,
         updatedAt: new Date()
       }
 
@@ -111,6 +117,9 @@ export async function PUT(
             number: values.number,
             kind: values.kind,
             status: values.status,
+            authorUserId: values.authorUserId,
+            authorName: values.authorName,
+            authorEmail: values.authorEmail,
             url: values.url,
             viewportId: values.viewportId,
             viewportType: values.viewportType,
@@ -133,7 +142,12 @@ export async function PUT(
             editInstruction: values.editInstruction,
             severity: values.severity,
             comment: values.comment,
-            screenshotKey: values.screenshotKey,
+            assetUrl: values.assetUrl,
+            anchorStatus: values.anchorStatus,
+            anchorCheckedAt: values.anchorCheckedAt,
+            // verificationState/verifiedBy/verifiedAt/verificationReason are
+            // deliberately absent: they are written by the verification route
+            // and must survive this full-session sync.
             updatedAt: values.updatedAt
           }
         })

@@ -5,13 +5,15 @@ import { db, schema } from '@/db/client'
 import type {
   DbFeedbackPin,
   DbFeedbackPinReply,
+  DbFeedbackPinSnapshot,
   DbFeedbackSession,
   DbMember,
   DbProject
 } from '@/db/schema'
 import type { ProjectRole } from '@/lib/project-access'
 import { hasProjectRole, parseProjectRoles, type AuthSession } from '@/lib/auth-helpers'
-import type { FeedbackSession, Pin, PinReply } from '@/types/feedback'
+import { publicUrlFor } from '@/lib/s3'
+import type { FeedbackSession, Pin, PinReply, PinSnapshot } from '@/types/feedback'
 
 export const PROJECT_PUBLIC_ACCESS_VIEW = 'view'
 
@@ -22,6 +24,9 @@ export type ProjectWithRole = {
   pinCount: number
   openPinCount: number
   closedPinCount: number
+  implementedPinCount: number
+  staleOpenPinCount: number
+  lastReviewedPage: string | null
   feedbackUpdatedAt: Date | null
   memberCount: number
   members: Array<{
@@ -94,16 +99,36 @@ export function toPinReply(reply: DbFeedbackPinReply): PinReply {
   }
 }
 
+export function toPinSnapshot(row: DbFeedbackPinSnapshot): PinSnapshot {
+  return {
+    status: row.status as PinSnapshot['status'],
+    pageScreenshotUrl: row.pageScreenshotKey
+      ? publicUrlFor(row.pageScreenshotKey) ?? undefined
+      : undefined,
+    elementScreenshotUrl: row.elementScreenshotKey
+      ? publicUrlFor(row.elementScreenshotKey) ?? undefined
+      : undefined,
+    elementHtml: row.elementHtml ?? undefined,
+    capturedUrl: row.capturedUrl ?? undefined,
+    capturedAt: row.capturedAt?.toISOString()
+  }
+}
+
 export function toFeedbackSession(
   session: DbFeedbackSession,
   pins: DbFeedbackPin[],
-  replies: DbFeedbackPinReply[] = []
+  replies: DbFeedbackPinReply[] = [],
+  snapshots: DbFeedbackPinSnapshot[] = []
 ): FeedbackSession {
   const repliesByPin = new Map<string, PinReply[]>()
   for (const reply of replies) {
     const list = repliesByPin.get(reply.pinId) ?? []
     list.push(toPinReply(reply))
     repliesByPin.set(reply.pinId, list)
+  }
+  const snapshotByPin = new Map<string, PinSnapshot>()
+  for (const snapshot of snapshots) {
+    snapshotByPin.set(snapshot.pinId, toPinSnapshot(snapshot))
   }
 
   return {
@@ -117,6 +142,9 @@ export function toFeedbackSession(
       number: pin.number,
       kind: (pin.kind as Pin['kind']) ?? 'comment',
       status: (pin.status as Pin['status']) ?? 'open',
+      authorName: pin.authorName ?? undefined,
+      authorEmail: pin.authorEmail ?? undefined,
+      authorUserId: pin.authorUserId ?? undefined,
       url: pin.url,
       viewportId: pin.viewportId,
       viewportType: pin.viewportType as Pin['viewportType'],
@@ -140,7 +168,15 @@ export function toFeedbackSession(
       editInstruction: pin.editInstruction ?? undefined,
       severity: pin.severity as Pin['severity'],
       comment: pin.comment,
-      screenshotDataUrl: pin.screenshotKey ?? undefined,
+      assetUrl: pin.assetUrl ?? undefined,
+      anchorStatus: (pin.anchorStatus as Pin['anchorStatus']) ?? undefined,
+      anchorCheckedAt: pin.anchorCheckedAt?.toISOString(),
+      verificationState:
+        (pin.verificationState as Pin['verificationState']) ?? undefined,
+      verifiedBy: (pin.verifiedBy as Pin['verifiedBy']) ?? undefined,
+      verifiedAt: pin.verifiedAt?.toISOString(),
+      verificationReason: pin.verificationReason ?? undefined,
+      snapshot: snapshotByPin.get(pin.id),
       createdAt: pin.createdAt.toISOString(),
       replies: (repliesByPin.get(pin.id) ?? []).sort((a, b) =>
         a.createdAt.localeCompare(b.createdAt)
@@ -219,12 +255,19 @@ export async function loadProjectBundle(
         .from(schema.feedbackPinReply)
         .where(inArray(schema.feedbackPinReply.pinId, pinIds))
     : []
+  const snapshots = pinIds.length
+    ? await db
+        .select()
+        .from(schema.feedbackPinSnapshot)
+        .where(inArray(schema.feedbackPinSnapshot.pinId, pinIds))
+    : []
 
   return {
     project,
     feedbackSession,
     pins,
     replies,
+    snapshots,
     member,
     role: parseProjectRoles(member?.role)[0] as ProjectRole | undefined,
     canEdit: canEditProjectFeedback(member),
@@ -288,6 +331,10 @@ export async function listProjectsForUser(userId: string): Promise<ProjectWithRo
     const projectPins = feedbackSession
       ? pins.filter(pin => pin.sessionId === feedbackSession.id)
       : []
+    const staleCutoff = Date.now() - 1000 * 60 * 60 * 24 * 7
+    const lastReviewedPin = projectPins
+      .slice()
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]
     const projectMembers = memberRows
       .filter(item => item.member.organizationId === row.project.organizationId)
       .map(item => ({
@@ -314,8 +361,15 @@ export async function listProjectsForUser(userId: string): Promise<ProjectWithRo
       role: row.member.role,
       canEdit: canEditProjectFeedback(row.member),
       pinCount: projectPins.length,
-      openPinCount: projectPins.filter(pin => (pin.status ?? 'open') !== 'closed').length,
+      openPinCount: projectPins.filter(pin => (pin.status ?? 'open') === 'open').length,
       closedPinCount: projectPins.filter(pin => pin.status === 'closed').length,
+      implementedPinCount: projectPins.filter(pin => pin.status === 'implemented').length,
+      staleOpenPinCount: projectPins.filter(
+        pin =>
+          (pin.status ?? 'open') === 'open' &&
+          pin.createdAt.getTime() < staleCutoff
+      ).length,
+      lastReviewedPage: lastReviewedPin?.url ?? null,
       feedbackUpdatedAt: feedbackSession?.updatedAt ?? null,
       memberCount: projectMembers.length,
       members: projectMembers,

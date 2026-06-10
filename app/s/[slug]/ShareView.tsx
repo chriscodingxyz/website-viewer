@@ -88,6 +88,34 @@ export default function ShareView({ session, markdown }: Props) {
                 )}
               </div>
               {pin.comment && <p className='text-sm mb-2'>{pin.comment}</p>}
+              {pin.snapshot?.elementScreenshotUrl && (
+                <a
+                  href={pin.snapshot.elementScreenshotUrl}
+                  target='_blank'
+                  rel='noreferrer'
+                  className='block mb-2 overflow-hidden rounded-md border border-border/40 bg-background'
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={pin.snapshot.elementScreenshotUrl}
+                    alt={`Pin ${pin.number} snapshot`}
+                    className='max-h-40 w-full object-contain'
+                  />
+                </a>
+              )}
+              {pin.assetUrl && (
+                <p className='text-xs text-muted-foreground mb-2 break-all'>
+                  Replacement image:{' '}
+                  <a
+                    href={pin.assetUrl}
+                    target='_blank'
+                    rel='noreferrer'
+                    className='text-foreground underline-offset-2 hover:underline'
+                  >
+                    {pin.assetUrl}
+                  </a>
+                </p>
+              )}
               {pin.kind === 'inspect' && (
                 <div className='rounded-md border border-border/40 bg-muted/30 p-3 mb-2 text-sm'>
                   {pin.elementText && (

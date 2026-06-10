@@ -8,6 +8,7 @@ export type InspectActionId =
   | 'remove-image'
   | 'update-alt'
   | 'remove-element'
+  | 'layout-issue'
   | 'style-layout'
   | 'update-link'
 
@@ -40,6 +41,23 @@ const TEXT_TAGS = new Set([
 
 const IMAGE_TAGS = new Set(['img', 'picture', 'source'])
 const MEDIA_TAGS = new Set(['img', 'picture', 'source', 'video'])
+const CONTAINER_TAGS = new Set([
+  'article',
+  'aside',
+  'div',
+  'figure',
+  'footer',
+  'header',
+  'main',
+  'nav',
+  'section',
+  'table',
+  'tbody',
+  'thead',
+  'tr',
+  'ul',
+  'ol'
+])
 
 function elementName(pin: Pick<Pin, 'elementTag'>) {
   return pin.elementTag ? `<${pin.elementTag}>` : 'selected element'
@@ -107,6 +125,18 @@ export function getInspectActions(pin: Pick<Pin, 'elementTag' | 'elementText'>):
         'Update link',
         `Update the destination or behavior for this ${elementName(pin)}.`,
         'Paste the new URL or describe the target behavior'
+      )
+    )
+  }
+
+  if (!tag || CONTAINER_TAGS.has(tag)) {
+    actions.push(
+      action(
+        'layout-issue',
+        'Layout issue',
+        `Fix the layout issue around this ${elementName(pin)}.`,
+        'Describe the overflow, spacing, alignment, crop, z-index, or responsive issue',
+        'Add viewport/page context and the expected visual result'
       )
     )
   }

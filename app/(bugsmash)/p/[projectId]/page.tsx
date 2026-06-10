@@ -20,7 +20,8 @@ export default async function ProjectWorkspacePage({
   const initialSession = toFeedbackSession(
     bundle.feedbackSession,
     bundle.pins,
-    bundle.replies
+    bundle.replies,
+    bundle.snapshots
   )
 
   return (
@@ -35,6 +36,7 @@ export default async function ProjectWorkspacePage({
       canEdit={bundle.canEdit}
       publicView={bundle.publicView}
       initialSession={initialSession}
+      aiVerifyEnabled={Boolean(process.env.ANTHROPIC_API_KEY)}
     />
   )
 }

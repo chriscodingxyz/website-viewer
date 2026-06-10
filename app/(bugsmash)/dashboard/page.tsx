@@ -105,9 +105,9 @@ export default async function DashboardPage() {
               </p>
             </Card>
             <Card className='border-border/70 p-4 shadow-sm'>
-              <p className='text-xs text-muted-foreground'>Team members</p>
+              <p className='text-xs text-muted-foreground'>Stale open tasks</p>
               <p className='mt-1 text-2xl font-semibold tabular-nums'>
-                {projects.reduce((sum, item) => sum + item.memberCount, 0)}
+                {projects.reduce((sum, item) => sum + item.staleOpenPinCount, 0)}
               </p>
             </Card>
           </div>
@@ -120,8 +120,11 @@ export default async function DashboardPage() {
                 <TableHead>Website</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead className='text-right'>Open</TableHead>
+                <TableHead className='text-right'>Implemented</TableHead>
                 <TableHead className='text-right'>Closed</TableHead>
                 <TableHead className='text-right'>Team</TableHead>
+                <TableHead>Last page</TableHead>
+                <TableHead>Access</TableHead>
                 <TableHead className='text-right'>Updated</TableHead>
                 <TableHead className='w-[140px]' />
               </TableRow>
@@ -131,8 +134,10 @@ export default async function DashboardPage() {
                 project,
                 role,
                 openPinCount,
+                implementedPinCount,
                 closedPinCount,
                 memberCount,
+                lastReviewedPage,
                 members,
                 invitations,
                 feedbackUpdatedAt
@@ -175,10 +180,28 @@ export default async function DashboardPage() {
                       {openPinCount}
                     </TableCell>
                     <TableCell className='text-right tabular-nums text-muted-foreground'>
+                      {implementedPinCount}
+                    </TableCell>
+                    <TableCell className='text-right tabular-nums text-muted-foreground'>
                       {closedPinCount}
                     </TableCell>
                     <TableCell className='text-right tabular-nums text-muted-foreground'>
                       {memberCount}
+                    </TableCell>
+                    <TableCell className='max-w-[160px] truncate font-mono text-xs text-muted-foreground'>
+                      {lastReviewedPage ? (() => {
+                        try {
+                          const url = new URL(lastReviewedPage)
+                          return url.pathname === '/' ? '/' : url.pathname
+                        } catch {
+                          return lastReviewedPage
+                        }
+                      })() : '—'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant='outline' className='capitalize'>
+                        {project.publicAccess === 'view' ? 'Public' : 'Private'}
+                      </Badge>
                     </TableCell>
                     <TableCell className='text-right text-muted-foreground'>
                       {formatDate(feedbackUpdatedAt ?? project.updatedAt)}

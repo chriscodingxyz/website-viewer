@@ -146,6 +146,7 @@ const nextConfig = {
   // Experimental features for better performance
   experimental: {
     scrollRestoration: true,
+    serverComponentsExternalPackages: ['playwright'],
   },
 }
 

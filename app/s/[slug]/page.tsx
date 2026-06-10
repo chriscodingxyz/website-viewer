@@ -1,9 +1,10 @@
-import { eq, and } from 'drizzle-orm'
+import { eq, and, inArray } from 'drizzle-orm'
 import { db, schema } from '@/db/client'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { FeedbackSession, Pin } from '@/types/feedback'
 import { toMarkdown } from '@/lib/feedback/export'
+import { toPinSnapshot } from '@/lib/projects'
 import ShareView from './ShareView'
 
 export const dynamic = 'force-dynamic'
@@ -28,7 +29,14 @@ async function loadBySlug(slug: string) {
     .from(schema.feedbackPin)
     .where(eq(schema.feedbackPin.sessionId, sess.id))
 
-  return { sess, pins }
+  const snapshots = pins.length
+    ? await db
+        .select()
+        .from(schema.feedbackPinSnapshot)
+        .where(inArray(schema.feedbackPinSnapshot.pinId, pins.map(p => p.id)))
+    : []
+
+  return { sess, pins, snapshots }
 }
 
 export async function generateMetadata({
@@ -58,6 +66,9 @@ export default async function SharePage({ params }: { params: { slug: string } }
       number: p.number,
       kind: (p.kind as Pin['kind']) ?? 'comment',
       status: (p.status as Pin['status']) ?? 'open',
+      authorName: p.authorName ?? undefined,
+      authorEmail: p.authorEmail ?? undefined,
+      authorUserId: p.authorUserId ?? undefined,
       url: p.url,
       viewportId: p.viewportId,
       viewportType: p.viewportType as Pin['viewportType'],
@@ -81,7 +92,18 @@ export default async function SharePage({ params }: { params: { slug: string } }
       scrollY: p.scrollY ?? undefined,
       severity: p.severity as Pin['severity'],
       comment: p.comment,
-      screenshotDataUrl: p.screenshotKey ?? undefined,
+      assetUrl: p.assetUrl ?? undefined,
+      anchorStatus: (p.anchorStatus as Pin['anchorStatus']) ?? undefined,
+      anchorCheckedAt: p.anchorCheckedAt?.toISOString(),
+      verificationState:
+        (p.verificationState as Pin['verificationState']) ?? undefined,
+      verifiedBy: (p.verifiedBy as Pin['verifiedBy']) ?? undefined,
+      verifiedAt: p.verifiedAt?.toISOString(),
+      verificationReason: p.verificationReason ?? undefined,
+      snapshot: (() => {
+        const row = data.snapshots.find(s => s.pinId === p.id)
+        return row ? toPinSnapshot(row) : undefined
+      })(),
       createdAt: p.createdAt.toISOString()
     })),
     meta: {

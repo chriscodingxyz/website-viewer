@@ -34,7 +34,12 @@ export async function GET(
     canEdit: bundle.canEdit,
     canManage: bundle.canManage,
     publicView: bundle.publicView,
-    session: toFeedbackSession(bundle.feedbackSession, bundle.pins, bundle.replies)
+    session: toFeedbackSession(
+      bundle.feedbackSession,
+      bundle.pins,
+      bundle.replies,
+      bundle.snapshots
+    )
   })
 }
 

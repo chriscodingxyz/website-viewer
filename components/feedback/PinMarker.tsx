@@ -44,6 +44,7 @@ const actionIcon = (id: InspectActionId) => {
       return Link
     case 'remove-element':
       return Trash
+    case 'layout-issue':
     case 'style-layout':
       return PaintBrush
     default:
@@ -64,6 +65,7 @@ const actionTone = (id: InspectActionId) => {
     case 'update-link':
       return 'border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-400 dark:border-blue-950 dark:bg-blue-950/30 dark:text-blue-300'
     case 'style-layout':
+    case 'layout-issue':
       return 'border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-400 dark:border-amber-950 dark:bg-amber-950/30 dark:text-amber-300'
     default:
       return 'border-border/70 bg-background text-muted-foreground hover:border-zinc-400 hover:text-foreground'

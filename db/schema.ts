@@ -201,6 +201,11 @@ export const feedbackPin = pgTable(
     number: integer('number').notNull(),
     kind: text('kind').notNull().default('comment'),
     status: text('status').notNull().default('open'),
+    authorUserId: text('author_user_id').references(() => user.id, {
+      onDelete: 'set null'
+    }),
+    authorName: text('author_name'),
+    authorEmail: text('author_email'),
     url: text('url').notNull(),
     viewportId: integer('viewport_id').notNull(),
     viewportType: text('viewport_type').notNull(),
@@ -221,14 +226,49 @@ export const feedbackPin = pgTable(
     ancestorChain: jsonb('ancestor_chain'),
     replacementText: text('replacement_text'),
     editInstruction: text('edit_instruction'),
-    severity: text('severity').notNull(),
+    severity: text('severity').notNull().default('medium'),
     comment: text('comment').notNull().default(''),
+    assetUrl: text('asset_url'),
     screenshotKey: text('screenshot_key'),
+    // client-computed anchor health (synced with the session)
+    anchorStatus: text('anchor_status'),
+    anchorCheckedAt: timestamp('anchor_checked_at'),
+    // server/human-owned verdicts; excluded from the bulk feedback upsert
+    verificationState: text('verification_state'),
+    verifiedBy: text('verified_by'),
+    verifiedAt: timestamp('verified_at'),
+    verificationReason: text('verification_reason'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow()
   },
   table => ({
     sessionIdx: index('feedback_pin_session_idx').on(table.sessionId)
+  })
+)
+
+export const feedbackPinSnapshot = pgTable(
+  'feedback_pin_snapshot',
+  {
+    id: text('id').primaryKey(),
+    pinId: text('pin_id')
+      .notNull()
+      .unique()
+      .references(() => feedbackPin.id, { onDelete: 'cascade' }),
+    status: text('status').notNull().default('pending'), // pending|captured|element-missing|failed
+    pageScreenshotKey: text('page_screenshot_key'),
+    elementScreenshotKey: text('element_screenshot_key'),
+    // full outerHTML at capture time, unlike feedback_pin.element_html (truncated)
+    elementHtml: text('element_html'),
+    boundingBox: jsonb('bounding_box'),
+    capturedUrl: text('captured_url'),
+    error: text('error'),
+    selectorHash: text('selector_hash'),
+    capturedAt: timestamp('captured_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
+  },
+  table => ({
+    pinIdx: index('feedback_pin_snapshot_pin_idx').on(table.pinId)
   })
 )
 
@@ -257,4 +297,5 @@ export type DbInvitation = typeof invitation.$inferSelect
 export type DbProject = typeof project.$inferSelect
 export type DbFeedbackSession = typeof feedbackSession.$inferSelect
 export type DbFeedbackPin = typeof feedbackPin.$inferSelect
+export type DbFeedbackPinSnapshot = typeof feedbackPinSnapshot.$inferSelect
 export type DbFeedbackPinReply = typeof feedbackPinReply.$inferSelect

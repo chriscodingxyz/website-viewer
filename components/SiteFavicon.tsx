@@ -1,58 +1,32 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 
-const FALLBACK_ICON = '/seoseal.png'
-const metadataIconCache = new Map<string, string[]>()
-
-function originFor(siteUrl: string) {
-  try {
-    return new URL(siteUrl).origin
-  } catch {
-    return ''
-  }
-}
+const faviconCache = new Map<string, { src: string; initials: string }>()
 
 function hostFor(siteUrl: string) {
   try {
-    return new URL(siteUrl).hostname
+    return new URL(siteUrl).hostname.replace(/^www\./, '')
   } catch {
-    return ''
+    return siteUrl
   }
 }
 
-function metadataCandidates(siteUrl: string, icons: Array<{ href?: string; sizes?: string }>) {
-  const origin = originFor(siteUrl)
-  return icons
-    .filter(icon => Boolean(icon.href))
-    .sort((a, b) => {
-      const sizeA = a.sizes ? parseInt(a.sizes.split('x')[0], 10) : 0
-      const sizeB = b.sizes ? parseInt(b.sizes.split('x')[0], 10) : 0
-      return sizeB - sizeA
-    })
-    .map(icon => {
-      try {
-        return new URL(icon.href!, origin || siteUrl).toString()
-      } catch {
-        return icon.href!
-      }
-    })
+function initialsFor(siteUrl: string) {
+  const host = hostFor(siteUrl)
+  const first = host.split(/[.-]/g).filter(Boolean)[0] ?? 'S'
+  return first.slice(0, 2).toUpperCase()
 }
 
-function baseCandidates(siteUrl: string) {
-  const origin = originFor(siteUrl)
-  const host = hostFor(siteUrl)
-  const localhost = host.includes('localhost') || host.includes('127.0.0.1')
-
-  return [
-    origin ? `${origin}/apple-touch-icon.png` : null,
-    origin ? `${origin}/favicon.ico` : null,
-    host && !localhost
-      ? `https://www.google.com/s2/favicons?domain=${host}&sz=128`
-      : null,
-    FALLBACK_ICON
-  ].filter(Boolean) as string[]
+function fallbackDataUrl(initials: string) {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="24" fill="#111111"/>
+      <text x="64" y="74" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="700" fill="#ffffff">${initials}</text>
+    </svg>
+  `.trim()
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 }
 
 interface Props {
@@ -68,60 +42,72 @@ export default function SiteFavicon({
   className,
   imageClassName
 }: Props) {
-  const [metadataIcons, setMetadataIcons] = useState<string[]>(
-    () => metadataIconCache.get(siteUrl) ?? []
+  const fallbackInitials = initialsFor(siteUrl)
+  const cached = faviconCache.get(siteUrl)
+  const [icon, setIcon] = useState<{ src: string; initials: string } | null>(
+    cached ?? null
   )
-  const [index, setIndex] = useState(0)
 
   useEffect(() => {
-    setIndex(0)
-    const cached = metadataIconCache.get(siteUrl)
-    if (cached) {
-      setMetadataIcons(cached)
+    const existing = faviconCache.get(siteUrl)
+    if (existing) {
+      setIcon(existing)
       return
     }
 
     let ignore = false
-    fetch(`/api/metadata?url=${encodeURIComponent(siteUrl)}`)
+    setIcon(null)
+    fetch(`/api/favicon?url=${encodeURIComponent(siteUrl)}`)
       .then(res => (res.ok ? res.json() : null))
       .then(data => {
-        if (ignore) return
-        const icons = metadataCandidates(siteUrl, data?.metadata?.icons ?? [])
-        metadataIconCache.set(siteUrl, icons)
-        setMetadataIcons(icons)
+        if (ignore || !data?.src) return
+        const next = {
+          src: String(data.src),
+          initials: String(data.initials || fallbackInitials)
+        }
+        faviconCache.set(siteUrl, next)
+        setIcon(next)
       })
       .catch(() => {
-        metadataIconCache.set(siteUrl, [])
-        if (!ignore) setMetadataIcons([])
+        if (!ignore) {
+          setIcon({
+            src: fallbackDataUrl(fallbackInitials),
+            initials: fallbackInitials
+          })
+        }
       })
 
     return () => {
       ignore = true
     }
-  }, [siteUrl])
-
-  const candidates = useMemo(() => {
-    return Array.from(new Set([...metadataIcons, ...baseCandidates(siteUrl)]))
-  }, [metadataIcons, siteUrl])
-
-  const src = candidates[Math.min(index, candidates.length - 1)] ?? FALLBACK_ICON
+  }, [fallbackInitials, siteUrl])
 
   return (
     <span
       className={cn(
-        'inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/70 bg-background',
+        'inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/70 bg-background text-[10px] font-semibold text-foreground',
         className
       )}
+      title={hostFor(siteUrl)}
     >
-      <img
-        key={src}
-        src={src}
-        alt={alt ?? `${hostFor(siteUrl) || 'Site'} favicon`}
-        className={cn('size-full object-cover', imageClassName)}
-        onError={() => {
-          setIndex(next => Math.min(next + 1, candidates.length - 1))
-        }}
-      />
+      {icon?.src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={icon.src}
+          alt={alt ?? `${hostFor(siteUrl)} favicon`}
+          className={cn('size-full object-cover', imageClassName)}
+          onError={() => {
+            const next = {
+              src: fallbackDataUrl(icon.initials || fallbackInitials),
+              initials: icon.initials || fallbackInitials
+            }
+            faviconCache.set(siteUrl, next)
+            setIcon(next)
+          }}
+        />
+      ) : (
+        <span aria-hidden='true'>{fallbackInitials}</span>
+      )}
     </span>
   )
 }
