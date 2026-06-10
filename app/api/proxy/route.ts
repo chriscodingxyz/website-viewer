@@ -366,6 +366,14 @@ export async function GET (request: NextRequest) {
                 if (state === 'image-replaced') {
                   var origSrc = el.getAttribute('data-bugsmash-original-src');
                   if (origSrc != null) el.setAttribute('src', origSrc);
+                  var origSrcset = el.getAttribute('data-bugsmash-original-srcset');
+                  if (origSrcset) el.setAttribute('srcset', origSrcset);
+                  // re-enable any <source> elements in parent <picture>
+                  var pic = el.closest ? el.closest('picture') : null;
+                  if (pic) {
+                    pic.querySelectorAll('source').forEach(function(s) { s.removeAttribute('media'); });
+                  }
+                  el.removeAttribute('data-bugsmash-original-srcset');
                 }
                 if (state === 'alt-updated') {
                   var origAlt = el.getAttribute('data-bugsmash-original-alt');
@@ -414,11 +422,21 @@ export async function GET (request: NextRequest) {
                   el.setAttribute(PREVIEW_ATTR, 'text-replaced');
                   if (showDiff) highlight(el, 'rgb(34 197 94)');
                 } else if (action === 'replace-image') {
-                  if (!detail || el.tagName !== 'IMG') return;
-                  el.setAttribute('data-bugsmash-original-src', el.getAttribute('src') || '');
-                  el.setAttribute('src', detail);
-                  el.setAttribute(PREVIEW_ATTR, 'image-replaced');
-                  if (showDiff) highlight(el, 'rgb(34 197 94)');
+                  if (!detail) return;
+                  var imgEl = el.tagName === 'IMG' ? el : el.querySelector('img');
+                  if (!imgEl) return;
+                  imgEl.setAttribute('data-bugsmash-original-src', imgEl.getAttribute('src') || '');
+                  imgEl.setAttribute('data-bugsmash-original-srcset', imgEl.getAttribute('srcset') || '');
+                  imgEl.setAttribute('src', detail);
+                  imgEl.removeAttribute('srcset');
+                  imgEl.removeAttribute('sizes');
+                  // disable <source> siblings inside <picture> so src takes effect
+                  var picture = imgEl.closest('picture');
+                  if (picture) {
+                    picture.querySelectorAll('source').forEach(function(s) { s.setAttribute('media', 'not all'); });
+                  }
+                  imgEl.setAttribute(PREVIEW_ATTR, 'image-replaced');
+                  if (showDiff) highlight(imgEl, 'rgb(34 197 94)');
                 } else if (action === 'update-alt') {
                   if (!detail || el.tagName !== 'IMG') return;
                   el.setAttribute('data-bugsmash-original-alt', el.getAttribute('alt') || '');

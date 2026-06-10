@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFeedback } from '@/contexts/FeedbackContext'
-import type { View, ViewType } from '@/contexts/WebsiteViewerContext'
+import type { View } from '@/contexts/WebsiteViewerContext'
 import type { Pin } from '@/types/feedback'
 import FeedbackOverlay from '@/components/feedback/FeedbackOverlay'
 import { iframeDetectionService } from '@/services/IframeDetectionService'
@@ -34,17 +34,7 @@ import {
 import { cn } from '@/lib/utils'
 import { canonicalFeedbackUrl, feedbackPath, sameFeedbackUrl } from '@/lib/feedback/url'
 import { findInspectAction } from '@/lib/feedback/inspectActions'
-
-export type CanvasViewport = 'desktop' | 'tablet' | 'mobile' | 'fullscreen'
-
-const PRESETS: Record<
-  Exclude<CanvasViewport, 'fullscreen'>,
-  { id: number; type: ViewType; width: number; height: number }
-> = {
-  desktop: { id: 1, type: 'desktop', width: 1440, height: 900 },
-  tablet: { id: 2, type: 'tablet', width: 768, height: 1024 },
-  mobile: { id: 3, type: 'mobile', width: 375, height: 812 }
-}
+import { type CanvasViewport, VIEWPORT_PRESETS } from '@/lib/feedback/viewports'
 
 const VIEWPORT_OPTIONS: { id: CanvasViewport; label: string; icon: typeof Monitor }[] = [
   { id: 'desktop', label: 'Desktop', icon: Monitor },
@@ -96,7 +86,7 @@ export default function ProjectCanvas({
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const detectionContainerRef = useRef<HTMLDivElement>(null)
 
-  const preset = viewport === 'fullscreen' ? PRESETS.desktop : PRESETS[viewport]
+  const preset = viewport === 'fullscreen' ? VIEWPORT_PRESETS.desktop : VIEWPORT_PRESETS[viewport]
   const isFullscreen = viewport === 'fullscreen'
 
   const pinsOnThisPage = pins.filter(
@@ -106,11 +96,14 @@ export default function ProjectCanvas({
   const previewPayload = useMemo(() => {
     return pins
       .filter(p => sameFeedbackUrl(p.url, currentPageUrl) && p.kind === 'inspect' && p.cssSelector)
-      .map(p => ({
-        cssSelector: p.cssSelector,
-        action: findInspectAction(p)?.id,
-        replacementText: p.replacementText
-      }))
+      .map(p => {
+        const action = findInspectAction(p)?.id
+        const replacementText =
+          action === 'replace-image'
+            ? (p.assetUrl?.trim() || p.replacementText)
+            : p.replacementText
+        return { cssSelector: p.cssSelector, action, replacementText }
+      })
       .filter(p => p.action)
   }, [pins, currentPageUrl])
 
@@ -196,9 +189,6 @@ export default function ProjectCanvas({
     })
   }
 
-  useEffect(() => {
-    if (feedbackMode && previewMode) setPreviewMode(false)
-  }, [feedbackMode, previewMode])
 
   const pathHint = feedbackPath(currentPageUrl)
 

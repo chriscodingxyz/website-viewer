@@ -31,9 +31,11 @@ import {
   PaintBrush,
   PaperPlaneTilt,
   SelectionPlus,
+  Sparkle,
   Target,
   TextT,
   Trash,
+  WarningCircle,
   X
 } from '@phosphor-icons/react'
 import type { Pin, PinReply } from '@/types/feedback'
@@ -44,6 +46,12 @@ import {
   type InspectAction,
   type InspectActionId
 } from '@/lib/feedback/inspectActions'
+import { PinAssetUpload } from '@/components/feedback/PinAssetUpload'
+import {
+  isAnchorLost,
+  isPossiblyDone,
+  possiblyDoneReason
+} from '@/lib/feedback/verification'
 
 interface Props {
   projectId: string
@@ -51,6 +59,7 @@ interface Props {
   projectWebsiteUrl?: string
   onJumpToPin?: (pin: Pin) => void
   onNavigateToPage?: (url: string) => void
+  aiVerifyEnabled?: boolean
 }
 
 function timeAgo(iso: string) {
@@ -79,6 +88,8 @@ const actionIcon = (id: InspectActionId) => {
       return Link
     case 'remove-element':
       return Trash
+    case 'layout-issue':
+      return WarningCircle
     case 'style-layout':
       return PaintBrush
     default:
@@ -108,6 +119,7 @@ const actionTone = (id: InspectActionId | undefined) => {
         active: 'border-blue-600 bg-blue-600 text-white'
       }
     case 'style-layout':
+    case 'layout-issue':
       return {
         chip: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-950 dark:bg-amber-950/30 dark:text-amber-300',
         active: 'border-amber-600 bg-amber-600 text-white'
@@ -139,6 +151,7 @@ function detailLabelFor(id: InspectActionId | undefined): string | null {
     case 'update-link':
       return 'New URL'
     case 'style-layout':
+    case 'layout-issue':
       return 'Desired change'
     case 'remove-image':
     case 'remove-element':
@@ -163,7 +176,8 @@ export default function ProjectCommentPanel({
   currentPageUrl,
   projectWebsiteUrl,
   onJumpToPin,
-  onNavigateToPage
+  onNavigateToPage,
+  aiVerifyEnabled = false
 }: Props) {
   const {
     pins,
@@ -173,7 +187,8 @@ export default function ProjectCommentPanel({
     removePin,
     updatePin,
     setExportOpen,
-    session
+    session,
+    setFeedbackMode
   } = useFeedback()
 
   const handlePinClick = (pin: Pin) => {
@@ -182,10 +197,13 @@ export default function ProjectCommentPanel({
   }
   const [replyDraft, setReplyDraft] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [verifyingPinId, setVerifyingPinId] = useState<string | null>(null)
   const [localReplies, setLocalReplies] = useState<Record<string, PinReply[]>>({})
+  const [taskFilter, setTaskFilter] = useState<'open' | 'done' | 'all'>('open')
 
   const selectedPin = pins.find(p => p.id === selectedPinId) ?? null
-  const openPins = pins.filter(pin => (pin.status ?? 'open') !== 'closed')
+  const openPins = pins.filter(pin => (pin.status ?? 'open') === 'open')
+  const implementedPins = pins.filter(pin => pin.status === 'implemented')
   const closedPins = pins.filter(pin => pin.status === 'closed')
 
   const copyText = async (text: string, success: string) => {
@@ -221,6 +239,59 @@ export default function ProjectCommentPanel({
     toast.success(`Pin ${pin.number} moved to ${feedbackPath(url)}`)
   }
 
+  const setVerification = async (
+    pin: Pin,
+    state: 'still-open' | 'confirmed-done',
+    reason?: string
+  ) => {
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/pins/${pin.id}/verification`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ state, reason })
+        }
+      )
+      if (!res.ok) {
+        toast.error('Could not save verification')
+        return
+      }
+      const { verification } = await res.json()
+      updatePin(pin.id, verification)
+    } catch {
+      toast.error('Network error')
+    }
+  }
+
+  const verifyWithAi = async (pin: Pin) => {
+    setVerifyingPinId(pin.id)
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/pins/${pin.id}/verify`,
+        { method: 'POST' }
+      )
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        toast.error(data?.error ?? 'AI verification failed')
+        return
+      }
+      updatePin(pin.id, data.verification)
+      const verdict = data.verdict?.verdict
+      toast.success(
+        verdict === 'implemented'
+          ? `Pin ${pin.number}: AI confirmed the change is implemented`
+          : verdict === 'not-implemented'
+            ? `Pin ${pin.number}: AI says the change is still open`
+            : `Pin ${pin.number}: AI could not decide`
+      )
+    } catch {
+      toast.error('Network error during AI verification')
+    } finally {
+      setVerifyingPinId(null)
+    }
+  }
+
   const applyInspectAction = (pin: Pin, action: InspectAction) => {
     updatePin(pin.id, {
       editInstruction: action.instruction,
@@ -231,9 +302,17 @@ export default function ProjectCommentPanel({
     })
   }
 
-  const setPinStatus = (pin: Pin, status: 'open' | 'closed') => {
+  const setPinStatus = (pin: Pin, status: 'open' | 'implemented' | 'closed') => {
     updatePin(pin.id, { status })
-    toast.success(`Pin ${pin.number} ${status === 'closed' ? 'closed' : 'reopened'}`)
+    toast.success(
+      `Pin ${pin.number} ${
+        status === 'closed'
+          ? 'closed'
+          : status === 'implemented'
+            ? 'marked implemented'
+            : 'reopened'
+      }`
+    )
   }
 
   type PageGroup = {
@@ -386,6 +465,34 @@ export default function ProjectCommentPanel({
                 {selectedPin.status === 'closed' ? 'Reopen' : 'Close'}
               </Button>
             )}
+            {canEdit && selectedPin.status !== 'implemented' && selectedPin.status !== 'closed' && (
+              <Button
+                variant='ghost'
+                size='sm'
+                className='h-7 gap-1.5 px-2 text-xs'
+                onClick={() => setPinStatus(selectedPin, 'implemented')}
+              >
+                <CheckCircle className='h-3.5 w-3.5' />
+                Implemented
+              </Button>
+            )}
+            {canEdit && aiVerifyEnabled && selectedPin.cssSelector && (
+              <Button
+                variant='ghost'
+                size='sm'
+                className='h-7 gap-1.5 px-2 text-xs'
+                disabled={verifyingPinId === selectedPin.id}
+                onClick={() => void verifyWithAi(selectedPin)}
+                title='Compare the snapshot with the live page using AI'
+              >
+                {verifyingPinId === selectedPin.id ? (
+                  <CircleNotch className='h-3.5 w-3.5 animate-spin' />
+                ) : (
+                  <Sparkle className='h-3.5 w-3.5' />
+                )}
+                Verify
+              </Button>
+            )}
             <Button
               variant='ghost'
               size='sm'
@@ -422,6 +529,58 @@ export default function ProjectCommentPanel({
         </header>
 
         <div className='min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden'>
+        {isPossiblyDone(selectedPin) && (
+          <div className='border-b border-amber-300/60 bg-amber-50 px-4 py-3 dark:border-amber-500/30 dark:bg-amber-500/10'>
+            <div className='flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400'>
+              <WarningCircle className='h-3.5 w-3.5' />
+              Possibly implemented
+              {selectedPin.verifiedBy === 'ai' && ' (AI)'}
+            </div>
+            <p className='mt-1 text-xs text-amber-800 dark:text-amber-200'>
+              {possiblyDoneReason(selectedPin)}
+            </p>
+            {canEdit && (
+              <div className='mt-2 flex gap-1.5'>
+                <Button
+                  size='sm'
+                  className='h-7 px-2 text-xs'
+                  onClick={() => {
+                    setPinStatus(selectedPin, 'implemented')
+                    void setVerification(selectedPin, 'confirmed-done')
+                  }}
+                >
+                  Confirm implemented
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='h-7 px-2 text-xs'
+                  onClick={() =>
+                    void setVerification(
+                      selectedPin,
+                      'still-open',
+                      'Reviewer marked the task as still open.'
+                    )
+                  }
+                >
+                  Still open
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+        {isAnchorLost(selectedPin) && (
+          <div className='border-b border-border/60 bg-muted/40 px-4 py-3'>
+            <div className='flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground'>
+              <WarningCircle className='h-3.5 w-3.5' />
+              Element not found on live page
+            </div>
+            <p className='mt-1 text-xs text-muted-foreground'>
+              The page may have changed since this pin was created. The captured
+              element details below remain the source of truth.
+            </p>
+          </div>
+        )}
         <div className='border-b border-border/60 px-4 py-3'>
           <div className='flex items-center justify-between gap-2'>
             <div className='flex items-center gap-2'>
@@ -458,6 +617,31 @@ export default function ProjectCommentPanel({
                   </span>
                 )}
               </div>
+              {canEdit && (
+                <div className='space-y-1'>
+                  <p className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
+                    Priority
+                  </p>
+                  <div className='flex flex-wrap gap-1'>
+                    {(['low', 'medium', 'high', 'blocking'] as const).map(level => (
+                      <button
+                        key={level}
+                        type='button'
+                        onClick={() => updatePin(selectedPin.id, { severity: level })}
+                        className={cn(
+                          'h-7 rounded-md border px-2 text-[11px] font-medium capitalize transition-colors',
+                          selectedPin.severity === level
+                            ? 'border-foreground bg-foreground text-background'
+                            : 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                          level === 'blocking' && selectedPin.severity === level && 'bg-red-600 text-white border-red-600'
+                        )}
+                      >
+                        {level}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {canEdit && selectedPin.kind !== 'inspect' ? (
@@ -533,9 +717,9 @@ export default function ProjectCommentPanel({
                         <Textarea
                           value={selectedPin.replacementText || ''}
                           onChange={event =>
-                            updatePin(selectedPin.id, {
-                              replacementText: event.target.value
-                            })
+            updatePin(selectedPin.id, {
+              replacementText: event.target.value
+            })
                           }
                           placeholder={selectedInspectAction.detailPlaceholder}
                           rows={3}
@@ -547,6 +731,15 @@ export default function ProjectCommentPanel({
                     <p className='rounded-md border border-dashed border-border/60 bg-background px-2 py-2 text-[11px] text-muted-foreground'>
                       Pick an intent above to add a replacement, asset, or removal note.
                     </p>
+                  )}
+                  {selectedInspectAction?.id === 'replace-image' && (
+                    <PinAssetUpload
+                      assetUrl={selectedPin.assetUrl}
+                      canEdit={canEdit}
+                      onChange={url =>
+                        updatePin(selectedPin.id, { assetUrl: url })
+                      }
+                    />
                   )}
                   <div className='space-y-1'>
                     <p className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
@@ -570,6 +763,13 @@ export default function ProjectCommentPanel({
                 </>
               ) : (
                 <>
+                  {selectedPin.assetUrl && (
+                    <PinAssetUpload
+                      assetUrl={selectedPin.assetUrl}
+                      canEdit={false}
+                      onChange={() => {}}
+                    />
+                  )}
                   {selectedPin.replacementText && (
                     <div className='rounded-md border border-border/50 bg-background p-2'>
                       <p className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
@@ -601,6 +801,39 @@ export default function ProjectCommentPanel({
                     </div>
                   )}
                 </>
+              )}
+            </div>
+          )}
+          {selectedPin.snapshot?.elementScreenshotUrl && (
+            <div className='mt-3 space-y-1'>
+              <p className='text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
+                Snapshot at capture time
+                {selectedPin.snapshot.capturedAt
+                  ? ` · ${timeAgo(selectedPin.snapshot.capturedAt)}`
+                  : ''}
+              </p>
+              <a
+                href={selectedPin.snapshot.elementScreenshotUrl}
+                target='_blank'
+                rel='noreferrer'
+                className='block overflow-hidden rounded-md border border-border/50 bg-background'
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={selectedPin.snapshot.elementScreenshotUrl}
+                  alt={`Pin ${selectedPin.number} element snapshot`}
+                  className='max-h-44 w-full object-contain'
+                />
+              </a>
+              {selectedPin.snapshot.pageScreenshotUrl && (
+                <a
+                  href={selectedPin.snapshot.pageScreenshotUrl}
+                  target='_blank'
+                  rel='noreferrer'
+                  className='text-[11px] text-muted-foreground underline-offset-2 hover:underline'
+                >
+                  View full page screenshot
+                </a>
               )}
             </div>
           )}
@@ -708,6 +941,21 @@ export default function ProjectCommentPanel({
           </div>
         </div>
 
+        <div className='border-t border-border/60 p-3'>
+          <Button
+            className='h-8 w-full gap-1.5 rounded-md text-xs'
+            size='sm'
+            onClick={() => {
+              setFeedbackMode(false)
+              setSelectedPinId(null)
+              toast.success(`Pin ${selectedPin.number} saved`)
+            }}
+          >
+            <CheckCircle className='h-3.5 w-3.5' />
+            Save &amp; back to comments
+          </Button>
+        </div>
+
         {canEdit ? (
           <form onSubmit={submitReply} className='border-t border-border/60 p-3'>
             <Textarea
@@ -750,12 +998,27 @@ export default function ProjectCommentPanel({
         <div>
           <h2 className='text-sm font-semibold tracking-tight'>Tasks</h2>
           <p className='text-[11px] text-muted-foreground'>
-            {openPins.length} open · {closedPins.length} closed ·{' '}
+            {openPins.length} open · {implementedPins.length + closedPins.length} done ·{' '}
             {pageGroups.filter(g => g.pins.length > 0).length}{' '}
             {pageGroups.filter(g => g.pins.length > 0).length === 1 ? 'page' : 'pages'}
           </p>
         </div>
         <div className='flex items-center gap-1'>
+          {(['open', 'done', 'all'] as const).map(filter => (
+            <button
+              key={filter}
+              type='button'
+              onClick={() => setTaskFilter(filter)}
+              className={cn(
+                'h-7 shrink-0 rounded-md border px-2 text-[11px] font-medium capitalize transition-colors',
+                taskFilter === filter
+                  ? 'border-foreground bg-foreground text-background'
+                  : 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+              )}
+            >
+              {filter}
+            </button>
+          ))}
           <Button
             variant='ghost'
             size='icon'
@@ -832,23 +1095,29 @@ export default function ProjectCommentPanel({
         ) : (
           (() => {
             const activeGroup = pageGroups.find(g => sameFeedbackUrl(g.url, currentPageUrl))
-            const activePins = activeGroup
-              ? [...activeGroup.pins].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-              : []
+            const scopedPins = (() => {
+              if (taskFilter === 'all') return pins
+              if (taskFilter === 'done') return [...implementedPins, ...closedPins]
+              return openPins
+            })()
+            const activePins = [...scopedPins].sort((a, b) =>
+              b.createdAt.localeCompare(a.createdAt)
+            )
 
             if (activePins.length === 0) {
               return (
                 <div className='flex flex-col items-center justify-center px-6 py-12 text-center text-xs text-muted-foreground'>
                   <ChatText className='h-6 w-6 text-muted-foreground/60' />
-                  <p className='mt-3'>No tasks on this page.</p>
+                  <p className='mt-3'>No tasks match this filter.</p>
                   <p className='mt-1 text-[11px]'>
-                    Switch to Annotate mode and click an element, or pick another page above.
+                    Switch filters, annotate an element, or pick another page above.
                   </p>
                 </div>
               )
             }
 
-            const activeOpenPins = activePins.filter(pin => (pin.status ?? 'open') !== 'closed')
+            const activeOpenPins = activePins.filter(pin => (pin.status ?? 'open') === 'open')
+            const activeImplementedPins = activePins.filter(pin => pin.status === 'implemented')
             const activeClosedPins = activePins.filter(pin => pin.status === 'closed')
             const renderPins = (items: Pin[], closed = false) => (
               <ul className='w-full divide-y divide-border/50 overflow-hidden bg-background'>
@@ -899,6 +1168,26 @@ export default function ProjectCommentPanel({
                             )}
                           </span>
                           <span className='inline-flex items-center gap-1.5 text-[10px] text-muted-foreground'>
+                            {pin.severity === 'blocking' && (
+                              <span className='rounded-sm bg-red-600 px-1 text-[9px] font-semibold text-white'>
+                                Blocking
+                              </span>
+                            )}
+                            {pin.status === 'implemented' && (
+                              <span className='rounded-sm bg-blue-600 px-1 text-[9px] font-semibold text-white'>
+                                Done
+                              </span>
+                            )}
+                            {isPossiblyDone(pin) && (
+                              <span className='rounded-sm bg-amber-500 px-1 text-[9px] font-semibold text-white'>
+                                Possibly done
+                              </span>
+                            )}
+                            {isAnchorLost(pin) && (
+                              <span className='rounded-sm border border-amber-500/60 px-1 text-[9px] font-semibold text-amber-600'>
+                                Anchor lost
+                              </span>
+                            )}
                             {closed && <CheckCircle className='h-3 w-3 text-emerald-600' />}
                             {timeAgo(pin.createdAt)}
                           </span>
@@ -935,21 +1224,9 @@ export default function ProjectCommentPanel({
                                 {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
                               </span>
                             )}
-                            {pin.cssSelector && <span>selector captured</span>}
+                            {pin.cssSelector && <span>selector</span>}
                           </span>
                           <span className='flex shrink-0 items-center gap-1'>
-                            {canEdit && (
-                              <button
-                                type='button'
-                                className='rounded border border-border/70 px-1.5 py-0.5 text-[10px] font-medium text-foreground hover:bg-muted'
-                                onClick={event => {
-                                  event.stopPropagation()
-                                  setPinStatus(pin, closed ? 'open' : 'closed')
-                                }}
-                              >
-                                {closed ? 'Reopen' : 'Close'}
-                              </button>
-                            )}
                             {canMoveToActivePage && (
                               <button
                                 type='button'
@@ -962,6 +1239,19 @@ export default function ProjectCommentPanel({
                                 Move here
                               </button>
                             )}
+                            {canEdit && (
+                              <button
+                                type='button'
+                                title='Delete pin'
+                                className='rounded p-0.5 text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive'
+                                onClick={event => {
+                                  event.stopPropagation()
+                                  removePin(pin.id)
+                                }}
+                              >
+                                <Trash className='h-3 w-3' />
+                              </button>
+                            )}
                           </span>
                         </div>
                       </div>
@@ -970,6 +1260,29 @@ export default function ProjectCommentPanel({
                 })}
               </ul>
             )
+
+            if (taskFilter === 'open') {
+              return (
+                <div>
+                  {activeOpenPins.length > 0 ? (
+                    renderPins(activeOpenPins)
+                  ) : (
+                    <p className='px-4 py-6 text-center text-xs text-muted-foreground'>
+                      No open tasks.
+                    </p>
+                  )}
+                </div>
+              )
+            }
+
+            if (taskFilter === 'done') {
+              return (
+                <div>
+                  {activeImplementedPins.length > 0 && renderPins(activeImplementedPins)}
+                  {activeClosedPins.length > 0 && renderPins(activeClosedPins, true)}
+                </div>
+              )
+            }
 
             return (
               <div>
@@ -982,6 +1295,14 @@ export default function ProjectCommentPanel({
                   <p className='px-4 py-6 text-center text-xs text-muted-foreground'>
                     No open tasks on this page.
                   </p>
+                )}
+                {activeImplementedPins.length > 0 && (
+                  <>
+                    <div className='border-y border-border/60 bg-muted/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground'>
+                      Implemented ({activeImplementedPins.length})
+                    </div>
+                    {renderPins(activeImplementedPins)}
+                  </>
                 )}
                 {activeClosedPins.length > 0 && (
                   <>
