@@ -334,9 +334,6 @@ export default function ProjectCommentPanel({
   }, [selectedPinId])
 
   const selectedPin = pins.find(p => p.id === selectedPinId) ?? null
-  const openPins = pins.filter(pin => (pin.status ?? 'open') === 'open')
-  const implementedPins = pins.filter(pin => pin.status === 'implemented')
-  const closedPins = pins.filter(pin => pin.status === 'closed')
 
   const copyText = async (text: string, success: string) => {
     try {
@@ -362,13 +359,6 @@ export default function ProjectCommentPanel({
       }),
       `Pin ${pin.number} brief copied`
     )
-  }
-
-  const movePinToCurrentPage = (pin: Pin) => {
-    if (!currentPageUrl || !canEdit) return
-    const url = canonicalFeedbackUrl(currentPageUrl, projectWebsiteUrl)
-    updatePin(pin.id, { url })
-    toast.success(`Pin ${pin.number} moved to ${feedbackPath(url)}`)
   }
 
   const setVerification = async (
@@ -1041,19 +1031,6 @@ export default function ProjectCommentPanel({
               )}
             </div>
           )}
-          {canEdit &&
-            currentPageUrl &&
-            !sameFeedbackUrl(selectedPin.url, currentPageUrl) && (
-              <Button
-                variant='outline'
-                size='sm'
-                className='mt-3 h-8 w-full gap-1.5 rounded-md text-xs'
-                onClick={() => movePinToCurrentPage(selectedPin)}
-              >
-                <Target className='h-3.5 w-3.5' />
-                Move pin to active page ({pathOf(currentPageUrl)})
-              </Button>
-            )}
           <Collapsible className='mt-3'>
             <CollapsibleTrigger className='inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground hover:text-foreground [&[data-state=open]>svg]:rotate-180'>
               <CaretDown className='h-3 w-3 transition-transform' />
@@ -1219,6 +1196,22 @@ export default function ProjectCommentPanel({
   }
 
   const pagesWithPins = pageGroups.filter(g => g.pins.length > 0).length
+  const currentGroup = pageGroups.find(group =>
+    sameFeedbackUrl(group.url, currentPageUrl)
+  )
+  const currentPins = currentGroup?.pins ?? []
+  const currentOpenPins = currentPins.filter(pin => (pin.status ?? 'open') === 'open')
+  const currentImplementedPins = currentPins.filter(pin => pin.status === 'implemented')
+  const currentClosedPins = currentPins.filter(pin => pin.status === 'closed')
+  const currentDonePins = currentImplementedPins.length + currentClosedPins.length
+  const currentPath = pathOf(
+    currentPageUrl
+      ? canonicalFeedbackUrl(currentPageUrl, projectWebsiteUrl)
+      : projectWebsiteUrl ?? '/'
+  )
+  const otherPageGroups = pageGroups
+    .filter(group => group.pins.length > 0 && !sameFeedbackUrl(group.url, currentPageUrl))
+    .sort((a, b) => b.pins.length - a.pins.length)
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -1228,7 +1221,7 @@ export default function ProjectCommentPanel({
           <div className='flex items-baseline gap-2'>
             <h2 className='text-sm font-semibold tracking-tight'>Tasks</h2>
             <span className='text-[11px] text-muted-foreground'>
-              {pagesWithPins} {pagesWithPins === 1 ? 'page' : 'pages'}
+              {pins.length} total · {pagesWithPins} {pagesWithPins === 1 ? 'page' : 'pages'}
             </span>
           </div>
           <div className='flex items-center gap-0.5'>
@@ -1267,10 +1260,10 @@ export default function ProjectCommentPanel({
             {(['open', 'done', 'all'] as const).map(filter => {
               const count =
                 filter === 'open'
-                  ? openPins.length
+                  ? currentOpenPins.length
                   : filter === 'done'
-                    ? implementedPins.length + closedPins.length
-                    : pins.length
+                    ? currentDonePins
+                    : currentPins.length
               return (
                 <button
                   key={filter}
@@ -1301,44 +1294,64 @@ export default function ProjectCommentPanel({
         </div>
       </header>
 
-      {pageGroups.length > 1 && (
-        <div className='border-b border-border/60 bg-muted/30 px-2 py-1.5'>
-          <div className='flex items-center gap-1 overflow-x-auto scrollbar-hide'>
-            {pageGroups.map(group => {
-              const isActive = sameFeedbackUrl(group.url, currentPageUrl)
-              const isProjectHome = sameFeedbackUrl(group.url, projectWebsiteUrl)
-              const path = pathOf(group.url)
-              return (
-                <button
-                  key={group.url}
-                  type='button'
-                  onClick={() => onNavigateToPage?.(group.url)}
-                  title={group.url}
-                  className={cn(
-                    'inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 text-[11px] font-medium transition-colors',
-                    isActive
-                      ? 'border-foreground bg-foreground text-background'
-                      : 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                  )}
-                >
-                  {isProjectHome && <House weight='fill' className='h-3 w-3' />}
-                  <span className='max-w-[120px] truncate font-mono'>{path}</span>
-                  {group.pins.length > 0 && (
-                    <span
-                      className={cn(
-                        'inline-flex h-4 min-w-4 items-center justify-center rounded-sm px-1 text-[9px] font-bold tabular-nums',
-                        isActive ? 'bg-background/20 text-background' : 'bg-muted text-foreground'
-                      )}
-                    >
-                      {group.pins.length}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
+      <div className='border-b border-border/60 bg-muted/25 px-4 py-3'>
+        <div className='rounded-md border border-border/70 bg-background p-2.5'>
+          <div className='flex min-w-0 items-start justify-between gap-3'>
+            <div className='min-w-0'>
+              <p className='text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
+                Current page
+              </p>
+              <p className='mt-1 truncate font-mono text-xs font-semibold text-foreground' title={currentPageUrl}>
+                {currentPath}
+              </p>
+            </div>
+            <div className='flex shrink-0 items-center gap-1 text-[10px] tabular-nums'>
+              <span className='rounded-sm bg-zinc-950 px-1.5 py-0.5 font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900'>
+                {currentOpenPins.length} open
+              </span>
+              {currentDonePins > 0 && (
+                <span className='rounded-sm border border-border px-1.5 py-0.5 text-muted-foreground'>
+                  {currentDonePins} done
+                </span>
+              )}
+            </div>
           </div>
+          {otherPageGroups.length > 0 && (
+            <div className='mt-2 border-t border-border/60 pt-2'>
+              <div className='mb-1.5 flex items-center justify-between text-[10px] font-medium text-muted-foreground'>
+                <span>Other pages with tasks</span>
+                <span>{otherPageGroups.length}</span>
+              </div>
+              <div className='grid max-h-40 gap-1 overflow-y-auto pr-1'>
+                {otherPageGroups.map(group => {
+                  const isProjectHome = sameFeedbackUrl(group.url, projectWebsiteUrl)
+                  const path = pathOf(group.url)
+                  const openCount = group.pins.filter(pin => (pin.status ?? 'open') === 'open').length
+                  return (
+                    <button
+                      key={group.url}
+                      type='button'
+                      onClick={() => onNavigateToPage?.(group.url)}
+                      title={group.url}
+                      className='flex h-7 min-w-0 items-center gap-2 rounded border border-transparent px-1.5 text-left text-[11px] text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground'
+                    >
+                      {isProjectHome ? (
+                        <House weight='fill' className='h-3 w-3 shrink-0' />
+                      ) : (
+                        <FileText className='h-3 w-3 shrink-0' />
+                      )}
+                      <span className='min-w-0 flex-1 truncate font-mono'>{path}</span>
+                      <span className='shrink-0 rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-foreground'>
+                        {openCount}/{group.pins.length}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       <div className='min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden'>
         {pins.length === 0 ? (
@@ -1353,11 +1366,10 @@ export default function ProjectCommentPanel({
           </div>
         ) : (
           (() => {
-            const activeGroup = pageGroups.find(g => sameFeedbackUrl(g.url, currentPageUrl))
             const scopedPins = (() => {
-              if (taskFilter === 'all') return pins
-              if (taskFilter === 'done') return [...implementedPins, ...closedPins]
-              return openPins
+              if (taskFilter === 'all') return currentPins
+              if (taskFilter === 'done') return [...currentImplementedPins, ...currentClosedPins]
+              return currentOpenPins
             })()
             const activePins = [...scopedPins].sort((a, b) =>
               b.createdAt.localeCompare(a.createdAt)
@@ -1367,9 +1379,9 @@ export default function ProjectCommentPanel({
               return (
                 <div className='flex flex-col items-center justify-center px-6 py-12 text-center text-xs text-muted-foreground'>
                   <ChatText className='h-6 w-6 text-muted-foreground/60' />
-                  <p className='mt-3'>No tasks match this filter.</p>
+                  <p className='mt-3'>No tasks match this filter on this page.</p>
                   <p className='mt-1 text-[11px]'>
-                    Switch filters, annotate an element, or pick another page above.
+                    Switch filters, annotate an element, or open another page from the list above.
                   </p>
                 </div>
               )
@@ -1392,15 +1404,10 @@ export default function ProjectCommentPanel({
                       : ChatText
                   const summary = pinSummary(pin, pinAction)
                   const snippet = elementSnippet(pin, summary)
-                  const canMoveToActivePage =
-                    canEdit &&
-                    Boolean(currentPageUrl) &&
-                    !sameFeedbackUrl(pin.url, currentPageUrl)
                   const hasFooter =
                     Boolean(snippet) ||
                     pin.viewportType !== 'desktop' ||
                     replies.length > 0 ||
-                    canMoveToActivePage ||
                     canEdit
                   return (
                     <li key={pin.id} className={closed ? 'opacity-60' : undefined}>
@@ -1486,18 +1493,6 @@ export default function ProjectCommentPanel({
                               </span>
                             )}
                             <span className='ml-auto flex shrink-0 items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100'>
-                              {canMoveToActivePage && (
-                                <button
-                                  type='button'
-                                  className='rounded border border-border/70 px-1.5 py-0.5 text-[10px] font-medium text-foreground hover:bg-muted'
-                                  onClick={event => {
-                                    event.stopPropagation()
-                                    movePinToCurrentPage(pin)
-                                  }}
-                                >
-                                  Move here
-                                </button>
-                              )}
                               {canEdit && (
                                 <button
                                   type='button'
