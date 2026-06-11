@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Bugsmash / Website Viewer
 
-## Getting Started
+Bugsmash is a visual website review workspace built with Next.js 14. Teams create projects for websites, load pages through a proxy-backed iframe canvas, pin feedback to exact elements, discuss tasks in threads, and share implementation briefs.
 
-First, run the development server:
+The repository also keeps the older Website Viewer and metadata analysis routes (`/viewer`, `/seo`, `/social`, `/technical`, `/viewports`, `/report`, `/compare`) for responsive previews and SEO/social/technical checks.
+
+## Local Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the Next.js dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+By default the app runs at `http://localhost:3000`. If port `3000` is busy, Next.js will choose the next available port.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Useful Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```bash
+npm run dev      # Start the development server
+npm run build    # Build the production app
+npm run start    # Start the production server
+npm run lint     # Run ESLint
+```
 
-## Learn More
+## Optional Local Services
 
-To learn more about Next.js, take a look at the following resources:
+Bugsmash can run without database, auth, or upload services. When those environment variables are absent, feedback sync no-ops and the local browser flow remains usable.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+For server-backed feedback sessions and uploads:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+```bash
+npm run infra:up
+npm run db:generate
+npm run db:migrate
+```
 
-## Deploy on Vercel
+Copy `.env.example` to `.env.local` when configuring local auth, database, or S3-compatible storage. Enable server sync only when the required services are configured.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Testing Status
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+There is no dedicated test suite configured yet. Use `npm run lint`, `npm run build`, and manual browser verification for changed workflows.

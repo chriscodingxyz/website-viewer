@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Script from 'next/script'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { Analytics } from '@vercel/analytics/next'
@@ -95,7 +94,7 @@ export const metadata: Metadata = {
     shortcut: '/icon.svg',
     apple: '/apple-icon'
   },
-  manifest: '/manifest.json',
+  manifest: '/manifest.webmanifest',
   category: 'technology',
   classification: 'Web Development Tool',
   other: {
@@ -115,7 +114,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang='en'>
+    <html lang='en' suppressHydrationWarning>
       <body
         className={`${fontSans.variable} ${fontSerif.variable} min-h-screen flex flex-col font-sans antialiased`}
       >

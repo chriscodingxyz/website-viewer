@@ -1,4 +1,13 @@
 /** @type {import('next').NextConfig} */
+const isDev = process.env.NODE_ENV !== 'production'
+const appConnectSrc = [
+  "'self'",
+  'https://www.google-analytics.com',
+  'https://analytics.google.com',
+  'https://vitals.vercel-insights.com',
+  ...(isDev ? ['http://localhost:3000', 'http://127.0.0.1:3000'] : []),
+]
+
 const nextConfig = {
   // Image configuration from next.config.mjs
   images: {
@@ -113,11 +122,11 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https: http:",
-              "connect-src 'self' https://www.google-analytics.com https://analytics.google.com",
+              `connect-src ${appConnectSrc.join(' ')}`,
               "frame-src 'self' https: http:",
               "media-src 'self'",
               "object-src 'none'",

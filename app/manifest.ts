@@ -1,8 +1,6 @@
 import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://website-viewer.vercel.app'
-
   return {
     name: 'Website Viewer | Layout Lab',
     short_name: 'Website Viewer',
@@ -15,27 +13,21 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     icons: [
       {
-        src: '/icon-192.png',
-        sizes: '192x192',
+        src: '/logo.png',
+        sizes: '1024x1024',
         type: 'image/png',
         purpose: 'maskable'
       },
       {
-        src: '/icon-512.png',
-        sizes: '512x512',
-        type: 'image/png',
-        purpose: 'maskable'
-      },
-      {
-        src: '/icon-192.png',
-        sizes: '192x192',
+        src: '/logo.png',
+        sizes: '1024x1024',
         type: 'image/png',
         purpose: 'any'
       },
       {
-        src: '/icon-512.png',
-        sizes: '512x512',
-        type: 'image/png',
+        src: '/icon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
         purpose: 'any'
       }
     ],
