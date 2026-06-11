@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { Pin } from '@/types/feedback'
 import { FeedbackProvider, useFeedback } from '@/contexts/FeedbackContext'
 import type { FeedbackSession } from '@/types/feedback'
@@ -19,7 +19,9 @@ import {
   ArrowSquareOut,
   Export,
   Eye,
+  FileText,
   Gear,
+  House,
   LinkSimple,
   ListBullets,
   ShieldCheck,
@@ -31,6 +33,12 @@ import ProjectSeoPreview from './ProjectSeoPreview'
 import ExportDialog from '@/components/feedback/ExportDialog'
 import FeedbackKeyboard from '@/components/feedback/FeedbackKeyboard'
 import SiteFavicon from '@/components/SiteFavicon'
+import {
+  canonicalFeedbackUrl,
+  feedbackPath,
+  sameFeedbackUrl
+} from '@/lib/feedback/url'
+import { cn } from '@/lib/utils'
 
 type ProjectSummary = {
   id: string
@@ -119,6 +127,11 @@ export default function ProjectWorkspace({
 
         {/* Desktop: side-by-side with fixed tasks width */}
         <div className='hidden min-h-0 flex-1 overflow-hidden xl:flex'>
+          <ProjectPageRail
+            currentPageUrl={currentPageUrl}
+            projectWebsiteUrl={project.websiteUrl}
+            onNavigateToPage={handleNavigateToPage}
+          />
           <div className='min-w-0 flex-1'>
             <ProjectCanvas
               websiteUrl={project.websiteUrl}
@@ -135,7 +148,6 @@ export default function ProjectWorkspace({
               currentPageUrl={currentPageUrl}
               projectWebsiteUrl={project.websiteUrl}
               onJumpToPin={handleJumpToPin}
-              onNavigateToPage={handleNavigateToPage}
               aiVerifyEnabled={aiVerifyEnabled}
             />
           </aside>
@@ -160,7 +172,6 @@ export default function ProjectWorkspace({
             currentPageUrl={currentPageUrl}
             projectWebsiteUrl={project.websiteUrl}
             onJumpToPin={handleJumpToPin}
-            onNavigateToPage={handleNavigateToPage}
             aiVerifyEnabled={aiVerifyEnabled}
           />
         </div>
@@ -169,6 +180,125 @@ export default function ProjectWorkspace({
         <FeedbackKeyboard />
       </div>
     </FeedbackProvider>
+  )
+}
+
+type PageGroup = {
+  url: string
+  pins: Pin[]
+  lastUpdated: string
+}
+
+function ProjectPageRail({
+  currentPageUrl,
+  projectWebsiteUrl,
+  onNavigateToPage
+}: {
+  currentPageUrl: string
+  projectWebsiteUrl: string
+  onNavigateToPage: (url: string) => void
+}) {
+  const { pins } = useFeedback()
+
+  const pageGroups = useMemo<PageGroup[]>(() => {
+    const groups = new Map<string, PageGroup>()
+    const homeUrl = canonicalFeedbackUrl(projectWebsiteUrl)
+    const activeUrl = canonicalFeedbackUrl(currentPageUrl, projectWebsiteUrl)
+
+    groups.set(homeUrl, { url: homeUrl, pins: [], lastUpdated: '' })
+    groups.set(activeUrl, groups.get(activeUrl) ?? { url: activeUrl, pins: [], lastUpdated: '' })
+
+    for (const pin of pins) {
+      const url = canonicalFeedbackUrl(pin.url, projectWebsiteUrl)
+      const group = groups.get(url) ?? { url, pins: [], lastUpdated: '' }
+      group.pins.push(pin)
+      if (pin.createdAt > group.lastUpdated) group.lastUpdated = pin.createdAt
+      groups.set(url, group)
+    }
+
+    return Array.from(groups.values()).sort((a, b) => {
+      if (sameFeedbackUrl(a.url, projectWebsiteUrl)) return -1
+      if (sameFeedbackUrl(b.url, projectWebsiteUrl)) return 1
+      if (a.pins.length !== b.pins.length) return b.pins.length - a.pins.length
+      return feedbackPath(a.url).localeCompare(feedbackPath(b.url))
+    })
+  }, [pins, currentPageUrl, projectWebsiteUrl])
+
+  const pagesWithTasks = pageGroups.filter(group => group.pins.length > 0).length
+
+  return (
+    <nav className='flex h-full w-[220px] shrink-0 flex-col border-r border-border/60 bg-[#fbfbfa] 2xl:w-[240px]'>
+      <div className='border-b border-border/60 px-4 py-3'>
+        <div className='flex items-baseline justify-between gap-2'>
+          <h2 className='text-xs font-semibold uppercase tracking-wide text-foreground'>
+            Pages
+          </h2>
+          <span className='text-[10px] text-muted-foreground'>
+            {pagesWithTasks}/{pageGroups.length}
+          </span>
+        </div>
+        <p className='mt-1 text-[11px] leading-snug text-muted-foreground'>
+          Pick a page first. The task list only shows work for that page.
+        </p>
+      </div>
+
+      <div className='min-h-0 flex-1 overflow-y-auto py-2'>
+        {pageGroups.map(group => {
+          const active = sameFeedbackUrl(group.url, currentPageUrl)
+          const isHome = sameFeedbackUrl(group.url, projectWebsiteUrl)
+          const openCount = group.pins.filter(pin => (pin.status ?? 'open') === 'open').length
+          const doneCount = group.pins.length - openCount
+          const path = feedbackPath(group.url)
+
+          return (
+            <button
+              key={group.url}
+              type='button'
+              title={group.url}
+              onClick={() => onNavigateToPage(group.url)}
+              className={cn(
+                'group flex w-full items-center gap-2 border-l-2 px-3 py-2 text-left transition-colors',
+                active
+                  ? 'border-l-foreground bg-background text-foreground'
+                  : 'border-l-transparent text-muted-foreground hover:bg-background hover:text-foreground'
+              )}
+            >
+              <span className='flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground group-hover:text-foreground'>
+                {isHome ? (
+                  <House weight='fill' className='h-3.5 w-3.5' />
+                ) : (
+                  <FileText className='h-3.5 w-3.5' />
+                )}
+              </span>
+              <span className='min-w-0 flex-1 truncate font-mono text-[11px]'>
+                {path}
+              </span>
+              {group.pins.length > 0 ? (
+                <span className='flex shrink-0 items-center gap-1 tabular-nums'>
+                  <span
+                    className={cn(
+                      'rounded-sm px-1.5 py-0.5 text-[10px] font-semibold',
+                      openCount > 0
+                        ? 'bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                        : 'bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {openCount}
+                  </span>
+                  {doneCount > 0 && (
+                    <span className='text-[10px] text-muted-foreground'>
+                      +{doneCount}
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span className='h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/25' />
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </nav>
   )
 }
 
@@ -296,7 +426,6 @@ function CompactTasksTrigger({
   currentPageUrl,
   projectWebsiteUrl,
   onJumpToPin,
-  onNavigateToPage,
   aiVerifyEnabled
 }: {
   open: boolean
@@ -305,16 +434,19 @@ function CompactTasksTrigger({
   currentPageUrl: string
   projectWebsiteUrl: string
   onJumpToPin: (pin: Pin) => void
-  onNavigateToPage: (url: string) => void
   aiVerifyEnabled?: boolean
 }) {
   const { pins } = useFeedback()
+  const currentCanonicalUrl = canonicalFeedbackUrl(currentPageUrl, projectWebsiteUrl)
+  const currentPinCount = pins.filter(pin =>
+    sameFeedbackUrl(pin.url, currentCanonicalUrl)
+  ).length
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <div className='flex items-center justify-between border-t border-border/60 bg-background px-3 py-2'>
         <span className='text-xs text-muted-foreground'>
-          {pins.length} {pins.length === 1 ? 'task' : 'tasks'}
+          {currentPinCount} on page · {pins.length} total
         </span>
         <SheetTrigger asChild>
           <Button variant='outline' size='sm' className='h-8 gap-1.5 text-xs'>
@@ -333,7 +465,6 @@ function CompactTasksTrigger({
             currentPageUrl={currentPageUrl}
             projectWebsiteUrl={projectWebsiteUrl}
             onJumpToPin={onJumpToPin}
-            onNavigateToPage={onNavigateToPage}
             aiVerifyEnabled={aiVerifyEnabled}
           />
         </div>

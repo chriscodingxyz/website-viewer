@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, ReactNode, useEffect, useMemo, useState } from 'react'
+import { FormEvent, ReactNode, useEffect, useState } from 'react'
 import { useFeedback } from '@/contexts/FeedbackContext'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -41,7 +41,6 @@ import {
   DotsThreeVertical,
   DownloadSimple,
   FileText,
-  House,
   Image,
   Link,
   PaintBrush,
@@ -75,7 +74,6 @@ interface Props {
   currentPageUrl?: string
   projectWebsiteUrl?: string
   onJumpToPin?: (pin: Pin) => void
-  onNavigateToPage?: (url: string) => void
   aiVerifyEnabled?: boolean
 }
 
@@ -298,7 +296,6 @@ export default function ProjectCommentPanel({
   currentPageUrl,
   projectWebsiteUrl,
   onJumpToPin,
-  onNavigateToPage,
   aiVerifyEnabled = false
 }: Props) {
   const {
@@ -436,54 +433,6 @@ export default function ProjectCommentPanel({
       }`
     )
   }
-
-  type PageGroup = {
-    url: string
-    pins: Pin[]
-    lastUpdated: string
-  }
-
-  const pageGroups = useMemo<PageGroup[]>(() => {
-    const groups = new Map<string, PageGroup>()
-
-    if (projectWebsiteUrl) {
-      const url = canonicalFeedbackUrl(projectWebsiteUrl)
-      groups.set(url, {
-        url,
-        pins: [],
-        lastUpdated: ''
-      })
-    }
-    if (currentPageUrl) {
-      const url = canonicalFeedbackUrl(currentPageUrl, projectWebsiteUrl)
-      groups.set(url, groups.get(url) ?? {
-        url,
-        pins: [],
-        lastUpdated: ''
-      })
-    }
-
-    for (const pin of pins) {
-      const url = canonicalFeedbackUrl(pin.url, projectWebsiteUrl)
-      const existing = groups.get(url) ?? {
-        url,
-        pins: [],
-        lastUpdated: ''
-      }
-      existing.pins.push(pin)
-      if (pin.createdAt > existing.lastUpdated) {
-        existing.lastUpdated = pin.createdAt
-      }
-      groups.set(url, existing)
-    }
-
-    return Array.from(groups.values()).sort((a, b) => {
-      if (sameFeedbackUrl(a.url, currentPageUrl)) return -1
-      if (sameFeedbackUrl(b.url, currentPageUrl)) return 1
-      if (a.pins.length !== b.pins.length) return b.pins.length - a.pins.length
-      return b.lastUpdated.localeCompare(a.lastUpdated)
-    })
-  }, [pins, currentPageUrl, projectWebsiteUrl])
 
   const allRepliesFor = (pin: Pin) => {
     const fromServer = pin.replies ?? []
@@ -1195,23 +1144,17 @@ export default function ProjectCommentPanel({
     )
   }
 
-  const pagesWithPins = pageGroups.filter(g => g.pins.length > 0).length
-  const currentGroup = pageGroups.find(group =>
-    sameFeedbackUrl(group.url, currentPageUrl)
+  const currentCanonicalUrl = currentPageUrl
+    ? canonicalFeedbackUrl(currentPageUrl, projectWebsiteUrl)
+    : projectWebsiteUrl ?? '/'
+  const currentPins = pins.filter(pin =>
+    sameFeedbackUrl(pin.url, currentCanonicalUrl)
   )
-  const currentPins = currentGroup?.pins ?? []
   const currentOpenPins = currentPins.filter(pin => (pin.status ?? 'open') === 'open')
   const currentImplementedPins = currentPins.filter(pin => pin.status === 'implemented')
   const currentClosedPins = currentPins.filter(pin => pin.status === 'closed')
   const currentDonePins = currentImplementedPins.length + currentClosedPins.length
-  const currentPath = pathOf(
-    currentPageUrl
-      ? canonicalFeedbackUrl(currentPageUrl, projectWebsiteUrl)
-      : projectWebsiteUrl ?? '/'
-  )
-  const otherPageGroups = pageGroups
-    .filter(group => group.pins.length > 0 && !sameFeedbackUrl(group.url, currentPageUrl))
-    .sort((a, b) => b.pins.length - a.pins.length)
+  const currentPath = pathOf(currentCanonicalUrl)
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -1221,7 +1164,7 @@ export default function ProjectCommentPanel({
           <div className='flex items-baseline gap-2'>
             <h2 className='text-sm font-semibold tracking-tight'>Tasks</h2>
             <span className='text-[11px] text-muted-foreground'>
-              {pins.length} total · {pagesWithPins} {pagesWithPins === 1 ? 'page' : 'pages'}
+              {currentPins.length} on page · {pins.length} total
             </span>
           </div>
           <div className='flex items-center gap-0.5'>
@@ -1292,66 +1235,15 @@ export default function ProjectCommentPanel({
             })}
           </div>
         </div>
-      </header>
-
-      <div className='border-b border-border/60 bg-muted/25 px-4 py-3'>
-        <div className='rounded-md border border-border/70 bg-background p-2.5'>
-          <div className='flex min-w-0 items-start justify-between gap-3'>
-            <div className='min-w-0'>
-              <p className='text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
-                Current page
-              </p>
-              <p className='mt-1 truncate font-mono text-xs font-semibold text-foreground' title={currentPageUrl}>
-                {currentPath}
-              </p>
-            </div>
-            <div className='flex shrink-0 items-center gap-1 text-[10px] tabular-nums'>
-              <span className='rounded-sm bg-zinc-950 px-1.5 py-0.5 font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900'>
-                {currentOpenPins.length} open
-              </span>
-              {currentDonePins > 0 && (
-                <span className='rounded-sm border border-border px-1.5 py-0.5 text-muted-foreground'>
-                  {currentDonePins} done
-                </span>
-              )}
-            </div>
-          </div>
-          {otherPageGroups.length > 0 && (
-            <div className='mt-2 border-t border-border/60 pt-2'>
-              <div className='mb-1.5 flex items-center justify-between text-[10px] font-medium text-muted-foreground'>
-                <span>Other pages with tasks</span>
-                <span>{otherPageGroups.length}</span>
-              </div>
-              <div className='grid max-h-40 gap-1 overflow-y-auto pr-1'>
-                {otherPageGroups.map(group => {
-                  const isProjectHome = sameFeedbackUrl(group.url, projectWebsiteUrl)
-                  const path = pathOf(group.url)
-                  const openCount = group.pins.filter(pin => (pin.status ?? 'open') === 'open').length
-                  return (
-                    <button
-                      key={group.url}
-                      type='button'
-                      onClick={() => onNavigateToPage?.(group.url)}
-                      title={group.url}
-                      className='flex h-7 min-w-0 items-center gap-2 rounded border border-transparent px-1.5 text-left text-[11px] text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground'
-                    >
-                      {isProjectHome ? (
-                        <House weight='fill' className='h-3 w-3 shrink-0' />
-                      ) : (
-                        <FileText className='h-3 w-3 shrink-0' />
-                      )}
-                      <span className='min-w-0 flex-1 truncate font-mono'>{path}</span>
-                      <span className='shrink-0 rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-foreground'>
-                        {openCount}/{group.pins.length}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
+        <div className='flex min-w-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/20 px-4 py-2'>
+          <span className='min-w-0 truncate font-mono text-[11px] text-foreground' title={currentCanonicalUrl}>
+            {currentPath}
+          </span>
+          <span className='shrink-0 text-[10px] text-muted-foreground'>
+            {currentOpenPins.length} open · {currentDonePins} done
+          </span>
         </div>
-      </div>
+      </header>
 
       <div className='min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden'>
         {pins.length === 0 ? (
@@ -1381,7 +1273,7 @@ export default function ProjectCommentPanel({
                   <ChatText className='h-6 w-6 text-muted-foreground/60' />
                   <p className='mt-3'>No tasks match this filter on this page.</p>
                   <p className='mt-1 text-[11px]'>
-                    Switch filters, annotate an element, or open another page from the list above.
+                    Switch filters, annotate an element, or choose another page from the Pages rail.
                   </p>
                 </div>
               )
