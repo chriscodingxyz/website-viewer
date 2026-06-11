@@ -324,10 +324,10 @@ function CompactTasksTrigger({
         </SheetTrigger>
       </div>
       <SheetContent side='right' className='w-full max-w-md p-0 sm:max-w-md'>
-        <SheetHeader className='border-b border-border/60 px-4 py-3'>
+        <SheetHeader className='sr-only'>
           <SheetTitle className='text-sm'>Tasks</SheetTitle>
         </SheetHeader>
-        <div className='h-[calc(100vh-49px)]'>
+        <div className='h-screen'>
           <ProjectCommentPanel
             projectId={projectId}
             currentPageUrl={currentPageUrl}
