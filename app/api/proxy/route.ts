@@ -1,8 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
+import https from 'https'
+import http from 'http'
+import {
+  getProxiedUrl,
+  getProxiedSrcset,
+  rewriteCssUrls
+} from '@/lib/proxy/rewrite'
+import { buildInjectedScript } from '@/lib/proxy/inject'
+
+// Keep-alive agents shared across requests so repeated fetches to the same
+// upstream skip TCP/TLS handshakes.
+const httpsAgent = new https.Agent({ keepAlive: true, rejectUnauthorized: false })
+const httpAgent = new http.Agent({ keepAlive: true })
+
+const HTML_CACHE_CONTROL = 'public, max-age=0, s-maxage=60, stale-while-revalidate=300'
+const CODE_CACHE_CONTROL = 'public, max-age=300, s-maxage=86400, stale-while-revalidate=604800'
+const ASSET_CACHE_CONTROL = 'public, max-age=3600, s-maxage=604800, immutable'
+
+// Attributes that contain a single URL.
+const URL_ATTRS = [
+  'src', 'href', 'action', 'poster', 'data',
+  'data-src', 'data-href', 'data-original', 'data-lazy-src', 'data-url',
+  'data-basepath', 'data-inline-media-basepath', 'data-anim-lazy-image'
+]
+const SRCSET_ATTRS = ['srcset', 'data-srcset']
 
 export async function GET (request: NextRequest) {
+  return proxyRequest(request, 'GET')
+}
+
+// SPA pages POST to their own APIs (GraphQL, server actions, form handlers).
+// The injected fetch/XHR patches and the service worker route those calls
+// here with the original method and body.
+export async function POST (request: NextRequest) {
+  return proxyRequest(request, 'POST')
+}
+
+async function proxyRequest (request: NextRequest, method: 'GET' | 'POST') {
   const { searchParams } = new URL(request.url)
   const targetUrl = searchParams.get('url')
 
@@ -26,6 +62,35 @@ export async function GET (request: NextRequest) {
     const rangeHeader = request.headers.get('range')
     if (rangeHeader) {
       requestHeaders.Range = rangeHeader
+    }
+
+    if (method === 'POST') {
+      const contentTypeHeader = request.headers.get('content-type')
+      if (contentTypeHeader) requestHeaders['Content-Type'] = contentTypeHeader
+      const body = Buffer.from(await request.arrayBuffer())
+
+      const upstream = await axios.post(targetUrl, body, {
+        timeout: 12000,
+        headers: requestHeaders,
+        maxRedirects: 5,
+        httpsAgent,
+        httpAgent,
+        responseType: 'arraybuffer',
+        validateStatus: () => true
+      })
+
+      const upstreamType = upstream.headers['content-type'] || 'application/octet-stream'
+      return new NextResponse(Buffer.from(upstream.data), {
+        status: upstream.status,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Cross-Origin-Resource-Policy': 'cross-origin',
+          'Content-Type': upstreamType,
+          'Cache-Control': 'no-store'
+        }
+      })
     }
 
     if (streamableMediaPattern.test(targetUrl)) {
@@ -69,94 +134,17 @@ export async function GET (request: NextRequest) {
 
     // Fetch the target content
     const response = await axios.get(targetUrl, {
-      timeout: 15000,
+      timeout: 12000,
       headers: requestHeaders,
-      maxRedirects: 10,
-      // Handle SSL certs gracefully for dev environments
-      httpsAgent: new (require('https').Agent)({
-        rejectUnauthorized: false
-      }),
+      maxRedirects: 5,
+      httpsAgent,
+      httpAgent,
       responseType: 'arraybuffer', // Handle binary data
       validateStatus: status => status >= 200 && status < 400
     })
 
     const contentType = response.headers['content-type'] || 'text/html'
     const buffer = Buffer.from(response.data)
-
-    // Helper to rewrite URLs to point back to this proxy
-    const getProxiedUrl = (original: string, contextUrl: string) => {
-      if (!original || typeof original !== 'string') return original
-      const trimmed = original.trim().replace(/&amp;/g, '&')
-      
-      if (trimmed === '' || 
-          trimmed.startsWith('data:') || 
-          trimmed.startsWith('blob:') || 
-          trimmed.startsWith('javascript:') ||
-          trimmed.startsWith('/api/proxy?url=')) {
-         return original
-      }
-      
-      try {
-        let urlToProxy = trimmed
-        if (urlToProxy.startsWith('//')) {
-          urlToProxy = `https:${urlToProxy}`
-        }
-        
-        const absolute = new URL(urlToProxy, contextUrl).toString()
-        return `/api/proxy?url=${encodeURIComponent(absolute)}`
-      } catch (e) {
-        return original
-      }
-    }
-
-    // Helper to rewrite srcset attributes
-    const getProxiedSrcset = (srcset: string, contextUrl: string) => {
-      if (!srcset || typeof srcset !== 'string') return srcset
-      return srcset.split(/,(?=\s+|$)/).map(part => {
-        const trimmed = part.trim()
-        if (trimmed.startsWith('data:')) return trimmed
-        
-        const parts = trimmed.split(/\s+/)
-        if (parts.length === 0) return part
-        
-        const url = parts[0]
-        const rest = parts.slice(1).join(' ')
-        return `${getProxiedUrl(url, contextUrl)} ${rest}`.trim()
-      }).join(', ')
-    }
-
-    // Helper to rewrite CSS content
-    const rewriteCssUrls = (css: string, contextUrl: string) => {
-      if (!css || typeof css !== 'string') return css
-      
-      // 1. Rewrite url(...)
-      let rewritten = css.replace(/url\s*\(\s*(['"]?)([^'"\)]+)\1\s*\)/gi, (match, quote, p1) => {
-        return `url("${getProxiedUrl(p1.trim(), contextUrl)}")`
-      })
-      
-      // 2. Rewrite @import
-      rewritten = rewritten.replace(/@import\s+(?:url\s*\(\s*)?(['"]?)([^'"\)]+)\1\s*\)?/gi, (match, quote, p1) => {
-        if (match.toLowerCase().includes('url')) return match 
-        return `@import "${getProxiedUrl(p1.trim(), contextUrl)}"`
-      })
-      
-      return rewritten
-    }
-
-    const rewriteJavaScriptUrls = (js: string, contextUrl: string) => {
-      if (!js || typeof js !== 'string') return js
-
-      const rootPathPattern = /(["'`])(\/(?:_next|api|images|videos|fonts|assets|static|media|favicon\.ico|robots\.txt|sitemap(?:_index)?\.xml|sitemaps?\.xml)[^"'`\\]*)\1/g
-      const escapedRootPathPattern = /\\(["'`])(\/(?:_next|api|images|videos|fonts|assets|static|media|favicon\.ico|robots\.txt|sitemap(?:_index)?\.xml|sitemaps?\.xml)[^"'`\\]*)\\\1/g
-
-      return js
-        .replace(rootPathPattern, (_match, quote, path) => {
-          return `${quote}${getProxiedUrl(path, contextUrl)}${quote}`
-        })
-        .replace(escapedRootPathPattern, (_match, quote, path) => {
-          return `\\${quote}${getProxiedUrl(path, contextUrl)}\\${quote}`
-        })
-    }
 
     const getPassthroughHeaders = (
       overrides: Record<string, string> = {},
@@ -195,353 +183,107 @@ export async function GET (request: NextRequest) {
       $('meta[http-equiv="X-Frame-Options"]').remove()
       $('meta[http-equiv="frame-options"]').remove()
 
-      // Handle CSS inside style tags before we do global regex
-      $('style').each((_, el) => {
-        const css = $(el).text()
-        $(el).text(rewriteCssUrls(css, targetUrl))
-      })
+      // Rewritten resource bytes no longer match SRI hashes; strip them so the
+      // browser doesn't refuse to apply scripts/styles.
+      $('[integrity]').removeAttr('integrity')
+      $('[crossorigin]').removeAttr('crossorigin')
 
-      $('script:not([src])').each((_, el) => {
-        const script = $(el).html()
-        if (script) {
-          $(el).html(rewriteJavaScriptUrls(script, targetUrl))
+      // A <base> tag would change relative resolution after rewriting; fold it
+      // into the resolution context and drop the tag.
+      const baseHref = $('base[href]').attr('href')
+      let resolutionBase = targetUrl
+      if (baseHref) {
+        try {
+          resolutionBase = new URL(baseHref, targetUrl).toString()
+        } catch {}
+      }
+      $('base').remove()
+
+      // Rewrite URL-bearing attributes per element. Script/style CONTENT is
+      // never touched: hydration payloads (__NEXT_DATA__ etc.) must pass
+      // through byte-identical or client frameworks fail to attach handlers.
+      $('*').each((_, el) => {
+        const $el = $(el)
+        for (const attr of URL_ATTRS) {
+          const val = $el.attr(attr)
+          if (val) $el.attr(attr, getProxiedUrl(val, resolutionBase))
+        }
+        for (const attr of SRCSET_ATTRS) {
+          const val = $el.attr(attr)
+          if (val) $el.attr(attr, getProxiedSrcset(val, resolutionBase))
+        }
+        const style = $el.attr('style')
+        if (style && style.toLowerCase().includes('url(')) {
+          $el.attr('style', rewriteCssUrls(style, resolutionBase))
         }
       })
 
-      // Framebusting protection + in-iframe navigation interceptor.
-      // Keeps anchor clicks, history.pushState/replaceState, and meta
-      // refreshes routed back through the proxy so navigation stays
-      // inside the rendered preview.
-      const targetOrigin = new URL(targetUrl).origin
-      const framebusterScript = `
-        <script>
-          (function() {
-            var PROXY_PREFIX = '/api/proxy?url=';
-            var TARGET_ORIGIN = ${JSON.stringify(targetOrigin)};
-            var TARGET_URL = ${JSON.stringify(targetUrl)};
-            var REAL_PARENT = window.parent;
-
-            function toTargetUrl(url) {
-              if (url == null) return TARGET_URL;
-              try { url = String(url); } catch (e) { return TARGET_URL; }
-              if (!url || url.charAt(0) === '#') return TARGET_URL;
-              try {
-                var proxied = new URL(url, window.location.href);
-                if (proxied.pathname === '/api/proxy' && proxied.searchParams.get('url')) {
-                  return proxied.searchParams.get('url') || TARGET_URL;
-                }
-              } catch (e) {}
-              if (url.indexOf(PROXY_PREFIX) === 0) {
-                try {
-                  var relativeProxied = new URL(url, window.location.href);
-                  return relativeProxied.searchParams.get('url') || TARGET_URL;
-                } catch (e) { return TARGET_URL; }
-              }
-              try {
-                var abs = new URL(url, TARGET_URL).toString();
-                return abs;
-              } catch (e) { return TARGET_URL; }
-            }
-
-            function notifyPage(url) {
-              try {
-                var target = toTargetUrl(url);
-                window.__BUGSMASH_TARGET_URL__ = target;
-                if (REAL_PARENT && REAL_PARENT !== window) {
-                  REAL_PARENT.postMessage({
-                    source: 'bugsmash-proxy',
-                    type: 'url-change',
-                    url: target
-                  }, '*');
-                }
-              } catch (e) {}
-            }
-
-            function toProxy(url) {
-              if (url == null) return url;
-              try { url = String(url); } catch (e) { return url; }
-              if (!url || url.indexOf(PROXY_PREFIX) === 0) return url;
-              if (url.indexOf('data:') === 0 || url.indexOf('blob:') === 0 || url.indexOf('javascript:') === 0 || url.indexOf('mailto:') === 0 || url.indexOf('tel:') === 0 || url.charAt(0) === '#') return url;
-              try {
-                var abs = new URL(url, TARGET_URL).toString();
-                return PROXY_PREFIX + encodeURIComponent(abs);
-              } catch (e) { return url; }
-            }
-
-            try {
-              window.frameElement = { "id": "proxied-frame", "nodeName": "IFRAME" };
-              Object.defineProperty(window, 'top', { get: function() { return window.self; } });
-              Object.defineProperty(window, 'parent', { get: function() { return window.self; } });
-              window.onbeforeunload = function() { return null; };
-              window.onunload = function() {};
-            } catch (e) {}
-
-            // Intercept anchor clicks (capture phase before site handlers).
-            document.addEventListener('click', function(e) {
-              if (e.defaultPrevented || e.button !== 0) return;
-              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-              var node = e.target;
-              while (node && node !== document) {
-                if (node.tagName === 'A' && node.getAttribute('href')) {
-                  var href = node.getAttribute('href');
-                  if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0 || href.indexOf('mailto:') === 0 || href.indexOf('tel:') === 0) return;
-                  if (node.target && node.target !== '_self') return;
-                  e.preventDefault();
-                  e.stopPropagation();
-                  notifyPage(href);
-                  window.location.href = toProxy(href);
-                  return;
-                }
-                node = node.parentNode;
-              }
-            }, true);
-
-            // Wrap history navigation so SPA routes stay proxied.
-            try {
-              var _push = history.pushState;
-              history.pushState = function(state, title, url) {
-                if (url != null) {
-                  notifyPage(url);
-                  url = toProxy(url);
-                }
-                return _push.call(this, state, title, url);
-              };
-              var _replace = history.replaceState;
-              history.replaceState = function(state, title, url) {
-                if (url != null) {
-                  notifyPage(url);
-                  url = toProxy(url);
-                }
-                return _replace.call(this, state, title, url);
-              };
-            } catch (e) {}
-
-            // Intercept window.location.assign / replace.
-            try {
-              var _assign = window.location.assign && window.location.assign.bind(window.location);
-              if (_assign) {
-                window.location.assign = function(url) {
-                  notifyPage(url);
-                  return _assign(toProxy(url));
-                };
-              }
-              var _locReplace = window.location.replace && window.location.replace.bind(window.location);
-              if (_locReplace) {
-                window.location.replace = function(url) {
-                  notifyPage(url);
-                  return _locReplace(toProxy(url));
-                };
-              }
-            } catch (e) {}
-
-            // Form submissions with action attribute.
-            document.addEventListener('submit', function(e) {
-              var form = e.target;
-              if (!form || form.tagName !== 'FORM') return;
-              var action = form.getAttribute('action');
-              if (action && action.indexOf(PROXY_PREFIX) !== 0) {
-                form.setAttribute('action', toProxy(action));
-                notifyPage(action);
-              }
-            }, true);
-
-            window.addEventListener('popstate', function() {
-              notifyPage(window.location.href);
-            });
-
-            // ---- Preview mode applier ----
-            var PREVIEW_ATTR = 'data-bugsmash-preview';
-
-            function clearPreview() {
-              var marked = document.querySelectorAll('[' + PREVIEW_ATTR + ']');
-              Array.prototype.forEach.call(marked, function(el) {
-                var state = el.getAttribute(PREVIEW_ATTR);
-                if (state === 'removed') {
-                  el.style.display = el.getAttribute('data-bugsmash-original-display') || '';
-                }
-                if (state === 'text-replaced') {
-                  var origText = el.getAttribute('data-bugsmash-original-text');
-                  if (origText != null) el.textContent = origText;
-                }
-                if (state === 'image-replaced') {
-                  var origSrc = el.getAttribute('data-bugsmash-original-src');
-                  if (origSrc != null) el.setAttribute('src', origSrc);
-                  var origSrcset = el.getAttribute('data-bugsmash-original-srcset');
-                  if (origSrcset) el.setAttribute('srcset', origSrcset);
-                  // re-enable any <source> elements in parent <picture>
-                  var pic = el.closest ? el.closest('picture') : null;
-                  if (pic) {
-                    pic.querySelectorAll('source').forEach(function(s) { s.removeAttribute('media'); });
-                  }
-                  el.removeAttribute('data-bugsmash-original-srcset');
-                }
-                if (state === 'alt-updated') {
-                  var origAlt = el.getAttribute('data-bugsmash-original-alt');
-                  if (origAlt != null) el.setAttribute('alt', origAlt);
-                }
-                if (state === 'link-updated') {
-                  var origHref = el.getAttribute('data-bugsmash-original-href');
-                  if (origHref != null) el.setAttribute('href', origHref);
-                }
-                el.style.outline = el.getAttribute('data-bugsmash-original-outline') || '';
-                el.style.outlineOffset = '';
-                el.removeAttribute(PREVIEW_ATTR);
-                el.removeAttribute('data-bugsmash-original-text');
-                el.removeAttribute('data-bugsmash-original-src');
-                el.removeAttribute('data-bugsmash-original-alt');
-                el.removeAttribute('data-bugsmash-original-href');
-                el.removeAttribute('data-bugsmash-original-display');
-                el.removeAttribute('data-bugsmash-original-outline');
-              });
-            }
-
-            function highlight(el, color) {
-              el.setAttribute('data-bugsmash-original-outline', el.style.outline || '');
-              el.style.outline = '2px dashed ' + color;
-              el.style.outlineOffset = '2px';
-            }
-
-            function applyPreview(pins, showDiff) {
-              clearPreview();
-              pins.forEach(function(pin) {
-                if (!pin || !pin.cssSelector) return;
-                var el;
-                try { el = document.querySelector(pin.cssSelector); } catch (e) { return; }
-                if (!el) return;
-                var action = pin.action;
-                var detail = (pin.replacementText || '').toString();
-
-                if (action === 'remove-element' || action === 'remove-image') {
-                  el.setAttribute('data-bugsmash-original-display', el.style.display || '');
-                  el.style.display = 'none';
-                  el.setAttribute(PREVIEW_ATTR, 'removed');
-                } else if (action === 'replace-text' || action === 'rewrite-copy') {
-                  if (!detail) return;
-                  el.setAttribute('data-bugsmash-original-text', el.textContent || '');
-                  el.textContent = detail;
-                  el.setAttribute(PREVIEW_ATTR, 'text-replaced');
-                  if (showDiff) highlight(el, 'rgb(34 197 94)');
-                } else if (action === 'replace-image') {
-                  if (!detail) return;
-                  var imgEl = el.tagName === 'IMG' ? el : el.querySelector('img');
-                  if (!imgEl) return;
-                  imgEl.setAttribute('data-bugsmash-original-src', imgEl.getAttribute('src') || '');
-                  imgEl.setAttribute('data-bugsmash-original-srcset', imgEl.getAttribute('srcset') || '');
-                  imgEl.setAttribute('src', detail);
-                  imgEl.removeAttribute('srcset');
-                  imgEl.removeAttribute('sizes');
-                  // disable <source> siblings inside <picture> so src takes effect
-                  var picture = imgEl.closest('picture');
-                  if (picture) {
-                    picture.querySelectorAll('source').forEach(function(s) { s.setAttribute('media', 'not all'); });
-                  }
-                  imgEl.setAttribute(PREVIEW_ATTR, 'image-replaced');
-                  if (showDiff) highlight(imgEl, 'rgb(34 197 94)');
-                } else if (action === 'update-alt') {
-                  if (!detail || el.tagName !== 'IMG') return;
-                  el.setAttribute('data-bugsmash-original-alt', el.getAttribute('alt') || '');
-                  el.setAttribute('alt', detail);
-                  el.setAttribute(PREVIEW_ATTR, 'alt-updated');
-                } else if (action === 'update-link') {
-                  if (!detail) return;
-                  if (el.tagName !== 'A' && el.tagName !== 'BUTTON') return;
-                  el.setAttribute('data-bugsmash-original-href', el.getAttribute('href') || '');
-                  el.setAttribute('href', detail);
-                  el.setAttribute(PREVIEW_ATTR, 'link-updated');
-                  if (showDiff) highlight(el, 'rgb(59 130 246)');
-                }
-              });
-            }
-
-            window.addEventListener('message', function(e) {
-              var d = e.data;
-              if (!d || typeof d !== 'object' || d.source !== 'bugsmash') return;
-              if (d.type === 'apply-preview') {
-                applyPreview(Array.isArray(d.pins) ? d.pins : [], d.showDiff !== false);
-              } else if (d.type === 'clear-preview') {
-                clearPreview();
-              }
-            });
-
-            notifyPage(TARGET_URL);
-          })();
-        </script>
-      `
-      $('head').prepend(framebusterScript)
-
-      // Get HTML string and do global Regex replacement for attributes
-      let processedHtml = $.html()
-      
-      // List of attributes that usually contain URLs
-      const urlAttrs = [
-        'src', 'href', 'srcset', 'action', 'poster', 'data',
-        'data-src', 'data-href', 'data-srcset', 'data-original', 
-        'data-lazy-src', 'data-url', 'data-basepath', 
-        'data-inline-media-basepath', 'data-anim-lazy-image'
-      ]
-      
-      // Regex to find attributes: attr="value" or attr='value'
-      // We use a non-greedy catch for the value to avoid over-matching
-      urlAttrs.forEach(attr => {
-        const regex = new RegExp(`(\\s${attr})\\s*=\\s*(['"])([^'"]+)\\2`, 'gi')
-        processedHtml = processedHtml.replace(regex, (match, attrPart, quote, val) => {
-          if (attr.includes('srcset')) {
-            return `${attrPart}=${quote}${getProxiedSrcset(val, targetUrl)}${quote}`
-          } else {
-            return `${attrPart}=${quote}${getProxiedUrl(val, targetUrl)}${quote}`
-          }
-        })
-      })
-      
-      // Final pass for inline styles (which were missed by basic global attr regex because they contain quotes)
-      processedHtml = processedHtml.replace(/(\sstyle)\s*=\s*(['"])([^'"]+)\2/gi, (match, attrPart, quote, val) => {
-        return `${attrPart}=${quote}${rewriteCssUrls(val, targetUrl)}${quote}`
+      // Meta refresh redirects.
+      $('meta[http-equiv="refresh" i]').each((_, el) => {
+        const content = $(el).attr('content')
+        if (!content) return
+        const match = content.match(/^(\s*\d+\s*;\s*url\s*=\s*)(.+)$/i)
+        if (match) {
+          $(el).attr('content', `${match[1]}${getProxiedUrl(match[2].trim(), resolutionBase)}`)
+        }
       })
 
-      return new NextResponse(processedHtml, {
+      // CSS inside <style> tags references URLs relative to the stylesheet
+      // context, which has changed - rewrite them.
+      $('style').each((_, el) => {
+        const css = $(el).text()
+        $(el).text(rewriteCssUrls(css, resolutionBase))
+      })
+
+      // Inject navigation/network interception + preview applier.
+      $('head').prepend(buildInjectedScript(targetUrl))
+
+      return new NextResponse($.html(), {
         status: 200,
         headers: getPassthroughHeaders({
           'Content-Type': 'text/html; charset=utf-8',
           'X-Frame-Options': 'ALLOWALL',
-          'Content-Security-Policy': "frame-ancestors *",
+          'Content-Security-Policy': 'frame-ancestors *',
+          'Cache-Control': HTML_CACHE_CONTROL
         }, { includeEntityHeaders: false })
       })
     }
 
-    // 2. Handle JavaScript
-    if (contentType.includes('application/javascript') || contentType.includes('text/javascript') || contentType.includes('application/x-javascript')) {
-      let js = buffer.toString('utf-8')
-      js = rewriteJavaScriptUrls(js, targetUrl)
-      js = js.replace(/\bwindow\.top\b/g, 'window.self')
-      js = js.replace(/\bwindow\.parent\b/g, 'window.self')
-      js = js.replace(/\btop\.location\b/g, 'self.location')
-      js = js.replace(/\bparent\.location\b/g, 'self.location')
-      
-      return new NextResponse(js, {
-        status: 200,
-        headers: getPassthroughHeaders({
-          'Content-Type': contentType,
-        }, { includeEntityHeaders: false })
-      })
-    }
-
-    // 3. Handle CSS
+    // 2. Handle CSS (urls resolve relative to the stylesheet, whose URL
+    // context changed - must rewrite).
     if (contentType.includes('text/css')) {
       const css = buffer.toString('utf-8')
       return new NextResponse(rewriteCssUrls(css, targetUrl), {
         status: 200,
         headers: getPassthroughHeaders({
           'Content-Type': 'text/css',
+          'Cache-Control': CODE_CACHE_CONTROL
         }, { includeEntityHeaders: false })
       })
     }
 
-    // 3. Handle everything else (images, fonts, scripts, etc.)
+    // 3. Handle JavaScript: served byte-identical. URL routing happens at
+    // runtime (injected script + service worker), never by editing JS source.
+    if (
+      contentType.includes('application/javascript') ||
+      contentType.includes('text/javascript') ||
+      contentType.includes('application/x-javascript')
+    ) {
+      return new NextResponse(buffer, {
+        status: 200,
+        headers: getPassthroughHeaders({
+          'Content-Type': contentType,
+          'Cache-Control': CODE_CACHE_CONTROL
+        }, { includeEntityHeaders: false })
+      })
+    }
+
+    // 4. Handle everything else (images, fonts, etc.)
     return new NextResponse(buffer, {
       status: response.status,
       headers: getPassthroughHeaders({
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=3600',
+        'Cache-Control': ASSET_CACHE_CONTROL,
       })
     })
 
@@ -559,8 +301,8 @@ export async function OPTIONS () {
     status: 200,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': '*'
     }
   })
 }
