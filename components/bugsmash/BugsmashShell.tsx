@@ -35,8 +35,10 @@ import { Separator } from '@/components/ui/separator'
 import {
   Bug,
   CaretUpDown,
+  FileText,
   Folder,
   GlobeHemisphereWest,
+  House,
   PlusCircle,
   SignOut,
   SquaresFour,
@@ -45,6 +47,11 @@ import {
 import { signInWithGoogle, signOut } from '@/lib/auth-client'
 import { toast } from 'sonner'
 import SiteFavicon from '@/components/SiteFavicon'
+import {
+  ProjectPageNavProvider,
+  useProjectPageNav
+} from '@/components/bugsmash/ProjectPageNavContext'
+import { cn } from '@/lib/utils'
 
 type NavProject = {
   id: string
@@ -60,9 +67,18 @@ interface Props {
   projects: NavProject[]
 }
 
-export default function BugsmashShell({ children, user, canCreate, projects }: Props) {
+export default function BugsmashShell(props: Props) {
+  return (
+    <ProjectPageNavProvider>
+      <BugsmashShellInner {...props} />
+    </ProjectPageNavProvider>
+  )
+}
+
+function BugsmashShellInner({ children, user, canCreate, projects }: Props) {
   const pathname = usePathname()
   const [googleConfigured, setGoogleConfigured] = useState(false)
+  const { nav } = useProjectPageNav()
 
   useEffect(() => {
     fetch('/api/projects/config')
@@ -83,6 +99,7 @@ export default function BugsmashShell({ children, user, canCreate, projects }: P
     href === '/dashboard' ? pathname === '/dashboard' : pathname?.startsWith(href)
 
   const isProjectActive = (id: string) => pathname === `/p/${id}`
+  const hasActiveProjectInSidebar = projects.some(project => isProjectActive(project.id))
 
   return (
     <SidebarProvider>
@@ -150,24 +167,41 @@ export default function BugsmashShell({ children, user, canCreate, projects }: P
               <SidebarGroupLabel>Projects</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {projects.map(project => (
-                    <SidebarMenuItem key={project.id}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isProjectActive(project.id)}
-                        tooltip={project.name}
-                      >
-                        <Link href={`/p/${project.id}`}>
-                          <SiteFavicon siteUrl={project.websiteUrl} className='size-4 rounded-sm border-0' />
-                          <span>{project.name}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                      {project.pinCount > 0 && (
-                        <SidebarMenuBadge>{project.pinCount}</SidebarMenuBadge>
-                      )}
-                    </SidebarMenuItem>
-                  ))}
+                  {projects.map(project => {
+                    const projectActive = isProjectActive(project.id)
+                    const showPages = projectActive && nav?.projectId === project.id
+
+                    return (
+                      <SidebarMenuItem key={project.id}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={projectActive}
+                          tooltip={project.name}
+                        >
+                          <Link href={`/p/${project.id}`}>
+                            <SiteFavicon siteUrl={project.websiteUrl} className='size-4 rounded-sm border-0' />
+                            <span>{project.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                        {project.pinCount > 0 && (
+                          <SidebarMenuBadge>{project.pinCount}</SidebarMenuBadge>
+                        )}
+                        {showPages && (
+                          <SidebarPageList nav={nav} nested />
+                        )}
+                      </SidebarMenuItem>
+                    )
+                  })}
                 </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
+
+          {nav && pathname?.startsWith('/p/') && !hasActiveProjectInSidebar && (
+            <SidebarGroup>
+              <SidebarGroupLabel>Pages</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarPageList nav={nav} />
               </SidebarGroupContent>
             </SidebarGroup>
           )}
@@ -258,6 +292,65 @@ export default function BugsmashShell({ children, user, canCreate, projects }: P
         <div className='flex-1'>{children}</div>
       </SidebarInset>
     </SidebarProvider>
+  )
+}
+
+function SidebarPageList({
+  nav,
+  nested = false
+}: {
+  nav: NonNullable<ReturnType<typeof useProjectPageNav>['nav']>
+  nested?: boolean
+}) {
+  return (
+    <div className={cn(nested && 'my-1 ml-5 mr-1 border-l border-border/70 pl-2')}>
+      {nested && (
+        <div className='mb-1 flex items-center justify-between pr-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground'>
+          <span>Pages</span>
+          <span>{nav.pages.length}</span>
+        </div>
+      )}
+      <div className='max-h-60 space-y-0.5 overflow-y-auto pr-1'>
+        {nav.pages.map(page => {
+          const activePage = page.url === nav.currentUrl
+          return (
+            <button
+              key={page.url}
+              type='button'
+              title={page.url}
+              onClick={() => nav.navigateToPage(page.url)}
+              className={cn(
+                'flex h-7 w-full min-w-0 items-center gap-1.5 rounded-sm px-1.5 text-left transition-colors',
+                activePage
+                  ? 'bg-background text-foreground'
+                  : 'text-muted-foreground hover:bg-background hover:text-foreground'
+              )}
+            >
+              {page.isHome ? (
+                <House weight='fill' className='h-3 w-3 shrink-0' />
+              ) : (
+                <FileText className='h-3 w-3 shrink-0' />
+              )}
+              <span className='min-w-0 flex-1 truncate font-mono text-[11px]'>
+                {page.path}
+              </span>
+              {page.totalCount > 0 && (
+                <span
+                  className={cn(
+                    'shrink-0 rounded-sm px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
+                    page.openCount > 0
+                      ? 'bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                      : 'bg-muted text-muted-foreground'
+                  )}
+                >
+                  {page.openCount}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 

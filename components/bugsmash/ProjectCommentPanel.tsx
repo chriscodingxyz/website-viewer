@@ -1273,7 +1273,7 @@ export default function ProjectCommentPanel({
                   <ChatText className='h-6 w-6 text-muted-foreground/60' />
                   <p className='mt-3'>No tasks match this filter on this page.</p>
                   <p className='mt-1 text-[11px]'>
-                    Switch filters, annotate an element, or choose another page from the Pages rail.
+                    Switch filters, annotate an element, or choose another page from the left sidebar.
                   </p>
                 </div>
               )

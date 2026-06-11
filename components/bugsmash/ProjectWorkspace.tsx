@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Pin } from '@/types/feedback'
 import { FeedbackProvider, useFeedback } from '@/contexts/FeedbackContext'
 import type { FeedbackSession } from '@/types/feedback'
@@ -19,9 +19,7 @@ import {
   ArrowSquareOut,
   Export,
   Eye,
-  FileText,
   Gear,
-  House,
   LinkSimple,
   ListBullets,
   ShieldCheck,
@@ -38,7 +36,7 @@ import {
   feedbackPath,
   sameFeedbackUrl
 } from '@/lib/feedback/url'
-import { cn } from '@/lib/utils'
+import { useProjectPageNav } from '@/components/bugsmash/ProjectPageNavContext'
 
 type ProjectSummary = {
   id: string
@@ -127,11 +125,6 @@ export default function ProjectWorkspace({
 
         {/* Desktop: side-by-side with fixed tasks width */}
         <div className='hidden min-h-0 flex-1 overflow-hidden xl:flex'>
-          <ProjectPageRail
-            currentPageUrl={currentPageUrl}
-            projectWebsiteUrl={project.websiteUrl}
-            onNavigateToPage={handleNavigateToPage}
-          />
           <div className='min-w-0 flex-1'>
             <ProjectCanvas
               websiteUrl={project.websiteUrl}
@@ -178,6 +171,12 @@ export default function ProjectWorkspace({
 
         <ExportDialog />
         <FeedbackKeyboard />
+        <ProjectPageNavPublisher
+          projectId={project.id}
+          currentPageUrl={currentPageUrl}
+          projectWebsiteUrl={project.websiteUrl}
+          onNavigateToPage={handleNavigateToPage}
+        />
       </div>
     </FeedbackProvider>
   )
@@ -189,16 +188,19 @@ type PageGroup = {
   lastUpdated: string
 }
 
-function ProjectPageRail({
+function ProjectPageNavPublisher({
+  projectId,
   currentPageUrl,
   projectWebsiteUrl,
   onNavigateToPage
 }: {
+  projectId: string
   currentPageUrl: string
   projectWebsiteUrl: string
   onNavigateToPage: (url: string) => void
 }) {
   const { pins } = useFeedback()
+  const { setNav } = useProjectPageNav()
 
   const pageGroups = useMemo<PageGroup[]>(() => {
     const groups = new Map<string, PageGroup>()
@@ -224,82 +226,32 @@ function ProjectPageRail({
     })
   }, [pins, currentPageUrl, projectWebsiteUrl])
 
-  const pagesWithTasks = pageGroups.filter(group => group.pins.length > 0).length
+  useEffect(() => {
+    const currentUrl = canonicalFeedbackUrl(currentPageUrl, projectWebsiteUrl)
+    setNav({
+      projectId,
+      currentUrl,
+      navigateToPage: onNavigateToPage,
+      pages: pageGroups.map(group => {
+        const openCount = group.pins.filter(pin => (pin.status ?? 'open') === 'open').length
+        const totalCount = group.pins.length
+        return {
+          url: group.url,
+          path: feedbackPath(group.url),
+          openCount,
+          doneCount: totalCount - openCount,
+          totalCount,
+          isHome: sameFeedbackUrl(group.url, projectWebsiteUrl)
+        }
+      })
+    })
 
-  return (
-    <nav className='flex h-full w-[220px] shrink-0 flex-col border-r border-border/60 bg-[#fbfbfa] 2xl:w-[240px]'>
-      <div className='border-b border-border/60 px-4 py-3'>
-        <div className='flex items-baseline justify-between gap-2'>
-          <h2 className='text-xs font-semibold uppercase tracking-wide text-foreground'>
-            Pages
-          </h2>
-          <span className='text-[10px] text-muted-foreground'>
-            {pagesWithTasks}/{pageGroups.length}
-          </span>
-        </div>
-        <p className='mt-1 text-[11px] leading-snug text-muted-foreground'>
-          Pick a page first. The task list only shows work for that page.
-        </p>
-      </div>
+    return () => {
+      setNav(prev => (prev?.projectId === projectId ? null : prev))
+    }
+  }, [currentPageUrl, onNavigateToPage, pageGroups, projectId, projectWebsiteUrl, setNav])
 
-      <div className='min-h-0 flex-1 overflow-y-auto py-2'>
-        {pageGroups.map(group => {
-          const active = sameFeedbackUrl(group.url, currentPageUrl)
-          const isHome = sameFeedbackUrl(group.url, projectWebsiteUrl)
-          const openCount = group.pins.filter(pin => (pin.status ?? 'open') === 'open').length
-          const doneCount = group.pins.length - openCount
-          const path = feedbackPath(group.url)
-
-          return (
-            <button
-              key={group.url}
-              type='button'
-              title={group.url}
-              onClick={() => onNavigateToPage(group.url)}
-              className={cn(
-                'group flex w-full items-center gap-2 border-l-2 px-3 py-2 text-left transition-colors',
-                active
-                  ? 'border-l-foreground bg-background text-foreground'
-                  : 'border-l-transparent text-muted-foreground hover:bg-background hover:text-foreground'
-              )}
-            >
-              <span className='flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground group-hover:text-foreground'>
-                {isHome ? (
-                  <House weight='fill' className='h-3.5 w-3.5' />
-                ) : (
-                  <FileText className='h-3.5 w-3.5' />
-                )}
-              </span>
-              <span className='min-w-0 flex-1 truncate font-mono text-[11px]'>
-                {path}
-              </span>
-              {group.pins.length > 0 ? (
-                <span className='flex shrink-0 items-center gap-1 tabular-nums'>
-                  <span
-                    className={cn(
-                      'rounded-sm px-1.5 py-0.5 text-[10px] font-semibold',
-                      openCount > 0
-                        ? 'bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-900'
-                        : 'bg-muted text-muted-foreground'
-                    )}
-                  >
-                    {openCount}
-                  </span>
-                  {doneCount > 0 && (
-                    <span className='text-[10px] text-muted-foreground'>
-                      +{doneCount}
-                    </span>
-                  )}
-                </span>
-              ) : (
-                <span className='h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/25' />
-              )}
-            </button>
-          )
-        })}
-      </div>
-    </nav>
-  )
+  return null
 }
 
 function WorkspaceHeader({
