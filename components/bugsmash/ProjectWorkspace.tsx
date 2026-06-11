@@ -31,6 +31,7 @@ import ProjectSeoPreview from './ProjectSeoPreview'
 import ExportDialog from '@/components/feedback/ExportDialog'
 import FeedbackKeyboard from '@/components/feedback/FeedbackKeyboard'
 import SiteFavicon from '@/components/SiteFavicon'
+import { GuestIdentityDialog } from '@/components/bugsmash/GuestIdentityDialog'
 
 type ProjectSummary = {
   id: string
@@ -46,6 +47,7 @@ interface Props {
   publicView: boolean
   initialSession: FeedbackSession
   aiVerifyEnabled?: boolean
+  guest?: { slug: string; accessLevel: 'view' | 'comment' }
 }
 
 function hostFor(websiteUrl: string) {
@@ -62,7 +64,8 @@ export default function ProjectWorkspace({
   canEdit,
   publicView,
   initialSession,
-  aiVerifyEnabled = false
+  aiVerifyEnabled = false,
+  guest
 }: Props) {
   const host = hostFor(project.websiteUrl)
   const [currentPageUrl, setCurrentPageUrl] = useState<string>(project.websiteUrl)
@@ -106,6 +109,7 @@ export default function ProjectWorkspace({
       projectId={project.id}
       initialSession={initialSession}
       canEdit={canEdit}
+      guest={guest}
     >
       <div className='flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden bg-background'>
         <WorkspaceHeader
@@ -115,6 +119,7 @@ export default function ProjectWorkspace({
           canEdit={canEdit}
           publicView={publicView}
           currentPageUrl={currentPageUrl}
+          guest={guest}
         />
 
         {/* Desktop: side-by-side with fixed tasks width */}
@@ -167,6 +172,7 @@ export default function ProjectWorkspace({
 
         <ExportDialog />
         <FeedbackKeyboard />
+        <GuestIdentityDialog />
       </div>
     </FeedbackProvider>
   )
@@ -178,7 +184,8 @@ function WorkspaceHeader({
   role,
   canEdit,
   publicView,
-  currentPageUrl
+  currentPageUrl,
+  guest
 }: {
   project: ProjectSummary
   host: string
@@ -186,8 +193,9 @@ function WorkspaceHeader({
   canEdit: boolean
   publicView: boolean
   currentPageUrl: string
+  guest?: { slug: string; accessLevel: 'view' | 'comment' }
 }) {
-  const { setExportOpen } = useFeedback()
+  const { setExportOpen, guestProfile, setIdentityPromptOpen, createShareLink } = useFeedback()
   const [copied, setCopied] = useState(false)
   const currentPath = (() => {
     try {
@@ -202,7 +210,8 @@ function WorkspaceHeader({
 
   const copyShareLink = async () => {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/p/${project.id}`)
+      const url = await createShareLink()
+      await navigator.clipboard.writeText(url ?? `${window.location.origin}/p/${project.id}`)
       setCopied(true)
       toast.success('Share link copied')
       setTimeout(() => setCopied(false), 1500)
@@ -234,38 +243,80 @@ function WorkspaceHeader({
       </div>
 
       <div className='flex flex-wrap items-center gap-2'>
-        {project.publicAccess === 'view' && (
-          <Badge variant='outline' className='gap-1 text-[11px] font-medium'>
-            <Eye className='h-3 w-3' />
-            Public view
-          </Badge>
-        )}
-        {role && (
-          <Badge variant='secondary' className='gap-1 text-[11px] font-medium capitalize'>
-            <Users className='h-3 w-3' />
-            {role}
-          </Badge>
-        )}
-        {publicView && !canEdit && (
-          <Badge variant='outline' className='gap-1 text-[11px] font-medium'>
-            <ShieldCheck className='h-3 w-3' />
-            Read-only
-          </Badge>
+        {guest ? (
+          // Guest header: access badge + identity chip
+          <>
+            <Badge variant='outline' className='gap-1 text-[11px] font-medium'>
+              {guest.accessLevel === 'comment' ? (
+                <><Users className='h-3 w-3' />Comment link</>
+              ) : (
+                <><Eye className='h-3 w-3' />View link</>
+              )}
+            </Badge>
+            {guestProfile && (
+              <Button
+                variant='ghost'
+                size='sm'
+                className='h-8 gap-1.5 rounded-md text-xs text-muted-foreground'
+                onClick={() => setIdentityPromptOpen(true)}
+              >
+                Commenting as {guestProfile.name}
+              </Button>
+            )}
+          </>
+        ) : (
+          // Member header: access badge + role + read-only badge
+          <>
+            {(project.publicAccess === 'view' || project.publicAccess === 'comment') && (
+              <Badge variant='outline' className='gap-1 text-[11px] font-medium'>
+                <Eye className='h-3 w-3' />
+                {project.publicAccess === 'comment' ? 'Public comments on' : 'Public view'}
+              </Badge>
+            )}
+            {role && (
+              <Badge variant='secondary' className='gap-1 text-[11px] font-medium capitalize'>
+                <Users className='h-3 w-3' />
+                {role}
+              </Badge>
+            )}
+            {publicView && !canEdit && (
+              <Badge variant='outline' className='gap-1 text-[11px] font-medium'>
+                <ShieldCheck className='h-3 w-3' />
+                Read-only
+              </Badge>
+            )}
+          </>
         )}
         <Separator orientation='vertical' className='h-5' />
         <ProjectSeoPreview pageUrl={currentPageUrl} />
-        {canEdit && (
+        {guest ? (
+          // Guest: Report link (view=report)
           <Button
             asChild
-            variant='outline'
+            variant='ghost'
             size='sm'
             className='h-8 gap-1.5 rounded-md text-xs'
           >
-            <a href={`/p/${project.id}/settings`}>
-              <Gear className='h-3.5 w-3.5' />
-              Settings
+            <a href={`/s/${guest.slug}?view=report`} target='_blank' rel='noreferrer'>
+              <ListBullets className='h-3.5 w-3.5' />
+              Report
             </a>
           </Button>
+        ) : (
+          // Member: Settings button
+          canEdit && (
+            <Button
+              asChild
+              variant='outline'
+              size='sm'
+              className='h-8 gap-1.5 rounded-md text-xs'
+            >
+              <a href={`/p/${project.id}/settings`}>
+                <Gear className='h-3.5 w-3.5' />
+                Settings
+              </a>
+            </Button>
+          )
         )}
         <Button
           variant='outline'
@@ -276,14 +327,16 @@ function WorkspaceHeader({
           <LinkSimple className='h-3.5 w-3.5' />
           {copied ? 'Copied' : 'Share'}
         </Button>
-        <Button
-          size='sm'
-          className='h-8 gap-1.5 rounded-md text-xs'
-          onClick={() => setExportOpen(true)}
-        >
-          <Export className='h-3.5 w-3.5' />
-          Export Handoff
-        </Button>
+        {!guest && (
+          <Button
+            size='sm'
+            className='h-8 gap-1.5 rounded-md text-xs'
+            onClick={() => setExportOpen(true)}
+          >
+            <Export className='h-3.5 w-3.5' />
+            Export Handoff
+          </Button>
+        )}
       </div>
     </div>
   )

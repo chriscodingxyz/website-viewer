@@ -312,7 +312,13 @@ export default function ProjectCommentPanel({
     session,
     setFeedbackMode,
     triggerSnapshots,
-    projectMode
+    projectMode,
+    isGuest,
+    guest,
+    guestProfile,
+    setIdentityPromptOpen,
+    canModifyPin,
+    canChangeStatus
   } = useFeedback()
 
   const handlePinClick = (pin: Pin) => {
@@ -504,16 +510,21 @@ export default function ProjectCommentPanel({
   const submitReply = async (e: FormEvent) => {
     e.preventDefault()
     if (!selectedPin || !replyDraft.trim()) return
+    if (isGuest && !guestProfile) {
+      setIdentityPromptOpen(true)
+      return
+    }
     setSubmitting(true)
     try {
-      const res = await fetch(
-        `/api/projects/${projectId}/pins/${selectedPin.id}/replies`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ body: replyDraft.trim() })
-        }
-      )
+      const url = isGuest && guest
+        ? `/api/share/${guest.slug}/pins/${selectedPin.id}/replies`
+        : `/api/projects/${projectId}/pins/${selectedPin.id}/replies`
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (isGuest && guestProfile) headers['x-guest-token'] = guestProfile.token
+      const body = isGuest && guestProfile
+        ? { body: replyDraft.trim(), authorName: guestProfile.name, authorEmail: guestProfile.email }
+        : { body: replyDraft.trim() }
+      const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) })
       if (!res.ok) {
         const data = await res.json().catch(() => null)
         toast.error(
@@ -587,7 +598,7 @@ export default function ProjectCommentPanel({
             Tasks
           </Button>
           <div className='flex shrink-0 items-center gap-1'>
-            {canEdit && selectedPin.status !== 'implemented' && selectedPin.status !== 'closed' && (
+            {canChangeStatus && selectedPin.status !== 'implemented' && selectedPin.status !== 'closed' && (
               <Button
                 variant='outline'
                 size='sm'
@@ -622,7 +633,7 @@ export default function ProjectCommentPanel({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end' className='w-48'>
-                {canEdit && (
+                {canChangeStatus && (
                   <DropdownMenuItem
                     className='gap-2 text-xs'
                     onClick={() =>
@@ -640,7 +651,7 @@ export default function ProjectCommentPanel({
                     {selectedPin.status === 'closed' ? 'Reopen task' : 'Close task'}
                   </DropdownMenuItem>
                 )}
-                {canEdit && aiVerifyEnabled && selectedPin.cssSelector && (
+                {canChangeStatus && aiVerifyEnabled && selectedPin.cssSelector && (
                   <DropdownMenuItem
                     className='gap-2 text-xs'
                     disabled={verifyingPinId === selectedPin.id}
@@ -661,7 +672,7 @@ export default function ProjectCommentPanel({
                   <CopySimple className='h-3.5 w-3.5' />
                   Copy pin brief
                 </DropdownMenuItem>
-                {canEdit && (
+                {canEdit && canModifyPin(selectedPin) && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -692,7 +703,7 @@ export default function ProjectCommentPanel({
             <p className='mt-1 text-xs text-amber-800 dark:text-amber-200'>
               {possiblyDoneReason(selectedPin)}
             </p>
-            {canEdit && (
+            {canChangeStatus && (
               <div className='mt-2 flex gap-1.5'>
                 <Button
                   size='sm'
@@ -762,9 +773,16 @@ export default function ProjectCommentPanel({
                 </AvatarFallback>
               </Avatar>
               <div className='flex min-w-0 flex-col leading-tight'>
-                <span className='truncate text-xs font-medium text-foreground'>
-                  {selectedPin.authorName}
-                </span>
+                <div className='flex items-center gap-1.5'>
+                  <span className='truncate text-xs font-medium text-foreground'>
+                    {selectedPin.authorName}
+                  </span>
+                  {selectedPin.isGuest && (
+                    <span className='shrink-0 rounded border px-1 py-px text-[9px] font-medium text-muted-foreground'>
+                      Guest
+                    </span>
+                  )}
+                </div>
                 {selectedPin.authorEmail && (
                   <span className='truncate text-[10px] text-muted-foreground'>
                     {selectedPin.authorEmail}
@@ -773,7 +791,7 @@ export default function ProjectCommentPanel({
               </div>
             </div>
           )}
-          {canEdit && (
+          {canEdit && canModifyPin(selectedPin) && (
             <div className='mt-3 flex items-center gap-2'>
               <SectionLabel className='w-12 shrink-0 text-[11px]'>
                 Priority
@@ -799,7 +817,7 @@ export default function ProjectCommentPanel({
               </div>
             </div>
           )}
-          {canEdit && selectedPin.kind !== 'inspect' ? (
+          {canEdit && canModifyPin(selectedPin) && selectedPin.kind !== 'inspect' ? (
             <Textarea
               value={selectedPin.comment}
               onChange={event =>
@@ -823,7 +841,7 @@ export default function ProjectCommentPanel({
                   <SelectionPlus className='h-3.5 w-3.5' />
                   Intent
                 </div>
-                {canEdit && selectedInspectAction && !intentPickerOpen && (
+                {canEdit && canModifyPin(selectedPin) && selectedInspectAction && !intentPickerOpen && (
                   <button
                     type='button'
                     className='text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline'
@@ -855,7 +873,7 @@ export default function ProjectCommentPanel({
                       <button
                         key={action.id}
                         type='button'
-                        disabled={!canEdit}
+                        disabled={!canEdit || !canModifyPin(selectedPin)}
                         onClick={() => {
                           applyInspectAction(selectedPin, action)
                           setIntentPickerOpen(false)
@@ -887,7 +905,7 @@ export default function ProjectCommentPanel({
                     {detailLabelFor(selectedInspectAction?.id) ?? 'Replacement'}
                   </div>
                   <div className='border-l-2 border-l-emerald-500 px-2.5 py-2'>
-                    {canEdit ? (
+                    {canEdit && canModifyPin(selectedPin) ? (
                       <Textarea
                         value={selectedPin.replacementText || ''}
                         onChange={event =>
@@ -916,7 +934,7 @@ export default function ProjectCommentPanel({
                   Captured text saved for context.
                 </p>
               )}
-              {canEdit ? (
+              {canEdit && canModifyPin(selectedPin) ? (
                 <>
                   {!showBeforeAfter && (selectedInspectAction ? (
                     detailLabelFor(selectedInspectAction.id) ? (
@@ -942,7 +960,7 @@ export default function ProjectCommentPanel({
                       Pick an intent above to add a replacement, asset, or removal note.
                     </p>
                   ))}
-                  {selectedInspectAction?.id === 'replace-image' && (
+                  {selectedInspectAction?.id === 'replace-image' && !isGuest && (
                     <PinAssetUpload
                       assetUrl={selectedPin.assetUrl}
                       canEdit={canEdit}
@@ -1041,7 +1059,7 @@ export default function ProjectCommentPanel({
               )}
             </div>
           )}
-          {canEdit &&
+          {canEdit && canModifyPin(selectedPin) &&
             currentPageUrl &&
             !sameFeedbackUrl(selectedPin.url, currentPageUrl) && (
               <Button
@@ -1124,7 +1142,7 @@ export default function ProjectCommentPanel({
                       {reply.body}
                     </p>
                   </div>
-                  {canEdit && (
+                  {canEdit && !isGuest && (
                     <Button
                       variant='ghost'
                       size='icon'
@@ -1207,11 +1225,15 @@ export default function ProjectCommentPanel({
               Save and back to tasks
             </Button>
           </div>
-          {!canEdit && replies.length > 0 && (
+          {!canEdit && (isGuest ? (
+            <p className='mt-2 text-center text-xs text-muted-foreground'>
+              This link is view only. Ask the owner for a comment link.
+            </p>
+          ) : replies.length > 0 ? (
             <p className='mt-2 text-center text-xs text-muted-foreground'>
               Sign in as a project member to reply.
             </p>
-          )}
+          ) : null)}
         </div>
       </aside>
       </TooltipProvider>
@@ -1393,7 +1415,7 @@ export default function ProjectCommentPanel({
                   const summary = pinSummary(pin, pinAction)
                   const snippet = elementSnippet(pin, summary)
                   const canMoveToActivePage =
-                    canEdit &&
+                    canEdit && canModifyPin(pin) &&
                     Boolean(currentPageUrl) &&
                     !sameFeedbackUrl(pin.url, currentPageUrl)
                   const hasFooter =
@@ -1498,7 +1520,7 @@ export default function ProjectCommentPanel({
                                   Move here
                                 </button>
                               )}
-                              {canEdit && (
+                              {canEdit && canModifyPin(pin) && (
                                 <button
                                   type='button'
                                   title='Delete pin'
