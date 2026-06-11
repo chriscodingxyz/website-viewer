@@ -238,6 +238,7 @@ export default function FeedbackOverlay({
       severity: 'medium',
       comment: ''
     })
+    if (!created.id) return
     setAutoOpenPinId(created.id)
   }
 

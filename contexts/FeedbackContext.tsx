@@ -10,8 +10,10 @@ import React, {
   useState,
   ReactNode
 } from 'react'
+import { toast } from 'sonner'
 import { FeedbackSession, FeedbackTool, Pin, Severity } from '@/types/feedback'
 import { useActiveOrganization, useSession } from '@/lib/auth-client'
+import { useGuestIdentity, type GuestProfile } from '@/hooks/useGuestIdentity'
 
 const STORAGE_PREFIX = 'feedback:session:'
 const SYNC_ENABLED = process.env.NEXT_PUBLIC_FEEDBACK_SYNC === 'on'
@@ -82,6 +84,15 @@ interface FeedbackContextValue {
   projectMode: boolean
   createShareLink: () => Promise<string | null>
   triggerSnapshots: () => Promise<void>
+  // Guest mode
+  isGuest: boolean
+  guest: { slug: string; accessLevel: 'view' | 'comment' } | null
+  guestProfile: GuestProfile | null
+  saveGuestProfile: (name: string, email?: string) => void
+  identityPromptOpen: boolean
+  setIdentityPromptOpen: (open: boolean) => void
+  canModifyPin: (pin: Pin) => boolean
+  canChangeStatus: boolean
 }
 
 const FeedbackContext = createContext<FeedbackContextValue | undefined>(
@@ -94,6 +105,7 @@ interface ProviderProps {
   projectId?: string
   initialSession?: FeedbackSession | null
   canEdit?: boolean
+  guest?: { slug: string; accessLevel: 'view' | 'comment' }
 }
 
 export function FeedbackProvider({
@@ -101,7 +113,8 @@ export function FeedbackProvider({
   currentUrl,
   projectId,
   initialSession,
-  canEdit = true
+  canEdit = true,
+  guest
 }: ProviderProps) {
   const [feedbackMode, setFeedbackModeState] = useState(false)
   const [activeTool, setActiveTool] = useState<FeedbackTool>('comment')
@@ -109,9 +122,17 @@ export function FeedbackProvider({
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null)
   const [isPanelOpen, setPanelOpen] = useState(false)
   const [isExportOpen, setExportOpen] = useState(false)
+  const [identityPromptOpen, setIdentityPromptOpen] = useState(false)
   const lastUrlRef = useRef<string | null>(null)
   const projectMode = Boolean(projectId)
   const skipNextProjectSyncRef = useRef(false)
+
+  const isGuest = Boolean(guest)
+  const guestCanComment = guest?.accessLevel === 'comment'
+
+  // Always call hook — hooks must not be conditional
+  const { profile: guestProfile, saveProfile, ownPinIds, registerOwnPin, unregisterOwnPin } =
+    useGuestIdentity(guest?.slug)
 
   useEffect(() => {
     if (projectMode) {
@@ -163,29 +184,105 @@ export function FeedbackProvider({
 
   const toggleFeedbackMode = useCallback(() => {
     if (!canEdit) return
+    if (isGuest && guestCanComment && !guestProfile) {
+      setIdentityPromptOpen(true)
+      return
+    }
     setFeedbackModeState(v => !v)
-  }, [canEdit])
+  }, [canEdit, isGuest, guestCanComment, guestProfile])
 
   const setFeedbackMode = useCallback((on: boolean) => {
     if (!canEdit && on) return
+    if (on && isGuest && guestCanComment && !guestProfile) {
+      setIdentityPromptOpen(true)
+      return
+    }
     setFeedbackModeState(on)
-  }, [canEdit])
+  }, [canEdit, isGuest, guestCanComment, guestProfile])
 
   const authSession = useSession()
   const activeProject = useActiveOrganization()
   const signedInUser = authSession.data?.user ?? null
 
+  const saveGuestProfile = useCallback((name: string, email?: string) => {
+    saveProfile(name, email)
+  }, [saveProfile])
+
+  // Per-pin guest update debounce map
+  const guestUpdateTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+
   const addPin: FeedbackContextValue['addPin'] = useCallback(input => {
-    if (!canEdit) {
-      return {
-        ...input,
-        id: '',
-        number: 0,
-        status: 'open',
-        createdAt: new Date().toISOString()
-      }
+    const dummyPin = {
+      ...input,
+      id: '',
+      number: 0,
+      status: 'open' as const,
+      createdAt: new Date().toISOString()
     }
 
+    if (!canEdit) return dummyPin
+
+    // Guest path
+    if (isGuest && guest) {
+      if (!guestProfile) {
+        setIdentityPromptOpen(true)
+        return dummyPin
+      }
+      const created: Pin = {
+        ...input,
+        id: newId(),
+        number: 0,
+        status: 'open',
+        authorUserId: undefined,
+        authorName: guestProfile.name,
+        authorEmail: guestProfile.email,
+        isGuest: true,
+        createdAt: new Date().toISOString()
+      }
+      setSession(prev => {
+        if (!prev) return prev
+        const pins = renumber([...prev.pins, created])
+        return { ...prev, pins, updatedAt: new Date().toISOString() }
+      })
+      setSelectedPinId(created.id)
+      registerOwnPin(guest.slug, created.id)
+
+      // Fire-and-forget to guest API
+      fetch(`/api/share/${guest.slug}/pins`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-guest-token': guestProfile.token
+        },
+        body: JSON.stringify({
+          ...created,
+          authorName: guestProfile.name,
+          authorEmail: guestProfile.email
+        })
+      }).then(res => {
+        if (!res.ok) {
+          setSession(prev => {
+            if (!prev) return prev
+            const pins = renumber(prev.pins.filter(p => p.id !== created.id))
+            return { ...prev, pins, updatedAt: new Date().toISOString() }
+          })
+          unregisterOwnPin(guest.slug, created.id)
+          toast.error('Could not save pin')
+        }
+      }).catch(() => {
+        setSession(prev => {
+          if (!prev) return prev
+          const pins = renumber(prev.pins.filter(p => p.id !== created.id))
+          return { ...prev, pins, updatedAt: new Date().toISOString() }
+        })
+        unregisterOwnPin(guest.slug, created.id)
+        toast.error('Could not save pin')
+      })
+
+      return created
+    }
+
+    // Member path
     const created: Pin = {
       ...input,
       id: newId(),
@@ -203,26 +300,84 @@ export function FeedbackProvider({
     })
     setSelectedPinId(created.id)
     return created
-  }, [canEdit, signedInUser])
+  }, [canEdit, isGuest, guest, guestProfile, signedInUser, registerOwnPin, unregisterOwnPin])
 
   const updatePin = useCallback((id: string, patch: Partial<Pin>) => {
+    if (isGuest) {
+      if (!guestCanComment || !ownPinIds.has(id)) return
+      // Apply locally
+      setSession(prev => {
+        if (!prev) return prev
+        const pins = prev.pins.map(p => (p.id === id ? { ...p, ...patch } : p))
+        return { ...prev, pins, updatedAt: new Date().toISOString() }
+      })
+      // Debounced PATCH to guest API
+      if (!guest || !guestProfile) return
+      const timers = guestUpdateTimersRef.current
+      const existing = timers.get(id)
+      if (existing) clearTimeout(existing)
+      const timer = setTimeout(() => {
+        timers.delete(id)
+        fetch(`/api/share/${guest.slug}/pins/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-guest-token': guestProfile.token
+          },
+          body: JSON.stringify({
+            comment: patch.comment,
+            severity: patch.severity,
+            replacementText: patch.replacementText,
+            editInstruction: patch.editInstruction
+          })
+        }).catch(() => {})
+      }, 1000)
+      timers.set(id, timer)
+      return
+    }
     if (!canEdit) return
     setSession(prev => {
       if (!prev) return prev
       const pins = prev.pins.map(p => (p.id === id ? { ...p, ...patch } : p))
       return { ...prev, pins, updatedAt: new Date().toISOString() }
     })
-  }, [canEdit])
+  }, [canEdit, isGuest, guestCanComment, ownPinIds, guest, guestProfile])
 
   const removePin = useCallback((id: string) => {
+    if (isGuest) {
+      if (!guestCanComment || !ownPinIds.has(id)) return
+      const removedPin = session?.pins.find(p => p.id === id)
+      setSession(prev => {
+        if (!prev) return prev
+        const pins = renumber(prev.pins.filter(p => p.id !== id))
+        return { ...prev, pins, updatedAt: new Date().toISOString() }
+      })
+      setSelectedPinId(curr => (curr === id ? null : curr))
+      if (guest) {
+        unregisterOwnPin(guest.slug, id)
+        if (guestProfile) {
+          fetch(`/api/share/${guest.slug}/pins/${id}`, {
+            method: 'DELETE',
+            headers: { 'x-guest-token': guestProfile.token }
+          }).catch(() => {})
+        }
+      }
+      void removedPin
+      return
+    }
     if (!canEdit) return
+    const removedPin = session?.pins.find(p => p.id === id)
     setSession(prev => {
       if (!prev) return prev
       const pins = renumber(prev.pins.filter(p => p.id !== id))
       return { ...prev, pins, updatedAt: new Date().toISOString() }
     })
     setSelectedPinId(curr => (curr === id ? null : curr))
-  }, [canEdit])
+    // Member deleting a guest pin: bulk sync skips guest pins so fire explicit DELETE
+    if (projectMode && projectId && removedPin?.isGuest) {
+      fetch(`/api/projects/${projectId}/pins/${id}`, { method: 'DELETE' }).catch(() => {})
+    }
+  }, [canEdit, isGuest, guestCanComment, ownPinIds, guest, guestProfile, session, projectMode, projectId, unregisterOwnPin])
 
   const clearPins = useCallback(() => {
     if (!canEdit) return
@@ -239,17 +394,18 @@ export function FeedbackProvider({
     activeProject.data?.id ??
     authSession.data?.session.activeOrganizationId ??
     null
+
+  // Guests never hit the bulk PUT
   const canSync = projectMode
-    ? Boolean(projectId && canEdit)
+    ? Boolean(projectId && canEdit && !isGuest)
     : SYNC_ENABLED && !!signedInUser && !!activeProjectId
+
   const [isSyncing, setIsSyncing] = useState(false)
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const snapshotRunRef = useRef(false)
 
-  // Server-side Playwright capture: fire-and-forget after a successful sync,
-  // then merge any new snapshots into local pins (only when they changed, so
-  // the merge cannot retrigger the sync loop forever).
   const triggerSnapshots = useCallback(async () => {
+    if (isGuest) return
     if (!projectMode || !projectId || snapshotRunRef.current) return
     snapshotRunRef.current = true
     try {
@@ -285,7 +441,7 @@ export function FeedbackProvider({
     } finally {
       snapshotRunRef.current = false
     }
-  }, [projectId, projectMode])
+  }, [isGuest, projectId, projectMode])
 
   useEffect(() => {
     if (!canSync || !session) return
@@ -303,7 +459,7 @@ export function FeedbackProvider({
           ? `/api/projects/${projectId}/feedback`
           : `/api/feedback/sessions/${session.id}`
 
-        const res = await fetch(syncUrl, {
+        await fetch(syncUrl, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -311,7 +467,6 @@ export function FeedbackProvider({
             projectId: projectMode ? projectId : activeProjectId
           })
         })
-        // snapshots triggered explicitly on save, not every sync
       } catch {
         // silent — localStorage still holds truth
       } finally {
@@ -324,6 +479,11 @@ export function FeedbackProvider({
   }, [session, canSync, activeProjectId, projectId, projectMode, triggerSnapshots])
 
   const createShareLink = useCallback(async (): Promise<string | null> => {
+    // Guest mode: share the current /s/ URL
+    if (isGuest && guest) {
+      return `${window.location.origin}/s/${guest.slug}`
+    }
+
     if (projectMode && projectId) {
       if (canEdit && session) {
         try {
@@ -356,7 +516,14 @@ export function FeedbackProvider({
     } catch {
       return null
     }
-  }, [canSync, session, activeProjectId, projectId, projectMode, canEdit])
+  }, [isGuest, guest, canSync, session, activeProjectId, projectId, projectMode, canEdit])
+
+  const canModifyPin = useCallback((pin: Pin): boolean => {
+    if (isGuest) return guestCanComment && ownPinIds.has(pin.id)
+    return canEdit
+  }, [isGuest, guestCanComment, ownPinIds, canEdit])
+
+  const canChangeStatus = canEdit && !isGuest
 
   const value: FeedbackContextValue = {
     feedbackMode,
@@ -381,7 +548,15 @@ export function FeedbackProvider({
     canEdit,
     projectMode,
     createShareLink,
-    triggerSnapshots
+    triggerSnapshots,
+    isGuest,
+    guest: guest ?? null,
+    guestProfile,
+    saveGuestProfile,
+    identityPromptOpen,
+    setIdentityPromptOpen,
+    canModifyPin,
+    canChangeStatus
   }
 
   return (
@@ -431,7 +606,15 @@ export function useFeedback(): FeedbackContextValue {
       canEdit: false,
       projectMode: false,
       createShareLink: async () => null,
-      triggerSnapshots: async () => {}
+      triggerSnapshots: async () => {},
+      isGuest: false,
+      guest: null,
+      guestProfile: null,
+      saveGuestProfile: () => {},
+      identityPromptOpen: false,
+      setIdentityPromptOpen: () => {},
+      canModifyPin: () => false,
+      canChangeStatus: false
     }
   }
   return ctx
