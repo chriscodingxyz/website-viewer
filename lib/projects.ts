@@ -36,6 +36,7 @@ export type ProjectWithRole = {
   staleOpenPinCount: number
   lastReviewedPage: string | null
   feedbackUpdatedAt: Date | null
+  shareSlug: string | null
   memberCount: number
   members: Array<{
     id: string
@@ -380,6 +381,7 @@ export async function listProjectsForUser(userId: string): Promise<ProjectWithRo
       ).length,
       lastReviewedPage: lastReviewedPin?.url ?? null,
       feedbackUpdatedAt: feedbackSession?.updatedAt ?? null,
+      shareSlug: feedbackSession?.slug ?? null,
       memberCount: projectMembers.length,
       members: projectMembers,
       invitations: projectInvitations

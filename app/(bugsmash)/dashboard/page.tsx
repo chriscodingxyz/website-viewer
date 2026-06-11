@@ -140,7 +140,8 @@ export default async function DashboardPage() {
                 lastReviewedPage,
                 members,
                 invitations,
-                feedbackUpdatedAt
+                feedbackUpdatedAt,
+                shareSlug
               }) => {
                 const host = hostFor(project.websiteUrl)
                 const canManage =
@@ -200,7 +201,7 @@ export default async function DashboardPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant='outline' className='capitalize'>
-                        {project.publicAccess === 'view' ? 'Public' : 'Private'}
+                        {project.publicAccess === 'comment' ? 'Public comment' : project.publicAccess === 'view' ? 'Public view' : 'Private'}
                       </Badge>
                     </TableCell>
                     <TableCell className='text-right text-muted-foreground'>
@@ -213,6 +214,7 @@ export default async function DashboardPage() {
                           organizationId={project.organizationId}
                           projectName={project.name}
                           publicAccess={project.publicAccess}
+                          shareSlug={shareSlug}
                           members={members}
                           invitations={invitations}
                           canManage={canManage}

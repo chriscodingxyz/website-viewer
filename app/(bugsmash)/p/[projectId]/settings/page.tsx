@@ -67,6 +67,7 @@ export default async function ProjectSettingsPage({
           organizationId={bundle.project.organizationId}
           projectName={bundle.project.name}
           publicAccess={bundle.project.publicAccess}
+          shareSlug={bundle.feedbackSession.slug}
           members={members}
           invitations={invitations}
           canManage={bundle.canManage}
@@ -77,7 +78,11 @@ export default async function ProjectSettingsPage({
         <Card className='p-4'>
           <p className='text-xs text-muted-foreground'>Access</p>
           <Badge variant='secondary' className='mt-2 capitalize'>
-            {bundle.project.publicAccess === 'view' ? 'Public view' : 'Private'}
+            {bundle.project.publicAccess === 'comment'
+              ? 'Public comment'
+              : bundle.project.publicAccess === 'view'
+              ? 'Public view'
+              : 'Private'}
           </Badge>
         </Card>
         <Card className='p-4'>

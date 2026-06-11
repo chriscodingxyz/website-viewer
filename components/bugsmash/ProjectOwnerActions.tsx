@@ -61,6 +61,7 @@ interface Props {
   organizationId: string
   projectName: string
   publicAccess: string
+  shareSlug: string | null
   members: MemberSummary[]
   invitations: InvitationSummary[]
   canManage: boolean
@@ -71,6 +72,7 @@ export default function ProjectOwnerActions({
   organizationId,
   projectName,
   publicAccess,
+  shareSlug,
   members,
   invitations,
   canManage
@@ -80,6 +82,7 @@ export default function ProjectOwnerActions({
   const [role, setRole] = useState<ProjectRole>('client')
   const [inviteLink, setInviteLink] = useState('')
   const [access, setAccess] = useState(publicAccess)
+  const [slug, setSlug] = useState(shareSlug)
   const [busy, setBusy] = useState(false)
 
   if (!canManage) {
@@ -117,6 +120,21 @@ export default function ProjectOwnerActions({
     toast.success('Invite link copied')
   }
 
+  const copyShareLink = async () => {
+    if (!slug) return
+    await navigator.clipboard.writeText(`${window.location.origin}/s/${slug}`)
+    toast.success('Share link copied')
+  }
+
+  const regenerateShareLink = async () => {
+    if (!window.confirm('Old share links will stop working. Continue?')) return
+    const res = await fetch(`/api/projects/${projectId}/share`, { method: 'POST' })
+    if (!res.ok) { toast.error('Could not regenerate link'); return }
+    const data = await res.json()
+    setSlug(data.slug)
+    toast.success('New link ready. Old links revoked.')
+  }
+
   const updateAccess = async (nextAccess: string) => {
     setAccess(nextAccess)
     const res = await fetch(`/api/projects/${projectId}`, {
@@ -129,7 +147,12 @@ export default function ProjectOwnerActions({
       toast.error('Could not update access')
       return
     }
-    toast.success(nextAccess === 'view' ? 'Public view enabled' : 'Project is private')
+    const messages: Record<string, string> = {
+      view: 'Public view enabled',
+      comment: 'Public commenting enabled',
+      private: 'Project is private'
+    }
+    toast.success(messages[nextAccess] ?? 'Access updated')
   }
 
   return (
@@ -146,24 +169,43 @@ export default function ProjectOwnerActions({
         </DialogHeader>
 
         <div className='grid gap-5'>
-          <section className='grid gap-2'>
+          <section className='grid gap-3'>
             <div className='flex items-center justify-between gap-3'>
               <div>
                 <h3 className='text-sm font-semibold'>Project access</h3>
                 <p className='text-xs text-muted-foreground'>
-                  Public view lets anyone with the link inspect tasks read-only.
+                  View: read-only link. Comment: anyone with the link can drop pins and reply, no sign-in.
                 </p>
               </div>
               <Select value={access} onValueChange={updateAccess}>
-                <SelectTrigger className='h-8 w-32 text-xs'>
+                <SelectTrigger className='h-8 w-36 text-xs'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value='comment'>Public comment</SelectItem>
                   <SelectItem value='view'>Public view</SelectItem>
                   <SelectItem value='private'>Private</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {access !== 'private' && slug && (
+              <div className='grid gap-2'>
+                <p className='text-xs font-medium text-muted-foreground'>Share link</p>
+                <div className='flex gap-2'>
+                  <Input
+                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/s/${slug}`}
+                    readOnly
+                    className='h-8 text-xs'
+                  />
+                  <Button variant='outline' size='icon' className='h-8 w-8 shrink-0' onClick={copyShareLink}>
+                    <Copy className='h-3.5 w-3.5' />
+                  </Button>
+                </div>
+                <Button variant='outline' size='sm' className='h-8 self-start text-xs' onClick={regenerateShareLink}>
+                  Regenerate link
+                </Button>
+              </div>
+            )}
           </section>
 
           <Separator />
