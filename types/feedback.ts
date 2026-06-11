@@ -54,6 +54,7 @@ export const PinSchema = z.object({
   authorName: z.string().optional(),
   authorEmail: z.string().optional(),
   authorUserId: z.string().optional(),
+  isGuest: z.boolean().optional(),
   url: z.string(),
   viewportId: z.number(),
   viewportType: ViewportTypeEnum,

@@ -206,6 +206,7 @@ export const feedbackPin = pgTable(
     }),
     authorName: text('author_name'),
     authorEmail: text('author_email'),
+    guestToken: text('guest_token'),
     url: text('url').notNull(),
     viewportId: integer('viewport_id').notNull(),
     viewportType: text('viewport_type').notNull(),
@@ -242,7 +243,8 @@ export const feedbackPin = pgTable(
     updatedAt: timestamp('updated_at').notNull().defaultNow()
   },
   table => ({
-    sessionIdx: index('feedback_pin_session_idx').on(table.sessionId)
+    sessionIdx: index('feedback_pin_session_idx').on(table.sessionId),
+    guestTokenIdx: index('feedback_pin_guest_token_idx').on(table.guestToken)
   })
 )
 

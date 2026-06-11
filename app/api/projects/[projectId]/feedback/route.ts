@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { and, eq, inArray, notInArray } from 'drizzle-orm'
+import { and, eq, inArray, isNull, notInArray } from 'drizzle-orm'
 import { db, schema } from '@/db/client'
 import { requireSession } from '@/lib/auth-helpers'
 import { FeedbackSessionSchema } from '@/types/feedback'
@@ -44,16 +44,23 @@ export async function PUT(
 
     const incomingIds = data.pins.map(pin => pin.id)
 
+    // guestToken is server-owned; bulk sync must never write or clear it
     if (incomingIds.length === 0) {
       await tx
         .delete(schema.feedbackPin)
-        .where(eq(schema.feedbackPin.sessionId, sessionId))
+        .where(
+          and(
+            eq(schema.feedbackPin.sessionId, sessionId),
+            isNull(schema.feedbackPin.guestToken)
+          )
+        )
     } else {
       await tx
         .delete(schema.feedbackPin)
         .where(
           and(
             eq(schema.feedbackPin.sessionId, sessionId),
+            isNull(schema.feedbackPin.guestToken),
             notInArray(schema.feedbackPin.id, incomingIds)
           )
         )

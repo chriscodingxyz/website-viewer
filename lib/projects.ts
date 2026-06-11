@@ -16,6 +16,14 @@ import { publicUrlFor } from '@/lib/s3'
 import type { FeedbackSession, Pin, PinReply, PinSnapshot } from '@/types/feedback'
 
 export const PROJECT_PUBLIC_ACCESS_VIEW = 'view'
+export const PROJECT_PUBLIC_ACCESS_COMMENT = 'comment'
+export type ProjectPublicAccess = 'private' | 'view' | 'comment'
+export function publicAccessAllowsView(access: string) {
+  return access === 'view' || access === 'comment'
+}
+export function publicAccessAllowsComment(access: string) {
+  return access === 'comment'
+}
 
 export type ProjectWithRole = {
   project: DbProject
@@ -145,6 +153,7 @@ export function toFeedbackSession(
       authorName: pin.authorName ?? undefined,
       authorEmail: pin.authorEmail ?? undefined,
       authorUserId: pin.authorUserId ?? undefined,
+      isGuest: pin.guestToken != null || undefined,
       url: pin.url,
       viewportId: pin.viewportId,
       viewportType: pin.viewportType as Pin['viewportType'],
@@ -232,7 +241,7 @@ export async function loadProjectBundle(
   if (!project) return null
 
   const member = await getProjectMembership(project.organizationId, session)
-  const isPublic = project.publicAccess === PROJECT_PUBLIC_ACCESS_VIEW
+  const isPublic = publicAccessAllowsView(project.publicAccess)
   if (!isPublic && !member) return null
 
   const [feedbackSession] = await db

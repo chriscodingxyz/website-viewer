@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic'
 const UpdateProjectSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
   websiteUrl: z.string().min(1).optional(),
-  publicAccess: z.enum(['view', 'private']).optional()
+  publicAccess: z.enum(['view', 'private', 'comment']).optional()
 })
 
 export async function GET(
