@@ -47,6 +47,17 @@ self.addEventListener('fetch', function (event) {
   // the proxy route directly; never remap them.
   if (req.mode === 'navigate') return
 
+  // A cross-origin request that is not attributable to a proxied page (its
+  // referrer is not an /api/proxy document) belongs to the host app - e.g. a
+  // project favicon or analytics beacon. Leave it completely native; touching
+  // it would break no-cors image loads. Proxied pages rewrite their own
+  // cross-origin URLs to the /api/proxy form at the source, so this only ever
+  // skips genuine host-app requests.
+  var fromProxiedRef = req.referrer && targetFromClientUrl(req.referrer)
+  if (reqUrl.origin !== self.location.origin && !fromProxiedRef) {
+    return
+  }
+
   event.respondWith(
     (async function () {
       // The controlling client is the document making the request. For a
