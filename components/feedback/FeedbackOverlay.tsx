@@ -146,26 +146,52 @@ export default function FeedbackOverlay({
     }
 
     readFrameState()
-    let cleanupScrollListener: (() => void) | undefined
+    const cleanups: Array<() => void> = []
     try {
       const win = iframeRef.current?.contentWindow
+      const doc = iframeRef.current?.contentDocument
       if (win) {
         win.addEventListener('scroll', scheduleRead, { passive: true })
         win.addEventListener('resize', scheduleRead)
-        cleanupScrollListener = () => {
+        cleanups.push(() => {
           win.removeEventListener('scroll', scheduleRead)
           win.removeEventListener('resize', scheduleRead)
-        }
+        })
+      }
+      // Re-anchor the instant the page reflows (accordion expand/collapse,
+      // lazy content, font swaps) instead of waiting for the poll. The page
+      // height changes frame-by-frame while an accordion animates, so the
+      // ResizeObserver keeps markers pinned to their element throughout.
+      if (doc && win && 'ResizeObserver' in win) {
+        const ResizeObserverCtor = (win as unknown as { ResizeObserver: typeof ResizeObserver }).ResizeObserver
+        const ro = new ResizeObserverCtor(scheduleRead)
+        if (doc.documentElement) ro.observe(doc.documentElement)
+        if (doc.body) ro.observe(doc.body)
+        cleanups.push(() => ro.disconnect())
+      }
+      // Catch the DOM/attribute change that triggers the reflow (the toggled
+      // class, data-state, hidden, style, or inserted content).
+      if (doc?.body && win && 'MutationObserver' in win) {
+        const MutationObserverCtor = (win as unknown as { MutationObserver: typeof MutationObserver }).MutationObserver
+        const mo = new MutationObserverCtor(scheduleRead)
+        mo.observe(doc.body, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          attributeFilter: ['class', 'style', 'hidden', 'aria-expanded', 'data-state', 'open']
+        })
+        cleanups.push(() => mo.disconnect())
       }
     } catch {
-      // Cross-origin frames cannot expose scroll events; polling/fallback handles what it can.
+      // Cross-origin frames cannot expose scroll/observers; polling handles what it can.
     }
 
-    const interval = window.setInterval(readFrameState, 300)
+    // Safety net for anything the observers miss (and cross-origin frames).
+    const interval = window.setInterval(readFrameState, 500)
     return () => {
       if (frame) window.cancelAnimationFrame(frame)
       window.clearInterval(interval)
-      cleanupScrollListener?.()
+      cleanups.forEach(fn => fn())
     }
   }, [
     canEdit,
