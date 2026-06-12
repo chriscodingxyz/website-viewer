@@ -76,7 +76,7 @@ export default function ProjectSeoPreview({ pageUrl }: Props) {
         <Button
           variant='outline'
           size='sm'
-          className='h-8 gap-1.5 rounded-md text-xs'
+          className='h-8 gap-1.5 rounded-md px-2.5 text-xs font-medium'
           title='Page SEO preview'
         >
           <Info className='h-3.5 w-3.5' />

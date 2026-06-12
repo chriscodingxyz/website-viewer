@@ -30,6 +30,7 @@ import {
   ArrowCounterClockwise,
   ArrowDown,
   ArrowRight,
+  ArrowSquareOut,
   ArrowsOutCardinal,
   CaretDown,
   CaretLeft,
@@ -331,6 +332,8 @@ export default function ProjectCommentPanel({
   const [verifyingPinId, setVerifyingPinId] = useState<string | null>(null)
   const [localReplies, setLocalReplies] = useState<Record<string, PinReply[]>>({})
   const [taskFilter, setTaskFilter] = useState<'open' | 'done' | 'all'>('open')
+  // Per-page collapse overrides; default open = the page currently being viewed.
+  const [pageOpenOverrides, setPageOpenOverrides] = useState<Record<string, boolean>>({})
   const [intentPickerOpen, setIntentPickerOpen] = useState(false)
 
   useEffect(() => {
@@ -1395,7 +1398,7 @@ export default function ProjectCommentPanel({
                           }
                         }}
                         className={cn(
-                          'group block w-full min-w-0 cursor-pointer overflow-hidden border-l-2 px-4 py-3 text-left transition-colors hover:bg-muted/40',
+                          'group block w-full min-w-0 cursor-pointer overflow-hidden border-l-2 px-4 py-2 text-left transition-colors hover:bg-muted/40',
                           statusAccent(pin),
                           selectedPinId === pin.id && 'bg-muted/50'
                         )}
@@ -1423,7 +1426,7 @@ export default function ProjectCommentPanel({
                         </div>
                         <p
                           className={cn(
-                            'mt-1.5 line-clamp-2 break-words text-xs leading-snug text-foreground',
+                            'mt-1 line-clamp-2 break-words text-xs leading-snug text-foreground',
                             closed && 'line-through decoration-muted-foreground/50'
                           )}
                         >
@@ -1447,7 +1450,7 @@ export default function ProjectCommentPanel({
                           </p>
                         )}
                         {hasFooter && (
-                          <div className='mt-1.5 flex h-5 min-w-0 items-center gap-2 text-[11px] text-muted-foreground'>
+                          <div className='mt-1 flex h-4 min-w-0 items-center gap-2 text-[11px] text-muted-foreground'>
                             {snippet && (
                               <span className='min-w-0 truncate font-mono text-[10px]'>
                                 {snippet}
@@ -1524,36 +1527,75 @@ export default function ProjectCommentPanel({
               .filter(entry => entry.items.length > 0)
 
             return (
-              <div>
+              <div className='divide-y divide-border'>
                 {grouped.map(({ group, items }) => {
                   const isActive = sameFeedbackUrl(group.url, currentPageUrl)
                   const isProjectHome = sameFeedbackUrl(group.url, projectWebsiteUrl)
                   const path = pathOf(group.url)
+                  const isOpen = pageOpenOverrides[group.url] ?? isActive
+                  const openCount = items.filter(
+                    pin => (pin.status ?? 'open') === 'open'
+                  ).length
                   return (
                     <section key={group.url}>
-                      <button
-                        type='button'
-                        onClick={() => onNavigateToPage?.(group.url)}
-                        title={`Open ${group.url}`}
+                      <div
                         className={cn(
-                          'sticky top-0 z-10 flex w-full items-center gap-1.5 border-b border-border/60 px-4 py-1.5 text-left text-[11px] font-medium backdrop-blur transition-colors',
-                          isActive
-                            ? 'bg-muted/80 text-foreground'
-                            : 'bg-background/95 text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                          'sticky top-0 z-10 flex items-stretch backdrop-blur transition-colors',
+                          isActive ? 'bg-muted/70' : 'bg-background/95'
                         )}
                       >
-                        {isProjectHome && <House weight='fill' className='h-3 w-3 shrink-0' />}
-                        <span className='min-w-0 flex-1 truncate font-mono'>{path}</span>
-                        {isActive && (
-                          <span className='shrink-0 rounded-sm bg-foreground px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-background'>
-                            Viewing
+                        {/* Collapse toggle */}
+                        <button
+                          type='button'
+                          aria-expanded={isOpen}
+                          onClick={() =>
+                            setPageOpenOverrides(prev => ({
+                              ...prev,
+                              [group.url]: !isOpen
+                            }))
+                          }
+                          className='flex flex-1 items-center gap-1.5 py-2 pl-3 pr-2 text-left'
+                        >
+                          <CaretDown
+                            weight='bold'
+                            className={cn(
+                              'h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-200',
+                              !isOpen && '-rotate-90'
+                            )}
+                          />
+                          {isProjectHome && (
+                            <House weight='fill' className='h-3.5 w-3.5 shrink-0 text-muted-foreground' />
+                          )}
+                          <span
+                            className={cn(
+                              'min-w-0 flex-1 truncate font-mono text-xs',
+                              isActive ? 'font-semibold text-foreground' : 'font-medium text-foreground/80'
+                            )}
+                          >
+                            {path}
                           </span>
+                          {isActive && (
+                            <span className='shrink-0 rounded-sm bg-foreground px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-background'>
+                              Viewing
+                            </span>
+                          )}
+                          <span className='shrink-0 rounded-full bg-muted px-1.5 text-[10px] font-semibold tabular-nums text-muted-foreground'>
+                            {openCount > 0 ? openCount : items.length}
+                          </span>
+                        </button>
+                        {/* Jump to this page in the canvas */}
+                        {!isActive && (
+                          <button
+                            type='button'
+                            onClick={() => onNavigateToPage?.(group.url)}
+                            title={`Open ${group.url} in the canvas`}
+                            className='flex items-center px-2.5 text-muted-foreground transition-colors hover:text-foreground'
+                          >
+                            <ArrowSquareOut className='h-3.5 w-3.5' />
+                          </button>
                         )}
-                        <span className='shrink-0 tabular-nums text-muted-foreground'>
-                          {items.length}
-                        </span>
-                      </button>
-                      {renderPins(items)}
+                      </div>
+                      {isOpen && renderPins(items)}
                     </section>
                   )
                 })}

@@ -6,8 +6,8 @@ import type { Pin } from '@/types/feedback'
 import { FeedbackProvider, useFeedback } from '@/contexts/FeedbackContext'
 import type { FeedbackSession } from '@/types/feedback'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { cn } from '@/lib/utils'
 import {
   Sheet,
   SheetContent,
@@ -49,6 +49,12 @@ interface Props {
   aiVerifyEnabled?: boolean
   guest?: { slug: string; accessLevel: 'view' | 'comment' }
 }
+
+// Shared header control styles so every button/chip shares one height,
+// padding, radius, and type scale.
+const ACTION_BTN = 'h-8 gap-1.5 rounded-md px-2.5 text-xs font-medium'
+const STATUS_CHIP =
+  'inline-flex h-8 items-center gap-1.5 rounded-md bg-muted px-2.5 text-xs font-medium text-muted-foreground'
 
 function hostFor(websiteUrl: string) {
   try {
@@ -245,75 +251,65 @@ function WorkspaceHeader({
         <ArrowSquareOut className='h-3 w-3 shrink-0' />
       </a>
       <Separator orientation='vertical' className='mx-0.5 hidden h-5 sm:block' />
-      <div className='flex items-center gap-2'>
+      {/* Status chips: same height as the action buttons, but a quieter
+          'information' treatment (muted fill, no border) so they read as
+          state rather than actions. */}
+      <div className='hidden items-center gap-1.5 md:flex'>
         {guest ? (
-          // Guest header: access badge + identity chip
-          <>
-            <Badge variant='outline' className='gap-1 text-[11px] font-medium'>
-              {guest.accessLevel === 'comment' ? (
-                <><Users className='h-3 w-3' />Comment link</>
-              ) : (
-                <><Eye className='h-3 w-3' />View link</>
-              )}
-            </Badge>
-            {guestProfile && (
-              <Button
-                variant='ghost'
-                size='sm'
-                className='h-8 gap-1.5 rounded-md text-xs text-muted-foreground'
-                onClick={() => setIdentityPromptOpen(true)}
-              >
-                Commenting as {guestProfile.name}
-              </Button>
+          <span className={STATUS_CHIP}>
+            {guest.accessLevel === 'comment' ? (
+              <><Users className='h-3.5 w-3.5' />Comment link</>
+            ) : (
+              <><Eye className='h-3.5 w-3.5' />View link</>
             )}
-          </>
+          </span>
         ) : (
-          // Member header: access badge + role + read-only badge
           <>
             {(project.publicAccess === 'view' || project.publicAccess === 'comment') && (
-              <Badge variant='outline' className='gap-1 text-[11px] font-medium'>
-                <Eye className='h-3 w-3' />
-                {project.publicAccess === 'comment' ? 'Public comments on' : 'Public view'}
-              </Badge>
+              <span className={STATUS_CHIP}>
+                <Eye className='h-3.5 w-3.5' />
+                {project.publicAccess === 'comment' ? 'Public comments' : 'Public view'}
+              </span>
             )}
             {role && (
-              <Badge variant='secondary' className='gap-1 text-[11px] font-medium capitalize'>
-                <Users className='h-3 w-3' />
+              <span className={cn(STATUS_CHIP, 'capitalize')}>
+                <Users className='h-3.5 w-3.5' />
                 {role}
-              </Badge>
+              </span>
             )}
             {publicView && !canEdit && (
-              <Badge variant='outline' className='gap-1 text-[11px] font-medium'>
-                <ShieldCheck className='h-3 w-3' />
+              <span className={cn(STATUS_CHIP, 'text-amber-700 dark:text-amber-400')}>
+                <ShieldCheck className='h-3.5 w-3.5' />
                 Read-only
-              </Badge>
+              </span>
             )}
           </>
         )}
-        <Separator orientation='vertical' className='h-5' />
+      </div>
+      {guest && guestProfile && (
+        <Button
+          variant='ghost'
+          size='sm'
+          className={cn(ACTION_BTN, 'text-muted-foreground')}
+          onClick={() => setIdentityPromptOpen(true)}
+        >
+          {guestProfile.name}
+        </Button>
+      )}
+      <Separator orientation='vertical' className='hidden h-5 md:block' />
+      {/* Action buttons: uniform height, padding, and type. */}
+      <div className='flex items-center gap-1.5'>
         <ProjectSeoPreview pageUrl={currentPageUrl} />
         {guest ? (
-          // Guest: Report link (view=report)
-          <Button
-            asChild
-            variant='ghost'
-            size='sm'
-            className='h-8 gap-1.5 rounded-md text-xs'
-          >
+          <Button asChild variant='outline' size='sm' className={ACTION_BTN}>
             <a href={`/s/${guest.slug}?view=report`} target='_blank' rel='noreferrer'>
               <ListBullets className='h-3.5 w-3.5' />
               Report
             </a>
           </Button>
         ) : (
-          // Member: Settings button
           canEdit && (
-            <Button
-              asChild
-              variant='outline'
-              size='sm'
-              className='h-8 gap-1.5 rounded-md text-xs'
-            >
+            <Button asChild variant='outline' size='sm' className={ACTION_BTN}>
               <a href={`/p/${project.id}/settings`}>
                 <Gear className='h-3.5 w-3.5' />
                 Settings
@@ -324,18 +320,14 @@ function WorkspaceHeader({
         <Button
           variant='outline'
           size='sm'
-          className='h-8 gap-1.5 rounded-md text-xs'
+          className={ACTION_BTN}
           onClick={copyShareLink}
         >
           <LinkSimple className='h-3.5 w-3.5' />
           {copied ? 'Copied' : 'Share'}
         </Button>
         {!guest && (
-          <Button
-            size='sm'
-            className='h-8 gap-1.5 rounded-md text-xs'
-            onClick={() => setExportOpen(true)}
-          >
+          <Button size='sm' className={ACTION_BTN} onClick={() => setExportOpen(true)}>
             <Export className='h-3.5 w-3.5' />
             Export Handoff
           </Button>
