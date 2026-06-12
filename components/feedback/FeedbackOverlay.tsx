@@ -371,7 +371,7 @@ export default function FeedbackOverlay({
       action?.id === 'rewrite-copy' ||
       action?.id === 'update-alt'
     const linkAction = action?.id === 'update-link'
-    const amberAction = action?.id === 'style-layout' || action?.id === 'layout-issue'
+    const styleAction = action?.id === 'style-layout' || action?.id === 'layout-issue'
 
     return {
       label,
@@ -382,8 +382,8 @@ export default function FeedbackOverlay({
           ? 'border-emerald-500 bg-emerald-500/5 shadow-[0_0_0_1px_rgba(16,185,129,0.18)]'
           : linkAction
             ? 'border-blue-500 bg-blue-500/5 shadow-[0_0_0_1px_rgba(59,130,246,0.18)]'
-            : amberAction
-              ? 'border-amber-500 bg-amber-500/5 shadow-[0_0_0_1px_rgba(245,158,11,0.18)]'
+            : styleAction
+              ? 'border-violet-500 bg-violet-500/5 shadow-[0_0_0_1px_rgba(139,92,246,0.20)]'
               : 'border-zinc-500 bg-zinc-500/5 shadow-[0_0_0_1px_rgba(113,113,122,0.18)]',
       badgeClass: removal
         ? 'border-red-600 bg-red-600 text-white'
@@ -391,8 +391,8 @@ export default function FeedbackOverlay({
           ? 'border-emerald-600 bg-emerald-600 text-white'
           : linkAction
             ? 'border-blue-600 bg-blue-600 text-white'
-            : amberAction
-              ? 'border-amber-600 bg-amber-600 text-white'
+            : styleAction
+              ? 'border-violet-600 bg-violet-600 text-white'
               : 'border-zinc-700 bg-zinc-700 text-white'
     }
   }
@@ -413,7 +413,7 @@ export default function FeedbackOverlay({
       )}
       {canEdit && feedbackMode && activeTool === 'inspect' && hoverTarget && (
         <div
-          className='absolute z-20 pointer-events-none rounded-sm border border-foreground bg-foreground/5 shadow-[0_0_0_9999px_rgba(0,0,0,0.03)]'
+          className='absolute z-20 pointer-events-none border border-foreground bg-foreground/5 shadow-[0_0_0_9999px_rgba(0,0,0,0.03)]'
           style={{
             left: `${hoverTarget.x}%`,
             top: `${hoverTarget.y}%`,
@@ -421,7 +421,7 @@ export default function FeedbackOverlay({
             height: `${Math.max(hoverTarget.height, 0.4)}%`
           }}
         >
-          <div className='absolute left-0 top-0 -translate-y-full rounded-t-sm bg-foreground px-1.5 py-0.5 text-[10px] font-mono text-background max-w-[220px] truncate'>
+          <div className='absolute left-0 top-0 -translate-y-full bg-foreground px-1.5 py-0.5 text-[10px] font-mono text-background max-w-[220px] truncate'>
             {hoverTarget.label}
           </div>
         </div>
@@ -435,7 +435,7 @@ export default function FeedbackOverlay({
           <div
             key={`anchor-${pin.id}`}
             className={cn(
-              'pointer-events-none absolute z-20 overflow-visible rounded-sm border bg-background/0',
+              'pointer-events-none absolute z-20 overflow-visible border bg-background/0',
               meta.outlineClass,
               selected && 'border-2'
             )}
@@ -446,19 +446,16 @@ export default function FeedbackOverlay({
               height: `${Math.max(anchor.height, 0.4)}%`
             }}
           >
-            <div className='absolute inset-0 overflow-hidden rounded-[inherit]'>
-              {meta.removal && (
-                <svg
-                  className='absolute inset-0 h-full w-full'
-                  viewBox='0 0 100 100'
-                  preserveAspectRatio='none'
-                  aria-hidden='true'
-                >
-                  <line x1='0' y1='0' x2='100' y2='100' stroke='rgb(239 68 68)' strokeWidth='1.5' vectorEffect='non-scaling-stroke' />
-                  <line x1='100' y1='0' x2='0' y2='100' stroke='rgb(239 68 68)' strokeWidth='1.5' vectorEffect='non-scaling-stroke' />
-                </svg>
-              )}
-            </div>
+            {meta.removal && (
+              <div
+                className='absolute inset-0 overflow-hidden'
+                aria-hidden='true'
+                style={{
+                  backgroundImage:
+                    'repeating-linear-gradient(135deg, rgba(239,68,68,0.16) 0, rgba(239,68,68,0.16) 1.5px, transparent 1.5px, transparent 7px)'
+                }}
+              />
+            )}
             {pin.kind === 'inspect' && (
               <button
                 type='button'
@@ -467,12 +464,12 @@ export default function FeedbackOverlay({
                   setSelectedPinId(pin.id)
                 }}
                 className={cn(
-                  'pointer-events-auto absolute left-0 top-0 z-10 inline-flex max-w-[200px] -translate-y-[calc(100%+4px)] items-center gap-1 truncate rounded-md border pl-1 pr-2 py-0.5 text-[10px] font-semibold leading-none shadow-sm transition-transform hover:scale-[1.02]',
+                  'pointer-events-auto absolute left-0 top-0 z-10 inline-flex max-w-[200px] -translate-x-px -translate-y-full items-center gap-1 truncate border pl-1 pr-1.5 py-0.5 text-[10px] font-semibold leading-none shadow-sm',
                   meta.badgeClass
                 )}
                 title={`Pin ${pin.number}: ${meta.label}`}
               >
-                <span className='inline-flex h-4 min-w-4 items-center justify-center rounded-sm bg-black/25 px-1 text-[9px] font-bold tabular-nums'>
+                <span className='inline-flex h-4 min-w-4 items-center justify-center bg-black/25 px-1 text-[9px] font-bold tabular-nums'>
                   {pin.number}
                 </span>
                 <span className='truncate'>{meta.label}</span>

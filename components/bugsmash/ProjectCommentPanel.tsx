@@ -139,8 +139,8 @@ const actionTone = (id: InspectActionId | undefined) => {
     case 'style-layout':
     case 'layout-issue':
       return {
-        chip: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-950 dark:bg-amber-950/30 dark:text-amber-300',
-        active: 'border-amber-600 bg-amber-600 text-white'
+        chip: 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-950 dark:bg-violet-950/30 dark:text-violet-300',
+        active: 'border-violet-600 bg-violet-600 text-white'
       }
     default:
       return {
@@ -270,26 +270,28 @@ function PinStatusBadges({ pin, closed }: { pin: Pin; closed?: boolean }) {
   return (
     <>
       {pin.severity === 'blocking' && (
-        <span className='rounded-sm bg-red-600 px-1 py-px text-[9px] font-semibold text-white'>
+        <span className='inline-flex items-center gap-1 bg-red-600 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white'>
           Blocking
         </span>
       )}
       {pin.status === 'implemented' && (
-        <span className='rounded-sm bg-blue-600 px-1 py-px text-[9px] font-semibold text-white'>
+        <span className='inline-flex items-center gap-1 bg-blue-600 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white'>
           Done
         </span>
       )}
       {isPossiblyDone(pin) && (
-        <span className='rounded-sm bg-amber-500 px-1 py-px text-[9px] font-semibold text-white'>
+        <span className='inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400'>
+          <span className='size-1.5 rounded-full bg-amber-500' />
           Possibly done
         </span>
       )}
       {isAnchorLost(pin) && (
-        <span className='rounded-sm border border-amber-500/60 px-1 py-px text-[9px] font-semibold text-amber-600'>
+        <span className='inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground'>
+          <span className='size-1.5 rounded-full bg-muted-foreground/60' />
           Anchor lost
         </span>
       )}
-      {closed && <CheckCircle className='h-3 w-3 text-emerald-600' />}
+      {closed && <CheckCircle weight='fill' className='h-3.5 w-3.5 text-emerald-600' />}
     </>
   )
 }
@@ -1398,35 +1400,38 @@ export default function ProjectCommentPanel({
                           }
                         }}
                         className={cn(
-                          'group block w-full min-w-0 cursor-pointer overflow-hidden border-l-2 px-4 py-2 text-left transition-colors hover:bg-muted/40',
+                          'group block w-full min-w-0 cursor-pointer overflow-hidden border-l-2 px-4 py-2.5 text-left transition-colors hover:bg-muted/40',
                           statusAccent(pin),
-                          selectedPinId === pin.id && 'bg-muted/50'
+                          selectedPinId === pin.id && 'bg-muted/60'
                         )}
                       >
                         <div className='flex items-center gap-2'>
-                          <span className='inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-zinc-950 text-[10px] font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900'>
-                            {pin.number}
-                          </span>
+                          {/* Number + intent merged into one color-coded pill, mirroring the canvas marker. */}
                           <span
                             className={cn(
-                              'inline-flex min-w-0 items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[10px] font-medium',
-                              tone.chip
+                              'inline-flex min-w-0 items-center gap-1 border py-0.5 pl-0.5 pr-1.5 text-[10px] font-semibold leading-none',
+                              tone.active
                             )}
                           >
+                            <span className='inline-flex h-3.5 min-w-3.5 items-center justify-center bg-black/25 px-0.5 text-[9px] font-bold tabular-nums'>
+                              {pin.number}
+                            </span>
                             <IntentIcon className='h-3 w-3 shrink-0' />
                             <span className='truncate'>
                               {pinAction?.label ??
                                 (pin.kind === 'inspect' ? 'Inspect' : 'Comment')}
                             </span>
                           </span>
-                          <span className='ml-auto inline-flex shrink-0 items-center gap-1.5 text-[10px] text-muted-foreground'>
+                          <span className='ml-auto inline-flex shrink-0 items-center gap-1.5'>
                             <PinStatusBadges pin={pin} closed={closed} />
-                            {timeAgo(pin.createdAt)}
+                            <span className='text-[10px] tabular-nums text-muted-foreground'>
+                              {timeAgo(pin.createdAt)}
+                            </span>
                           </span>
                         </div>
                         <p
                           className={cn(
-                            'mt-1 line-clamp-2 break-words text-xs leading-snug text-foreground',
+                            'mt-1.5 line-clamp-2 break-words text-xs leading-snug text-foreground',
                             closed && 'line-through decoration-muted-foreground/50'
                           )}
                         >
