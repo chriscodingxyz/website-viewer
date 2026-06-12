@@ -254,6 +254,9 @@ export default function BugsmashShell({ children, user, canCreate, projects }: P
           <SidebarTrigger className='-ml-1' />
           <Separator orientation='vertical' className='mr-2 h-4' />
           <Breadcrumbs pathname={pathname ?? ''} projects={projects} />
+          {/* Project pages portal their actions (badges, SEO, Settings, Share,
+              Export) into this slot so the workspace needs no second header. */}
+          <div id='ws-header-slot' className='ml-auto flex min-w-0 items-center gap-2' />
         </header>
         <div className='flex-1'>{children}</div>
       </SidebarInset>

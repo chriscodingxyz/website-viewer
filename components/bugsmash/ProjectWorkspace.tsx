@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { Pin } from '@/types/feedback'
 import { FeedbackProvider, useFeedback } from '@/contexts/FeedbackContext'
 import type { FeedbackSession } from '@/types/feedback'
@@ -30,7 +31,6 @@ import ProjectCommentPanel from './ProjectCommentPanel'
 import ProjectSeoPreview from './ProjectSeoPreview'
 import ExportDialog from '@/components/feedback/ExportDialog'
 import FeedbackKeyboard from '@/components/feedback/FeedbackKeyboard'
-import SiteFavicon from '@/components/SiteFavicon'
 import { GuestIdentityDialog } from '@/components/bugsmash/GuestIdentityDialog'
 
 type ProjectSummary = {
@@ -112,6 +112,7 @@ export default function ProjectWorkspace({
       guest={guest}
     >
       <div className='flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden bg-background'>
+        {/* Header actions render into the global top bar (no second band). */}
         <WorkspaceHeader
           project={project}
           host={host}
@@ -197,6 +198,12 @@ function WorkspaceHeader({
 }) {
   const { setExportOpen, guestProfile, setIdentityPromptOpen, createShareLink } = useFeedback()
   const [copied, setCopied] = useState(false)
+  const [slot, setSlot] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    setSlot(document.getElementById('ws-header-slot'))
+  }, [])
+
   const currentPath = (() => {
     try {
       const u = new URL(currentPageUrl)
@@ -220,29 +227,25 @@ function WorkspaceHeader({
     }
   }
 
-  return (
-    <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-background px-4 py-3 sm:px-6'>
-      <div className='flex min-w-0 items-center gap-3'>
-        <SiteFavicon siteUrl={project.websiteUrl} className='size-8 rounded-lg' />
-        <div className='min-w-0'>
-          <h1 className='truncate text-sm font-semibold tracking-tight'>{project.name}</h1>
-          <a
-            href={currentPageUrl}
-            target='_blank'
-            rel='noreferrer'
-            className='mt-0.5 inline-flex max-w-full items-center gap-1 text-xs text-muted-foreground hover:text-foreground'
-            title={currentPageUrl}
-          >
-            <span className='shrink-0'>{host}</span>
-            {!isHome && (
-              <span className='truncate font-mono text-foreground'>{currentPath}</span>
-            )}
-            <ArrowSquareOut className='h-3 w-3 shrink-0' />
-          </a>
-        </div>
-      </div>
+  if (!slot) return null
 
-      <div className='flex flex-wrap items-center gap-2'>
+  const actions = (
+    <div className='flex min-w-0 items-center gap-2'>
+      <a
+        href={currentPageUrl}
+        target='_blank'
+        rel='noreferrer'
+        className='hidden min-w-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground sm:inline-flex'
+        title={currentPageUrl}
+      >
+        <span className='shrink-0'>{host}</span>
+        {!isHome && (
+          <span className='truncate font-mono text-foreground'>{currentPath}</span>
+        )}
+        <ArrowSquareOut className='h-3 w-3 shrink-0' />
+      </a>
+      <Separator orientation='vertical' className='mx-0.5 hidden h-5 sm:block' />
+      <div className='flex items-center gap-2'>
         {guest ? (
           // Guest header: access badge + identity chip
           <>
@@ -340,6 +343,8 @@ function WorkspaceHeader({
       </div>
     </div>
   )
+
+  return createPortal(actions, slot)
 }
 
 function CompactTasksTrigger({
