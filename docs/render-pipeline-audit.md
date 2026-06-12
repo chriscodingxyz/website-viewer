@@ -65,6 +65,43 @@ A page with `<base href="https://cdn.example/">` changes relative resolution aft
 - Auto-flip to proxy when direct embed is blocked (`IframeDetectionService` preflight).
 - CSS `url()`/`@import` rewriting (genuinely required since stylesheet URL context changes).
 
+## RESOLVED (2026-06-12) - the decisive root cause
+
+Live debugging through the proxied iframe found the real reason interactivity
+died on modern SPA sites, beyond RC1/RC2:
+
+**Bundler chunk identity is derived from `document.currentScript.src`.**
+Turbopack's `registerChunk` does, per loaded chunk:
+
+```js
+let r = decodeURIComponent(scriptEl.src.replace(/[?#].*$/, ''))
+return r.startsWith('/_next/') ? r.slice('/_next/'.length) : r
+```
+
+With the old `?url=` query proxy, every chunk's `src` was
+`/api/proxy?url=...`, so `.replace(/[?#].*/)` cut at the first `?` leaving
+`/api/proxy`. **Every chunk registered under the same path `/api/proxy`**, none
+matched the page entry's `otherChunks` list (`static/chunks/<hash>.js`), so the
+runtime never ran the entry → React never hydrated → no event handlers. Webpack
+with automatic `publicPath` has the same failure mode.
+
+**Implemented fix - transparent same-origin proxying:**
+- Target same-origin subresources are rewritten to **root-relative paths**
+  (`/_next/static/...`) so the runtime sees real chunk paths and hydrates.
+- A **service worker** (`public/bugsmash-proxy-sw.js`) controls the proxied
+  iframe doc (same origin), determines proxied-ness from the controlling
+  **client** (the `/api/proxy?url=<target>` document, NOT the referrer - a
+  CSS-loaded font's referrer is the stylesheet), and remaps every same-origin
+  subresource request to the target origin.
+- **Navigation** (`<a>/<area>/<form>/meta-refresh`) keeps the explicit `?url=`
+  form so clicks do a real top-level navigation (the SW skips navigations).
+- `ProjectCanvas` registers the SW and gates iframe load on it controlling the
+  origin, eliminating the first-paint race.
+
+Verified live: `ui.shadcn.com` (Next.js + Turbopack) accordion expands/collapses
+inside the proxied iframe, React fiber attaches, 0 hydration failures, host app
+unaffected (SW passes host requests through).
+
 ## Fix strategy (summary - see docs/plans/)
 
 1. **Stop corrupting code**: rewrite attributes per-element via cheerio (never the serialized string), stop editing inline/external JS source, strip `integrity`, handle `<base>`.
