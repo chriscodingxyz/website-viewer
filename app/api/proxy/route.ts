@@ -5,7 +5,8 @@ import https from 'https'
 import http from 'http'
 import {
   getProxiedUrl,
-  getProxiedSrcset,
+  getAssetUrl,
+  getAssetSrcset,
   rewriteCssUrls
 } from '@/lib/proxy/rewrite'
 import { buildInjectedScript } from '@/lib/proxy/inject'
@@ -19,10 +20,12 @@ const HTML_CACHE_CONTROL = 'public, max-age=0, s-maxage=60, stale-while-revalida
 const CODE_CACHE_CONTROL = 'public, max-age=300, s-maxage=86400, stale-while-revalidate=604800'
 const ASSET_CACHE_CONTROL = 'public, max-age=3600, s-maxage=604800, immutable'
 
-// Attributes that contain a single URL.
-const URL_ATTRS = [
-  'src', 'href', 'action', 'poster', 'data',
-  'data-src', 'data-href', 'data-original', 'data-lazy-src', 'data-url',
+// Subresource URL attributes: rewritten transparently (same-origin -> root
+// relative so bundler runtimes see real chunk paths; the service worker remaps
+// them back to the target origin).
+const ASSET_ATTRS = [
+  'src', 'poster', 'data',
+  'data-src', 'data-original', 'data-lazy-src', 'data-url',
   'data-basepath', 'data-inline-media-basepath', 'data-anim-lazy-image'
 ]
 const SRCSET_ATTRS = ['srcset', 'data-srcset']
@@ -199,26 +202,48 @@ async function proxyRequest (request: NextRequest, method: 'GET' | 'POST') {
       }
       $('base').remove()
 
+      const targetOrigin = new URL(targetUrl).origin
+
       // Rewrite URL-bearing attributes per element. Script/style CONTENT is
       // never touched: hydration payloads (__NEXT_DATA__ etc.) must pass
       // through byte-identical or client frameworks fail to attach handlers.
+      //
+      // Two modes:
+      //  - Navigation (<a>, <area>, <form>): explicit ?url= form so clicks do a
+      //    real top-level navigation through the proxy route.
+      //  - Subresource (everything else): transparent - same-origin URLs become
+      //    root-relative so Turbopack/webpack resolve their own chunk paths
+      //    correctly; the service worker remaps the request to the target.
       $('*').each((_, el) => {
         const $el = $(el)
-        for (const attr of URL_ATTRS) {
+        const tag = (el as any).tagName?.toLowerCase()
+
+        if (tag === 'a' || tag === 'area') {
+          const href = $el.attr('href')
+          if (href) $el.attr('href', getProxiedUrl(href, resolutionBase))
+        } else if (tag === 'form') {
+          const action = $el.attr('action')
+          if (action) $el.attr('action', getProxiedUrl(action, resolutionBase))
+        } else {
+          const href = $el.attr('href')
+          if (href) $el.attr('href', getAssetUrl(href, resolutionBase, targetOrigin))
+        }
+
+        for (const attr of ASSET_ATTRS) {
           const val = $el.attr(attr)
-          if (val) $el.attr(attr, getProxiedUrl(val, resolutionBase))
+          if (val) $el.attr(attr, getAssetUrl(val, resolutionBase, targetOrigin))
         }
         for (const attr of SRCSET_ATTRS) {
           const val = $el.attr(attr)
-          if (val) $el.attr(attr, getProxiedSrcset(val, resolutionBase))
+          if (val) $el.attr(attr, getAssetSrcset(val, resolutionBase, targetOrigin))
         }
         const style = $el.attr('style')
         if (style && style.toLowerCase().includes('url(')) {
-          $el.attr('style', rewriteCssUrls(style, resolutionBase))
+          $el.attr('style', rewriteCssUrls(style, resolutionBase, targetOrigin))
         }
       })
 
-      // Meta refresh redirects.
+      // Meta refresh redirects are navigations.
       $('meta[http-equiv="refresh" i]').each((_, el) => {
         const content = $(el).attr('content')
         if (!content) return
@@ -232,7 +257,7 @@ async function proxyRequest (request: NextRequest, method: 'GET' | 'POST') {
       // context, which has changed - rewrite them.
       $('style').each((_, el) => {
         const css = $(el).text()
-        $(el).text(rewriteCssUrls(css, resolutionBase))
+        $(el).text(rewriteCssUrls(css, resolutionBase, targetOrigin))
       })
 
       // Inject navigation/network interception + preview applier.
@@ -253,7 +278,8 @@ async function proxyRequest (request: NextRequest, method: 'GET' | 'POST') {
     // context changed - must rewrite).
     if (contentType.includes('text/css')) {
       const css = buffer.toString('utf-8')
-      return new NextResponse(rewriteCssUrls(css, targetUrl), {
+      const cssOrigin = new URL(targetUrl).origin
+      return new NextResponse(rewriteCssUrls(css, targetUrl, cssOrigin), {
         status: 200,
         headers: getPassthroughHeaders({
           'Content-Type': 'text/css',

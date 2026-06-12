@@ -1,14 +1,17 @@
 /*
  * Proxy safety net for pages rendered through /api/proxy.
  *
- * Proxied iframe documents live on this origin, so this worker sees every
- * request they make - including module imports and dynamically built URLs
- * that escape the injected interception script. Those requests are
- * re-targeted against the client page's ?url= parameter.
+ * Proxied iframe documents live on this origin (URL /api/proxy?url=<target>),
+ * so this worker controls them and sees every request they make. Target
+ * same-origin subresources are served root-relative (e.g. /_next/static/...)
+ * so bundler runtimes resolve their real chunk paths; this worker remaps those
+ * requests to the target origin. Anything escaping the injected interception
+ * script is caught here too.
  *
- * SAFETY RULE: requests whose client is NOT a /api/proxy page are never
- * intercepted (the handler returns before respondWith), so the host app is
- * unaffected.
+ * SAFETY RULE: a request is only remapped when its CLIENT is a proxied page.
+ * Requests from the host app itself (client URL is not /api/proxy) are passed
+ * through untouched - the host's own /_next/, /api/feedback, /api/auth, etc.
+ * are never affected.
  */
 
 self.addEventListener('install', function () {
@@ -21,7 +24,7 @@ self.addEventListener('activate', function (event) {
 
 var PROXY_PATH = '/api/proxy'
 
-function targetFromProxyUrl (urlStr) {
+function targetFromClientUrl (urlStr) {
   try {
     var u = new URL(urlStr)
     if (u.origin === self.location.origin && u.pathname === PROXY_PATH) {
@@ -40,19 +43,16 @@ self.addEventListener('fetch', function (event) {
     return
   }
 
-  // Never touch our own API (includes /api/proxy itself) or Next.js internals.
-  if (reqUrl.origin === self.location.origin) {
-    if (reqUrl.pathname.startsWith('/api/')) return
-    if (reqUrl.pathname.startsWith('/_next/')) return
-    if (reqUrl.pathname === '/bugsmash-proxy-sw.js') return
-  }
-
-  // Top-level navigations have no source client; the injected click
-  // interceptor already routes those through the proxy.
+  // Top-level navigations are handled by the injected click interceptor and
+  // the proxy route directly; never remap them.
   if (req.mode === 'navigate') return
 
   event.respondWith(
     (async function () {
+      // The controlling client is the document making the request. For a
+      // proxied page that is /api/proxy?url=<target>. This is authoritative -
+      // unlike the referrer, which for a CSS-loaded font points at the
+      // stylesheet, not the document.
       var clientUrl = null
       if (event.clientId) {
         try {
@@ -60,15 +60,27 @@ self.addEventListener('fetch', function (event) {
           if (client) clientUrl = client.url
         } catch (e) {}
       }
-      if (!clientUrl && req.referrer) clientUrl = req.referrer
+      // Fallbacks for requests with no client (e.g. some preloads).
+      if (!clientUrl && req.referrer && targetFromClientUrl(req.referrer)) {
+        clientUrl = req.referrer
+      }
 
-      var target = clientUrl ? targetFromProxyUrl(clientUrl) : null
-      if (!target) return fetch(req) // host app request: passthrough untouched
+      var target = clientUrl ? targetFromClientUrl(clientUrl) : null
 
-      // Request from a proxied page: re-target it.
+      // Not a proxied page (host app, or unknown client): passthrough untouched.
+      if (!target) return fetch(req)
+
+      // Request already aimed at our proxy route: let it through to the route.
+      if (reqUrl.origin === self.location.origin && reqUrl.pathname === PROXY_PATH) {
+        return fetch(req)
+      }
+      if (reqUrl.origin === self.location.origin && reqUrl.pathname === '/bugsmash-proxy-sw.js') {
+        return fetch(req)
+      }
+
       var absolute
       if (reqUrl.origin === self.location.origin) {
-        // Relative URL that resolved against our origin - remap onto target.
+        // Transparent same-origin subresource - remap onto the target origin.
         try {
           absolute = new URL(reqUrl.pathname + reqUrl.search + reqUrl.hash, target).toString()
         } catch (e) {
@@ -80,10 +92,7 @@ self.addEventListener('fetch', function (event) {
       }
 
       var proxied = PROXY_PATH + '?url=' + encodeURIComponent(absolute)
-      var init = {
-        method: req.method,
-        redirect: 'follow'
-      }
+      var init = { method: req.method, redirect: 'follow' }
       var contentType = req.headers.get('content-type')
       if (contentType) init.headers = { 'Content-Type': contentType }
       if (req.method !== 'GET' && req.method !== 'HEAD') {

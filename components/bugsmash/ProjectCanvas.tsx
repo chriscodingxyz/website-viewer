@@ -86,6 +86,43 @@ export default function ProjectCanvas({
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const detectionContainerRef = useRef<HTMLDivElement>(null)
 
+  // The proxy renderer serves a target's own-origin subresources as
+  // root-relative paths (so bundler runtimes resolve their real chunk paths);
+  // a service worker remaps those requests to the target origin. It must be
+  // active before the iframe loads or the first paint's /_next/... requests
+  // hit this app instead. Register it here (same origin controls the iframe)
+  // and gate proxied rendering on it being ready.
+  const [swReady, setSwReady] = useState(false)
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+      setSwReady(true) // no SW support: fall back to best-effort rendering
+      return
+    }
+    let cancelled = false
+    navigator.serviceWorker
+      .register('/bugsmash-proxy-sw.js')
+      .then(() => navigator.serviceWorker.ready)
+      .then(() => {
+        if (cancelled) return
+        if (navigator.serviceWorker.controller) {
+          setSwReady(true)
+        } else {
+          // Registered but not yet controlling this page; controllerchange
+          // fires once it claims clients.
+          const onChange = () => setSwReady(true)
+          navigator.serviceWorker.addEventListener('controllerchange', onChange, { once: true })
+          // Safety timeout so we never hang forever.
+          window.setTimeout(() => setSwReady(true), 1500)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSwReady(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const preset = viewport === 'fullscreen' ? VIEWPORT_PRESETS.desktop : VIEWPORT_PRESETS[viewport]
   const isFullscreen = viewport === 'fullscreen'
 
@@ -222,11 +259,16 @@ export default function ProjectCanvas({
     [preset.id, preset.type, currentPageUrl, frameStatus, useProxy]
   )
 
-  const iframeSrc = useProxy
-    ? `/api/proxy?url=${encodeURIComponent(targetPageUrl)}`
-    : targetPageUrl
+  // In proxy mode, hold off loading until the service worker controls this
+  // origin so the iframe's first transparent /_next/... requests are remapped.
+  const proxyGateOpen = !useProxy || swReady
+  const iframeSrc = !proxyGateOpen
+    ? 'about:blank'
+    : useProxy
+      ? `/api/proxy?url=${encodeURIComponent(targetPageUrl)}`
+      : targetPageUrl
 
-  const iframeKey = `${targetPageUrl}-${useProxy ? 'proxy' : 'direct'}-${refreshCount}`
+  const iframeKey = `${targetPageUrl}-${useProxy ? 'proxy' : 'direct'}-${refreshCount}-${proxyGateOpen ? 'ready' : 'wait'}`
 
   useEffect(() => {
     const handleProxyMessage = (event: MessageEvent) => {

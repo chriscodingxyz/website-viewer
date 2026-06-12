@@ -47,12 +47,21 @@ export function buildInjectedScript (targetUrl: string): string {
           } catch (e) {}
         }
 
+        function skipUrl(url) {
+          return !url || url.indexOf(PROXY_PREFIX) === 0 ||
+            url.indexOf('data:') === 0 || url.indexOf('blob:') === 0 ||
+            url.indexOf('javascript:') === 0 || url.indexOf('mailto:') === 0 ||
+            url.indexOf('tel:') === 0 || url.indexOf('about:') === 0 ||
+            url.indexOf('ws:') === 0 || url.indexOf('wss:') === 0 ||
+            url.charAt(0) === '#';
+        }
+
+        // Navigation encoding: always the ?url= form so top-level navigations
+        // land on the proxy route (the service worker skips navigations).
         function toProxy(url) {
           if (url == null) return url;
           try { url = String(url); } catch (e) { return url; }
-          if (!url || url.indexOf(PROXY_PREFIX) === 0) return url;
-          if (url.indexOf('data:') === 0 || url.indexOf('blob:') === 0 || url.indexOf('javascript:') === 0 || url.indexOf('mailto:') === 0 || url.indexOf('tel:') === 0 || url.indexOf('about:') === 0 || url.charAt(0) === '#') return url;
-          if (url.indexOf('ws:') === 0 || url.indexOf('wss:') === 0) return url;
+          if (skipUrl(url)) return url;
           try {
             var abs = new URL(url, TARGET_URL);
             if (abs.protocol !== 'http:' && abs.protocol !== 'https:') return url;
@@ -61,14 +70,32 @@ export function buildInjectedScript (targetUrl: string): string {
           } catch (e) { return url; }
         }
 
-        function toProxySrcset(value) {
+        // Subresource encoding: same-origin-as-target URLs stay root-relative
+        // (the service worker remaps them to the target); cross-origin falls
+        // back to the ?url= form. Keeps bundler chunk-path resolution correct.
+        function toAsset(url) {
+          if (url == null) return url;
+          try { url = String(url); } catch (e) { return url; }
+          if (skipUrl(url)) return url;
+          try {
+            var abs = new URL(url, TARGET_URL);
+            if (abs.protocol !== 'http:' && abs.protocol !== 'https:') return url;
+            if (abs.origin === TARGET_ORIGIN) {
+              return abs.pathname + abs.search + abs.hash;
+            }
+            if (abs.origin === window.location.origin) return url;
+            return PROXY_PREFIX + encodeURIComponent(abs.toString());
+          } catch (e) { return url; }
+        }
+
+        function toAssetSrcset(value) {
           if (!value || typeof value !== 'string') return value;
           return value.split(/,(?=\\s+|$)/).map(function(part) {
             var trimmed = part.trim();
             if (trimmed.indexOf('data:') === 0) return trimmed;
             var pieces = trimmed.split(/\\s+/);
             var rest = pieces.slice(1).join(' ');
-            return (toProxy(pieces[0]) + ' ' + rest).trim();
+            return (toAsset(pieces[0]) + ' ' + rest).trim();
           }).join(', ');
         }
 
@@ -89,9 +116,9 @@ export function buildInjectedScript (targetUrl: string): string {
             window.fetch = function(input, init) {
               try {
                 if (typeof input === 'string' || input instanceof URL) {
-                  input = toProxy(String(input));
+                  input = toAsset(String(input));
                 } else if (input && typeof input.url === 'string') {
-                  var proxied = toProxy(input.url);
+                  var proxied = toAsset(input.url);
                   if (proxied !== input.url) {
                     input = new Request(proxied, input);
                   }
@@ -106,7 +133,7 @@ export function buildInjectedScript (targetUrl: string): string {
           var _xhrOpen = XMLHttpRequest.prototype.open;
           XMLHttpRequest.prototype.open = function(method, url) {
             var args = Array.prototype.slice.call(arguments);
-            try { args[1] = toProxy(String(url)); } catch (e) {}
+            try { args[1] = toAsset(String(url)); } catch (e) {}
             return _xhrOpen.apply(this, args);
           };
         } catch (e) {}
@@ -115,7 +142,7 @@ export function buildInjectedScript (targetUrl: string): string {
           if (navigator.sendBeacon) {
             var _beacon = navigator.sendBeacon.bind(navigator);
             navigator.sendBeacon = function(url, data) {
-              try { url = toProxy(String(url)); } catch (e) {}
+              try { url = toAsset(String(url)); } catch (e) {}
               return _beacon(url, data);
             };
           }
@@ -133,27 +160,33 @@ export function buildInjectedScript (targetUrl: string): string {
             });
           } catch (e) {}
         }
-        patchUrlProp(HTMLImageElement.prototype, 'src', toProxy);
-        patchUrlProp(HTMLImageElement.prototype, 'srcset', toProxySrcset);
-        patchUrlProp(HTMLScriptElement.prototype, 'src', toProxy);
-        patchUrlProp(HTMLLinkElement.prototype, 'href', toProxy);
-        patchUrlProp(HTMLSourceElement.prototype, 'src', toProxy);
-        patchUrlProp(HTMLSourceElement.prototype, 'srcset', toProxySrcset);
-        patchUrlProp(HTMLMediaElement.prototype, 'src', toProxy);
-        patchUrlProp(HTMLIFrameElement.prototype, 'src', toProxy);
-        patchUrlProp(HTMLEmbedElement.prototype, 'src', toProxy);
-        patchUrlProp(HTMLObjectElement.prototype, 'data', toProxy);
+        patchUrlProp(HTMLImageElement.prototype, 'src', toAsset);
+        patchUrlProp(HTMLImageElement.prototype, 'srcset', toAssetSrcset);
+        patchUrlProp(HTMLScriptElement.prototype, 'src', toAsset);
+        patchUrlProp(HTMLLinkElement.prototype, 'href', toAsset);
+        patchUrlProp(HTMLSourceElement.prototype, 'src', toAsset);
+        patchUrlProp(HTMLSourceElement.prototype, 'srcset', toAssetSrcset);
+        patchUrlProp(HTMLMediaElement.prototype, 'src', toAsset);
+        patchUrlProp(HTMLIFrameElement.prototype, 'src', toAsset);
+        patchUrlProp(HTMLEmbedElement.prototype, 'src', toAsset);
+        patchUrlProp(HTMLObjectElement.prototype, 'data', toAsset);
 
         try {
-          var URL_ATTRS = { src: 1, href: 1, action: 1, poster: 1, 'data-src': 1, 'data-href': 1, 'data-lazy-src': 1 };
+          // <a href> / <area href> / <form action> are navigations; everything
+          // else is a subresource.
           var _setAttribute = Element.prototype.setAttribute;
           Element.prototype.setAttribute = function(name, value) {
             try {
               var lower = String(name).toLowerCase();
-              if (URL_ATTRS[lower]) {
+              var tag = this.tagName;
+              if (lower === 'href' && (tag === 'A' || tag === 'AREA')) {
                 value = toProxy(String(value));
+              } else if (lower === 'action' && tag === 'FORM') {
+                value = toProxy(String(value));
+              } else if (lower === 'src' || lower === 'href' || lower === 'poster' || lower === 'data-src' || lower === 'data-lazy-src') {
+                value = toAsset(String(value));
               } else if (lower === 'srcset' || lower === 'data-srcset') {
-                value = toProxySrcset(String(value));
+                value = toAssetSrcset(String(value));
               }
             } catch (e) {}
             return _setAttribute.call(this, name, value);
