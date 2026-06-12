@@ -828,7 +828,7 @@ export default function ProjectCommentPanel({
               className='mt-3 resize-y'
             />
           ) : selectedPin.kind !== 'inspect' ? (
-            <p className='mt-3 whitespace-pre-wrap text-sm text-foreground'>
+            <p className='mt-3 whitespace-pre-wrap text-xs text-foreground'>
               {selectedPin.comment || (
                 <span className='text-muted-foreground'>No description.</span>
               )}
@@ -1138,7 +1138,7 @@ export default function ProjectCommentPanel({
                         {timeAgo(reply.createdAt)}
                       </span>
                     </div>
-                    <p className='mt-0.5 whitespace-pre-wrap text-sm text-foreground'>
+                    <p className='mt-0.5 whitespace-pre-wrap text-xs text-foreground'>
                       {reply.body}
                     </p>
                   </div>
@@ -1323,45 +1323,6 @@ export default function ProjectCommentPanel({
         </div>
       </header>
 
-      {pageGroups.length > 1 && (
-        <div className='border-b border-border/60 bg-muted/30 px-2 py-1.5'>
-          <div className='flex items-center gap-1 overflow-x-auto scrollbar-hide'>
-            {pageGroups.map(group => {
-              const isActive = sameFeedbackUrl(group.url, currentPageUrl)
-              const isProjectHome = sameFeedbackUrl(group.url, projectWebsiteUrl)
-              const path = pathOf(group.url)
-              return (
-                <button
-                  key={group.url}
-                  type='button'
-                  onClick={() => onNavigateToPage?.(group.url)}
-                  title={group.url}
-                  className={cn(
-                    'inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2 text-[11px] font-medium transition-colors',
-                    isActive
-                      ? 'border-foreground bg-foreground text-background'
-                      : 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                  )}
-                >
-                  {isProjectHome && <House weight='fill' className='h-3 w-3' />}
-                  <span className='max-w-[120px] truncate font-mono'>{path}</span>
-                  {group.pins.length > 0 && (
-                    <span
-                      className={cn(
-                        'inline-flex h-4 min-w-4 items-center justify-center rounded-sm px-1 text-[9px] font-bold tabular-nums',
-                        isActive ? 'bg-background/20 text-background' : 'bg-muted text-foreground'
-                      )}
-                    >
-                      {group.pins.length}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
       <div className='min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden'>
         {pins.length === 0 ? (
           <div className='flex flex-col items-center justify-center px-6 py-16 text-center text-xs text-muted-foreground'>
@@ -1375,7 +1336,6 @@ export default function ProjectCommentPanel({
           </div>
         ) : (
           (() => {
-            const activeGroup = pageGroups.find(g => sameFeedbackUrl(g.url, currentPageUrl))
             const scopedPins = (() => {
               if (taskFilter === 'all') return pins
               if (taskFilter === 'done') return [...implementedPins, ...closedPins]
@@ -1397,13 +1357,11 @@ export default function ProjectCommentPanel({
               )
             }
 
-            const activeOpenPins = activePins.filter(pin => (pin.status ?? 'open') === 'open')
-            const activeImplementedPins = activePins.filter(pin => pin.status === 'implemented')
-            const activeClosedPins = activePins.filter(pin => pin.status === 'closed')
-            const renderPins = (items: Pin[], closed = false) => (
+            const renderPins = (items: Pin[]) => (
               <ul className='w-full divide-y divide-border/50 overflow-hidden bg-background'>
                 {items.map(pin => {
                   const replies = allRepliesFor(pin)
+                  const closed = pin.status === 'closed'
                   const pinAction =
                     pin.kind === 'inspect' ? findInspectAction(pin) : undefined
                   const tone = actionTone(pinAction?.id)
@@ -1465,7 +1423,7 @@ export default function ProjectCommentPanel({
                         </div>
                         <p
                           className={cn(
-                            'mt-1.5 line-clamp-2 break-words text-sm leading-snug text-foreground',
+                            'mt-1.5 line-clamp-2 break-words text-xs leading-snug text-foreground',
                             closed && 'line-through decoration-muted-foreground/50'
                           )}
                         >
@@ -1543,57 +1501,62 @@ export default function ProjectCommentPanel({
               </ul>
             )
 
-            if (taskFilter === 'open') {
-              return (
-                <div>
-                  {activeOpenPins.length > 0 ? (
-                    renderPins(activeOpenPins)
-                  ) : (
-                    <p className='px-4 py-6 text-center text-xs text-muted-foreground'>
-                      No open tasks.
-                    </p>
-                  )}
-                </div>
-              )
-            }
-
-            if (taskFilter === 'done') {
-              return (
-                <div>
-                  {activeImplementedPins.length > 0 && renderPins(activeImplementedPins)}
-                  {activeClosedPins.length > 0 && renderPins(activeClosedPins, true)}
-                </div>
-              )
-            }
+            // Keep each page's changes together: group the status-scoped pins
+            // by page, ordering open first then by recency within a page.
+            const statusRank = (pin: Pin) =>
+              (pin.status ?? 'open') === 'open' ? 0 : pin.status === 'implemented' ? 1 : 2
+            const grouped = pageGroups
+              .map(group => ({
+                group,
+                items: activePins
+                  .filter(pin =>
+                    sameFeedbackUrl(
+                      canonicalFeedbackUrl(pin.url, projectWebsiteUrl),
+                      group.url
+                    )
+                  )
+                  .sort(
+                    (a, b) =>
+                      statusRank(a) - statusRank(b) ||
+                      b.createdAt.localeCompare(a.createdAt)
+                  )
+              }))
+              .filter(entry => entry.items.length > 0)
 
             return (
               <div>
-                <div className='sticky top-0 z-10 border-b border-border/60 bg-background/95 px-4 py-1.5 text-[11px] font-medium text-muted-foreground backdrop-blur'>
-                  Open · {activeOpenPins.length}
-                </div>
-                {activeOpenPins.length > 0 ? (
-                  renderPins(activeOpenPins)
-                ) : (
-                  <p className='px-4 py-6 text-center text-xs text-muted-foreground'>
-                    No open tasks on this page.
-                  </p>
-                )}
-                {activeImplementedPins.length > 0 && (
-                  <>
-                    <div className='sticky top-0 z-10 border-y border-border/60 bg-background/95 px-4 py-1.5 text-[11px] font-medium text-muted-foreground backdrop-blur'>
-                      Implemented · {activeImplementedPins.length}
-                    </div>
-                    {renderPins(activeImplementedPins)}
-                  </>
-                )}
-                {activeClosedPins.length > 0 && (
-                  <>
-                    <div className='sticky top-0 z-10 border-y border-border/60 bg-background/95 px-4 py-1.5 text-[11px] font-medium text-muted-foreground backdrop-blur'>
-                      Closed · {activeClosedPins.length}
-                    </div>
-                    {renderPins(activeClosedPins, true)}
-                  </>
-                )}
+                {grouped.map(({ group, items }) => {
+                  const isActive = sameFeedbackUrl(group.url, currentPageUrl)
+                  const isProjectHome = sameFeedbackUrl(group.url, projectWebsiteUrl)
+                  const path = pathOf(group.url)
+                  return (
+                    <section key={group.url}>
+                      <button
+                        type='button'
+                        onClick={() => onNavigateToPage?.(group.url)}
+                        title={`Open ${group.url}`}
+                        className={cn(
+                          'sticky top-0 z-10 flex w-full items-center gap-1.5 border-b border-border/60 px-4 py-1.5 text-left text-[11px] font-medium backdrop-blur transition-colors',
+                          isActive
+                            ? 'bg-muted/80 text-foreground'
+                            : 'bg-background/95 text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                        )}
+                      >
+                        {isProjectHome && <House weight='fill' className='h-3 w-3 shrink-0' />}
+                        <span className='min-w-0 flex-1 truncate font-mono'>{path}</span>
+                        {isActive && (
+                          <span className='shrink-0 rounded-sm bg-foreground px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-background'>
+                            Viewing
+                          </span>
+                        )}
+                        <span className='shrink-0 tabular-nums text-muted-foreground'>
+                          {items.length}
+                        </span>
+                      </button>
+                      {renderPins(items)}
+                    </section>
+                  )
+                })}
               </div>
             )
           })()
