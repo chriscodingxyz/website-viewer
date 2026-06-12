@@ -244,13 +244,6 @@ function elementSnippet(pin: Pin, summary: PinSummary): string | null {
   return `<${pin.elementTag}>${text ? ` ${truncateText(text, 50)}` : ''}`
 }
 
-function statusAccent(pin: Pin): string {
-  if (pin.status === 'implemented') return 'border-l-blue-500'
-  if (pin.status === 'closed') return 'border-l-emerald-500/50'
-  if (isPossiblyDone(pin)) return 'border-l-amber-400'
-  if (pin.severity === 'blocking') return 'border-l-red-500'
-  return 'border-l-transparent'
-}
 
 function SectionLabel({
   children,
@@ -1400,38 +1393,35 @@ export default function ProjectCommentPanel({
                           }
                         }}
                         className={cn(
-                          'group block w-full min-w-0 cursor-pointer overflow-hidden border-l-2 px-4 py-2.5 text-left transition-colors hover:bg-muted/40',
-                          statusAccent(pin),
+                          'group relative block w-full min-w-0 cursor-pointer overflow-hidden px-4 pb-3 pt-3 text-left transition-colors hover:bg-muted/40',
                           selectedPinId === pin.id && 'bg-muted/60'
                         )}
                       >
-                        <div className='flex items-center gap-2'>
-                          {/* Number + intent merged into one color-coded pill, mirroring the canvas marker. */}
-                          <span
-                            className={cn(
-                              'inline-flex min-w-0 items-center gap-1 border py-0.5 pl-0.5 pr-1.5 text-[10px] font-semibold leading-none',
-                              tone.active
-                            )}
-                          >
-                            <span className='inline-flex h-3.5 min-w-3.5 items-center justify-center bg-black/25 px-0.5 text-[9px] font-bold tabular-nums'>
-                              {pin.number}
-                            </span>
-                            <IntentIcon className='h-3 w-3 shrink-0' />
-                            <span className='truncate'>
-                              {pinAction?.label ??
-                                (pin.kind === 'inspect' ? 'Inspect' : 'Comment')}
-                            </span>
+                        {/* Color-coded intent pill anchored flush in the top-left corner (mirrors the canvas marker badge). */}
+                        <span
+                          className={cn(
+                            'absolute left-0 top-0 inline-flex max-w-[72%] items-center gap-1 py-1 pl-1 pr-1.5 text-[10px] font-semibold leading-none',
+                            tone.active
+                          )}
+                        >
+                          <span className='inline-flex h-3.5 min-w-3.5 items-center justify-center bg-black/25 px-0.5 text-[9px] font-bold tabular-nums'>
+                            {pin.number}
                           </span>
-                          <span className='ml-auto inline-flex shrink-0 items-center gap-1.5'>
-                            <PinStatusBadges pin={pin} closed={closed} />
-                            <span className='text-[10px] tabular-nums text-muted-foreground'>
-                              {timeAgo(pin.createdAt)}
-                            </span>
+                          <IntentIcon className='h-3 w-3 shrink-0' />
+                          <span className='truncate'>
+                            {pinAction?.label ??
+                              (pin.kind === 'inspect' ? 'Inspect' : 'Comment')}
+                          </span>
+                        </span>
+                        <div className='flex h-4 items-center justify-end gap-1.5'>
+                          <PinStatusBadges pin={pin} closed={closed} />
+                          <span className='text-[10px] tabular-nums text-muted-foreground'>
+                            {timeAgo(pin.createdAt)}
                           </span>
                         </div>
                         <p
                           className={cn(
-                            'mt-1.5 line-clamp-2 break-words text-xs leading-snug text-foreground',
+                            'mt-2 line-clamp-2 break-words text-xs leading-snug text-foreground',
                             closed && 'line-through decoration-muted-foreground/50'
                           )}
                         >
