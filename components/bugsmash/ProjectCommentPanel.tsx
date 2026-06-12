@@ -745,20 +745,18 @@ export default function ProjectCommentPanel({
         )}
         <div className='border-b border-border/60 px-4 py-3'>
           <div className='flex items-center justify-between gap-2'>
-            <div className='flex min-w-0 items-center gap-2'>
-              <span className='inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-zinc-950 text-[11px] font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900'>
+            <span
+              className={cn(
+                'inline-flex min-w-0 items-center gap-1 border py-0.5 pl-0.5 pr-2 text-[11px] font-semibold leading-none',
+                detailTone.active
+              )}
+            >
+              <span className='inline-flex h-4 min-w-4 items-center justify-center bg-black/25 px-0.5 text-[10px] font-bold tabular-nums'>
                 {selectedPin.number}
               </span>
-              <span
-                className={cn(
-                  'inline-flex min-w-0 items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[10px] font-medium',
-                  detailTone.chip
-                )}
-              >
-                <DetailIcon className='h-3 w-3 shrink-0' />
-                <span className='truncate'>{detailChipLabel}</span>
-              </span>
-            </div>
+              <DetailIcon className='h-3.5 w-3.5 shrink-0' />
+              <span className='truncate'>{detailChipLabel}</span>
+            </span>
             <span className='shrink-0 text-[11px] text-muted-foreground'>
               {timeAgo(selectedPin.createdAt)}
             </span>
@@ -833,148 +831,121 @@ export default function ProjectCommentPanel({
             </p>
           ) : null}
           {selectedPin.kind === 'inspect' && (
-            <div className='mt-3 space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3'>
-              <div className='flex items-center justify-between'>
-                <div className='flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground'>
-                  <SelectionPlus className='h-3.5 w-3.5' />
-                  Intent
-                </div>
-                {canEdit && canModifyPin(selectedPin) && selectedInspectAction && !intentPickerOpen && (
+            <div className='mt-4 space-y-4'>
+              {/* Intent: the chosen action is already shown by the header pill,
+                  so here we only surface the editor. Show the picker when no
+                  intent is chosen or the user wants to change it. */}
+              {canEdit && canModifyPin(selectedPin) && (
+                intentPickerOpen || !selectedInspectAction ? (
+                  <div className='space-y-1.5'>
+                    <SectionLabel>Intent</SectionLabel>
+                    <div className='flex flex-wrap gap-1'>
+                      {inspectActions.map(action => {
+                        const ActionIcon = actionIcon(action.id)
+                        const active = selectedPin.editInstruction === action.instruction
+                        const tone = actionTone(action.id)
+                        return (
+                          <button
+                            key={action.id}
+                            type='button'
+                            disabled={!canEdit || !canModifyPin(selectedPin)}
+                            onClick={() => {
+                              applyInspectAction(selectedPin, action)
+                              setIntentPickerOpen(false)
+                            }}
+                            className={cn(
+                              'inline-flex h-7 items-center gap-1 border px-2 text-[11px] font-medium transition-colors',
+                              active
+                                ? tone.active
+                                : `${tone.chip} hover:bg-accent hover:text-accent-foreground`
+                            )}
+                          >
+                            <ActionIcon className='h-3.5 w-3.5' />
+                            {action.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ) : (
                   <button
                     type='button'
-                    className='text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline'
+                    className='text-[11px] font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline'
                     onClick={() => setIntentPickerOpen(true)}
                   >
-                    Change
+                    Change intent
                   </button>
-                )}
-              </div>
-              {selectedInspectAction && !intentPickerOpen ? (
-                <div>
-                  <span
-                    className={cn(
-                      'inline-flex h-7 items-center gap-1 rounded-md border px-2 text-[11px] font-medium',
-                      detailTone.active
-                    )}
-                  >
-                    <DetailIcon className='h-3.5 w-3.5' />
-                    {selectedInspectAction.label}
-                  </span>
-                </div>
-              ) : (
-                <div className='flex flex-wrap gap-1'>
-                  {inspectActions.map(action => {
-                    const ActionIcon = actionIcon(action.id)
-                    const active = selectedPin.editInstruction === action.instruction
-                    const tone = actionTone(action.id)
-                    return (
-                      <button
-                        key={action.id}
-                        type='button'
-                        disabled={!canEdit || !canModifyPin(selectedPin)}
-                        onClick={() => {
-                          applyInspectAction(selectedPin, action)
-                          setIntentPickerOpen(false)
-                        }}
-                        className={cn(
-                          'inline-flex h-7 items-center gap-1 rounded-md border px-2 text-[11px] font-medium transition-colors',
-                          active
-                            ? tone.active
-                            : `${tone.chip} hover:bg-accent hover:text-accent-foreground`
-                        )}
-                      >
-                        <ActionIcon className='h-3.5 w-3.5' />
-                        {action.label}
-                      </button>
-                    )
-                  })}
-                </div>
+                )
               )}
+
+              {/* Before / after, flat (no nested boxes) */}
               {showBeforeAfter && (
-                <div className='overflow-hidden rounded-md border border-border/60 bg-background'>
-                  <div className='border-l-2 border-l-zinc-300 px-2.5 py-2 dark:border-l-zinc-600'>
+                <div className='space-y-3'>
+                  <div>
                     <SectionLabel>Current</SectionLabel>
-                    <p className='mt-0.5 max-h-32 overflow-y-auto whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground'>
+                    <p className='mt-1 max-h-32 overflow-y-auto whitespace-pre-wrap break-words text-xs leading-relaxed text-muted-foreground line-through decoration-muted-foreground/40'>
                       {selectedPin.elementText}
                     </p>
                   </div>
-                  <div className='flex items-center gap-1.5 border-y border-border/60 bg-muted/30 px-2.5 py-1 text-[10px] font-medium text-emerald-700 dark:text-emerald-400'>
-                    <ArrowDown className='h-3 w-3' />
-                    {detailLabelFor(selectedInspectAction?.id) ?? 'Replacement'}
-                  </div>
-                  <div className='border-l-2 border-l-emerald-500 px-2.5 py-2'>
+                  <div>
+                    <SectionLabel className='flex items-center gap-1 text-emerald-700 dark:text-emerald-400'>
+                      <ArrowDown className='h-3 w-3' />
+                      {detailLabelFor(selectedInspectAction?.id) ?? 'Replacement'}
+                    </SectionLabel>
                     {canEdit && canModifyPin(selectedPin) ? (
                       <Textarea
                         value={selectedPin.replacementText || ''}
                         onChange={event =>
-                          updatePin(selectedPin.id, {
-                            replacementText: event.target.value
-                          })
+                          updatePin(selectedPin.id, { replacementText: event.target.value })
                         }
                         placeholder={selectedInspectAction?.detailPlaceholder}
                         rows={3}
-                        className='min-h-16 resize-y rounded-none border-0 p-0 text-xs shadow-none focus-visible:ring-0'
+                        className='mt-1 resize-y text-xs'
                       />
                     ) : (
-                      <p className='whitespace-pre-wrap text-xs text-foreground'>
+                      <p className='mt-1 whitespace-pre-wrap text-xs text-foreground'>
                         {selectedPin.replacementText || (
-                          <span className='text-muted-foreground'>
-                            Not provided yet.
-                          </span>
+                          <span className='text-muted-foreground'>Not provided yet.</span>
                         )}
                       </p>
                     )}
                   </div>
                 </div>
               )}
-              {!showCurrentText && selectedPin.elementText && (
-                <p className='rounded-md border border-border/50 bg-background px-2 py-1.5 text-[11px] text-muted-foreground'>
-                  Captured text saved for context.
-                </p>
-              )}
+
               {canEdit && canModifyPin(selectedPin) ? (
                 <>
-                  {!showBeforeAfter && (selectedInspectAction ? (
-                    detailLabelFor(selectedInspectAction.id) ? (
-                      <div className='space-y-1'>
+                  {!showBeforeAfter &&
+                    selectedInspectAction &&
+                    detailLabelFor(selectedInspectAction.id) && (
+                      <div className='space-y-1.5'>
                         <SectionLabel>
                           {detailLabelFor(selectedInspectAction.id)}
                         </SectionLabel>
                         <Textarea
                           value={selectedPin.replacementText || ''}
                           onChange={event =>
-                            updatePin(selectedPin.id, {
-                              replacementText: event.target.value
-                            })
+                            updatePin(selectedPin.id, { replacementText: event.target.value })
                           }
                           placeholder={selectedInspectAction.detailPlaceholder}
                           rows={3}
-                          className='resize-y text-sm'
+                          className='resize-y text-xs'
                         />
                       </div>
-                    ) : null
-                  ) : (
-                    <p className='rounded-md border border-dashed border-border/60 bg-background px-2 py-2 text-[11px] text-muted-foreground'>
-                      Pick an intent above to add a replacement, asset, or removal note.
-                    </p>
-                  ))}
+                    )}
                   {selectedInspectAction?.id === 'replace-image' && !isGuest && (
                     <PinAssetUpload
                       assetUrl={selectedPin.assetUrl}
                       canEdit={canEdit}
-                      onChange={url =>
-                        updatePin(selectedPin.id, { assetUrl: url })
-                      }
+                      onChange={url => updatePin(selectedPin.id, { assetUrl: url })}
                     />
                   )}
-                  <div className='space-y-1'>
+                  <div className='space-y-1.5'>
                     <SectionLabel>Notes</SectionLabel>
                     <Textarea
                       value={selectedPin.comment}
                       onChange={event =>
-                        updatePin(selectedPin.id, {
-                          comment: event.target.value
-                        })
+                        updatePin(selectedPin.id, { comment: event.target.value })
                       }
                       placeholder={
                         selectedInspectAction?.notePlaceholder ??
@@ -988,34 +959,28 @@ export default function ProjectCommentPanel({
               ) : (
                 <>
                   {selectedPin.assetUrl && (
-                    <PinAssetUpload
-                      assetUrl={selectedPin.assetUrl}
-                      canEdit={false}
-                      onChange={() => {}}
-                    />
+                    <PinAssetUpload assetUrl={selectedPin.assetUrl} canEdit={false} onChange={() => {}} />
                   )}
                   {!showBeforeAfter && selectedPin.replacementText && (
-                    <div className='rounded-md border border-border/50 bg-background p-2'>
-                      <SectionLabel>
-                        {detailLabelFor(selectedInspectAction?.id)}
-                      </SectionLabel>
-                      <p className='mt-1 whitespace-pre-wrap text-xs text-foreground'>
+                    <div className='space-y-1'>
+                      <SectionLabel>{detailLabelFor(selectedInspectAction?.id)}</SectionLabel>
+                      <p className='whitespace-pre-wrap text-xs text-foreground'>
                         {selectedPin.replacementText}
                       </p>
                     </div>
                   )}
                   {selectedPin.editInstruction && !selectedInspectAction && (
-                    <div className='rounded-md border border-border/50 bg-background p-2'>
+                    <div className='space-y-1'>
                       <SectionLabel>Instruction</SectionLabel>
-                      <p className='mt-1 whitespace-pre-wrap text-xs text-foreground'>
+                      <p className='whitespace-pre-wrap text-xs text-foreground'>
                         {selectedPin.editInstruction}
                       </p>
                     </div>
                   )}
                   {selectedPin.comment && (
-                    <div className='rounded-md border border-border/50 bg-background p-2'>
+                    <div className='space-y-1'>
                       <SectionLabel>Context</SectionLabel>
-                      <p className='mt-1 whitespace-pre-wrap text-xs text-foreground'>
+                      <p className='whitespace-pre-wrap text-xs text-foreground'>
                         {selectedPin.comment}
                       </p>
                     </div>
