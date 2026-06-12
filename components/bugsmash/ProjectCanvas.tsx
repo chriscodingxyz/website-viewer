@@ -449,6 +449,32 @@ export default function ProjectCanvas({
 
   const setBrowse = () => setFeedbackMode(false)
 
+  const enterAnnotate = useCallback(() => {
+    if (!canEdit) return
+    setActiveTool('inspect')
+    setFeedbackMode(true)
+  }, [canEdit, setActiveTool, setFeedbackMode])
+
+  // Keyboard shortcuts: V = browse, C = comment/annotate. Ignored while typing.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const el = e.target as HTMLElement | null
+      const tag = el?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || el?.isContentEditable) return
+      const key = e.key.toLowerCase()
+      if (key === 'v') {
+        e.preventDefault()
+        setFeedbackMode(false)
+      } else if (key === 'c') {
+        e.preventDefault()
+        enterAnnotate()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [enterAnnotate, setFeedbackMode])
+
   const wrapperWidth = isFullscreen ? '100%' : `${preset.width * scale}px`
   const wrapperHeight = isFullscreen ? '100%' : `${preset.height * scale}px`
 
@@ -489,26 +515,25 @@ export default function ProjectCanvas({
             value={feedbackMode ? 'annotate' : 'browse'}
             onValueChange={value => {
               if (value === 'browse') setBrowse()
-              else if (value === 'annotate') {
-                setActiveTool('inspect')
-                setFeedbackMode(true)
-              }
+              else if (value === 'annotate') enterAnnotate()
             }}
             size='sm'
             className='gap-0'
           >
-            <ToggleGroupItem value='browse' aria-label='Browse mode' className='h-8 gap-1.5 px-3 text-xs'>
+            <ToggleGroupItem value='browse' aria-label='Browse mode (V)' className='h-8 gap-1.5 px-3 text-xs'>
               <Cursor className='h-3.5 w-3.5' />
               Browse
+              <kbd className='ml-1 hidden rounded border border-border bg-muted px-1 text-[10px] font-medium text-muted-foreground sm:inline'>V</kbd>
             </ToggleGroupItem>
             <ToggleGroupItem
               value='annotate'
-              aria-label='Annotate mode'
+              aria-label='Annotate mode (C)'
               disabled={!canEdit}
               className='h-8 gap-1.5 px-3 text-xs'
             >
               <SelectionPlus className='h-3.5 w-3.5' />
               Annotate
+              <kbd className='ml-1 hidden rounded border border-border bg-muted px-1 text-[10px] font-medium text-muted-foreground sm:inline'>C</kbd>
               {pinsOnThisPage.length > 0 && (
                 <span className='ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-sm bg-muted-foreground/20 px-1 text-[10px] font-semibold tabular-nums text-muted-foreground'>
                   {pinsOnThisPage.length}
@@ -587,7 +612,7 @@ export default function ProjectCanvas({
                 </Toggle>
               </TooltipTrigger>
               <TooltipContent>
-                {useProxy ? 'Proxy on — navigation works' : 'Direct iframe'}
+                {useProxy ? 'Proxy on, navigation works' : 'Direct iframe'}
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -597,6 +622,16 @@ export default function ProjectCanvas({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Reload preview</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button asChild variant='ghost' size='icon' className='h-8 w-8'>
+                  <a href={currentPageUrl} target='_blank' rel='noreferrer' aria-label='Open page in a new tab'>
+                    <ArrowSquareOut className='h-4 w-4' />
+                  </a>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Open this page in a new tab</TooltipContent>
             </Tooltip>
           </div>
         </div>
